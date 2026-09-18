@@ -11,7 +11,7 @@ interface AuthContextType {
     password: string,
     fullName: string,
     username: string
-  ) => Promise<{ error: Error | null }>;
+  ) => Promise<{ error: Error | null; needsEmailConfirmation: boolean }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
 }
@@ -49,7 +49,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     fullName: string,
     username: string
   ) => {
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -60,7 +60,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         },
       },
     });
-    return { error };
+    // Když Supabase vyžaduje potvrzení e-mailu, session nepřijde a dítě
+    // není přihlášené — musí mu to někdo říct, jinak kouká na úvodní stránku.
+    return { error, needsEmailConfirmation: !error && !data.session };
   };
 
   const signIn = async (email: string, password: string) => {

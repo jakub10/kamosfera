@@ -70,7 +70,7 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
 
     setIsLoading(true);
 
-    const { error } = await signUp(signupEmail, signupPassword, signupFullName, username);
+    const { error, needsEmailConfirmation } = await signUp(signupEmail, signupPassword, signupFullName, username);
 
     if (error) {
       // Hlášky ze Supabase chodí anglicky a prozrazují detaily o backendu.
@@ -83,6 +83,13 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
           : 'Zkus to prosím znovu za chvíli.',
         variant: 'destructive',
       });
+    } else if (needsEmailConfirmation) {
+      toast({
+        title: 'Ještě jeden krok',
+        description: `Poslali jsme ti e-mail na ${signupEmail}. Klikni v něm na odkaz a pak se přihlas.`,
+        duration: 12000,
+      });
+      onOpenChange(false);
     } else {
       toast({
         title: 'Účet vytvořen!',

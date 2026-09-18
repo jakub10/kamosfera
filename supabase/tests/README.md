@@ -25,6 +25,7 @@ done
 
 # 3) samotné testy
 psql -d kamosfera_test -v ON_ERROR_STOP=1 -f supabase/tests/01_messaging_security.sql
+psql -d kamosfera_test -v ON_ERROR_STOP=1 -f supabase/tests/02_notifications.sql
 ```
 
 Každý test, který projde, vypíše `OK`. Když něco selže, skript skončí chybou

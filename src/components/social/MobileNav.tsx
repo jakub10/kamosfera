@@ -1,4 +1,4 @@
-import { Home, Search, MessageCircle, User, Users } from 'lucide-react';
+import { Home, Search, MessageCircle, User, Users, Gamepad2 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
@@ -21,7 +21,7 @@ export function MobileNav() {
   const navItems = [
     { icon: Home, label: t('nav.home'), path: '/', badge: 0 },
     { icon: Search, label: t('nav.search'), path: '/search', badge: 0 },
-    { icon: Users, label: t('nav.groups'), path: '/groups', badge: 0 },
+    { icon: Gamepad2, label: 'Hry', path: '/games', badge: 0 },
     { icon: MessageCircle, label: t('nav.messages'), path: '/messages', badge: unreadMessages },
     { icon: User, label: t('nav.profile'), path: '/profile', badge: 0 },
   ];

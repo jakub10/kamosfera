@@ -28,6 +28,16 @@ interface CreatePostProps {
   } | null;
 }
 
+// Střídavé nápovědy — ať to nezní jako Facebook, a ať je každý den jiná.
+const PROMPTS = [
+  'Co se dnes stalo?',
+  'Ukaž kamarádům něco, co tě baví…',
+  'Co ti dnes udělalo radost?',
+  'Kam jsi dneska byl?',
+  'Na co se těšíš?',
+];
+const promptIndex = new Date().getDate() % PROMPTS.length;
+
 export function CreatePost({ onPostCreated, currentProfile }: CreatePostProps) {
   const [content, setContent] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -207,7 +217,7 @@ export function CreatePost({ onPostCreated, currentProfile }: CreatePostProps) {
         </Avatar>
         <div className="flex-1">
           <Textarea
-            placeholder="Co máš na mysli?"
+            placeholder={PROMPTS[promptIndex]}
             value={content}
             onChange={(e) => setContent(e.target.value)}
             className="min-h-[80px] resize-none border-0 bg-transparent focus-visible:ring-0 text-base placeholder:text-muted-foreground"

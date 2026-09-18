@@ -7,6 +7,8 @@ import { Stories } from './Stories';
 import { Loader2 } from 'lucide-react';
 import { PostBackgroundStyle } from './VIPPostFeatures';
 import mascotWave from '@/assets/mascot-wave.png';
+import { Link } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
 
 interface Post {
   id: string;
@@ -172,8 +174,11 @@ export function Feed({ currentProfile }: FeedProps) {
             loading="lazy"
           />
           <p className="text-muted-foreground">
-            <span className="text-gradient-flow font-semibold">Zatím žádné příspěvky.</span> Buď první, kdo něco sdílí!
+            <span className="text-gradient-flow font-semibold">Zatím je tu ticho.</span> Napiš něco jako první — nebo se podívej, kdo tu je.
           </p>
+          <Button variant="outline" asChild>
+            <Link to="/search">Najít kamarády</Link>
+          </Button>
         </div>
       ) : (
         posts.map((post) => (

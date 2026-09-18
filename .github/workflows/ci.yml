@@ -87,3 +87,6 @@ jobs:
 
       - name: Bezpečnostní testy
         run: psql -v ON_ERROR_STOP=1 -f supabase/tests/01_messaging_security.sql
+
+      - name: Testy notifikací
+        run: psql -v ON_ERROR_STOP=1 -f supabase/tests/02_notifications.sql

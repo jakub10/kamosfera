@@ -2,18 +2,11 @@ import { useState } from 'react';
 import { Bot, Gamepad2, Brain, MousePointer2, Crown, Volume2, Shield, MessageSquare, Star } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
-import { AIChatWindow } from './AIChatWindow';
-import { SnakeGame } from './SnakeGame';
-import { TowerDefenseGame } from './TowerDefenseGame';
-import { MemoryGame } from './MemoryGame';
-import { ClickerGame } from './ClickerGame';
-import { VIPPuzzleGame } from './VIPPuzzleGame';
-import { AIChatbotModal } from './AIChatbotModal';
-import { VoiceAgentModal } from './VoiceAgentModal';
-import { BrawlGame } from './BrawlGame';
 import { useUserRole } from '@/hooks/useUserRole';
 
-type ActiveModal = 'none' | 'ai' | 'snake' | 'tower' | 'memory' | 'clicker' | 'vip-puzzle' | 'chatbot' | 'voice' | 'brawl';
+import { GAME_ITEMS, GameModals, type GameId } from './gameCatalog';
+
+type ActiveModal = 'none' | GameId;
 
 export function FloatingGameMenu() {
   const [isOpen, setIsOpen] = useState(false);
@@ -21,22 +14,10 @@ export function FloatingGameMenu() {
   const { isVIP, isCreator } = useUserRole();
   const { t } = useTranslation();
 
-  const baseMenuItems = [
-    { id: 'brawl' as const, icon: Star, label: 'Brawlosféra', color: 'from-amber-400 to-yellow-600' },
-    { id: 'voice' as const, icon: Volume2, label: t('fab.voice'), color: 'from-pink-500 to-rose-600' },
-    { id: 'clicker' as const, icon: MousePointer2, label: t('fab.clicker'), color: 'from-yellow-500 to-orange-600' },
-    { id: 'memory' as const, icon: Brain, label: t('fab.memory'), color: 'from-blue-500 to-cyan-600' },
-    { id: 'tower' as const, icon: Shield, label: t('fab.tower'), color: 'from-orange-500 to-red-600' },
-    { id: 'snake' as const, icon: Gamepad2, label: t('fab.snake'), color: 'from-green-500 to-emerald-600' },
-    { id: 'ai' as const, icon: Bot, label: t('fab.ai'), color: 'from-violet-500 to-purple-600' },
-    { id: 'chatbot' as const, icon: MessageSquare, label: t('fab.chatbot'), color: 'from-teal-500 to-cyan-700' },
-  ];
-
-  const vipMenuItems = isVIP || isCreator ? [
-    { id: 'vip-puzzle' as const, icon: Crown, label: t('fab.vipPuzzle'), color: 'from-amber-500 to-yellow-600', vip: true },
-  ] : [];
-
-  const menuItems = [...baseMenuItems, ...vipMenuItems];
+  // Jeden sdílený seznam se stránkou Hry (gameCatalog.tsx).
+  const menuItems = GAME_ITEMS
+    .filter((g) => !g.vip || isVIP || isCreator)
+    .map((g) => ({ ...g, label: g.labelKey.includes('.') ? t(g.labelKey) : g.labelKey }));
 
   const handleItemClick = (id: ActiveModal) => {
     setActiveModal(id);
@@ -96,16 +77,7 @@ export function FloatingGameMenu() {
         </div>
       </button>
 
-      {/* Modals */}
-      <AIChatWindow isOpen={activeModal === 'ai'} onClose={() => setActiveModal('none')} />
-      <AIChatbotModal isOpen={activeModal === 'chatbot'} onClose={() => setActiveModal('none')} />
-      <SnakeGame isOpen={activeModal === 'snake'} onClose={() => setActiveModal('none')} />
-      <TowerDefenseGame isOpen={activeModal === 'tower'} onClose={() => setActiveModal('none')} />
-      <MemoryGame isOpen={activeModal === 'memory'} onClose={() => setActiveModal('none')} />
-      <ClickerGame isOpen={activeModal === 'clicker'} onClose={() => setActiveModal('none')} />
-      <VIPPuzzleGame isOpen={activeModal === 'vip-puzzle'} onClose={() => setActiveModal('none')} />
-      <VoiceAgentModal isOpen={activeModal === 'voice'} onClose={() => setActiveModal('none')} />
-      <BrawlGame isOpen={activeModal === 'brawl'} onClose={() => setActiveModal('none')} />
+      <GameModals active={activeModal === 'none' ? null : activeModal} onClose={() => setActiveModal('none')} />
     </>
   );
 }

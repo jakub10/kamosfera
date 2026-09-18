@@ -3,10 +3,17 @@
 -- a otestovať v obyčajnom Postgrese, bez Supabase CLI a Dockeru.
 -- Postup spustenia je v supabase/tests/README.md
 
-CREATE ROLE anon NOLOGIN;
-CREATE ROLE authenticated NOLOGIN;
-CREATE ROLE service_role NOLOGIN;
-CREATE ROLE supabase_auth_admin NOLOGIN;
+-- Role jsou na úrovni celého clusteru, ne databáze — ať jde shim pustit
+-- vícekrát na jednom serveru.
+DO $$
+DECLARE r text;
+BEGIN
+  FOREACH r IN ARRAY ARRAY['anon','authenticated','service_role','supabase_auth_admin'] LOOP
+    IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = r) THEN
+      EXECUTE format('CREATE ROLE %I NOLOGIN', r);
+    END IF;
+  END LOOP;
+END$$;
 
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
