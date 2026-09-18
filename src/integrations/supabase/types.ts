@@ -348,18 +348,21 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          kind: string
           post_id: string
           user_id: string
         }
         Insert: {
           created_at?: string
           id?: string
+          kind?: string
           post_id: string
           user_id: string
         }
         Update: {
           created_at?: string
           id?: string
+          kind?: string
           post_id?: string
           user_id?: string
         }
@@ -847,6 +850,21 @@ export type Database = {
         Returns: boolean
       }
       is_user_banned: { Args: { _user_id: string }; Returns: boolean }
+      kindness_given: {
+        Args: { _since?: string; _user_id: string }
+        Returns: { given: number; people: number; supportive: number; active_days: number }[]
+      }
+      post_reactions: {
+        Args: { _post_id: string }
+        Returns: {
+          kind: string
+          user_id: string
+          username: string
+          full_name: string
+          avatar_url: string
+          reacted_at: string
+        }[]
+      }
       respond_to_conversation_request: {
         Args: { _action: string; _conversation_id: string }
         Returns: undefined
