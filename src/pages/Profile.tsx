@@ -367,8 +367,10 @@ const Profile = () => {
 
 
           {/* Tabs for content */}
-          <Tabs defaultValue="achievements" className="w-full">
+          {/* Příspěvky první: profil je místo, kde dítě vidí sebe, ne obchod. */}
+          <Tabs defaultValue="posts" className="w-full">
             <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger value="posts">Příspěvky</TabsTrigger>
               <TabsTrigger value="achievements" className="gap-2">
                 <Trophy className="h-4 w-4" />
                 <span className="hidden sm:inline">Achievementy</span>
@@ -381,7 +383,6 @@ const Profile = () => {
                 <ShoppingCart className="h-4 w-4" />
                 <span className="hidden sm:inline">Obchod</span>
               </TabsTrigger>
-              <TabsTrigger value="posts">Příspěvky</TabsTrigger>
             </TabsList>
             
             <TabsContent value="achievements" className="mt-4">

@@ -11,7 +11,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import logo from '@/assets/logo.jpg';
 
 interface MobileHeaderProps {
@@ -35,7 +34,6 @@ export function MobileHeader({ currentProfile }: MobileHeaderProps) {
         </Link>
 
         <div className="flex items-center gap-1">
-          <LanguageSwitcher />
           <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon">

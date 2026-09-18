@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Loader2, Search as SearchIcon, Users, FileText } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import mascotSearch from '@/assets/mascot-search.png';
+import { MembersList } from '@/components/social/MembersList';
 
 interface Profile {
   user_id: string;
@@ -193,12 +194,17 @@ const Search = () => {
                 <div className="flex items-center justify-center py-12">
                   <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 </div>
+              ) : !query.trim() ? (
+                <div className="space-y-3">
+                  <p className="text-sm text-muted-foreground">
+                    Kdo je v Kamosféře — všichni, koho tu můžeš potkat.
+                  </p>
+                  <MembersList />
+                </div>
               ) : users.length === 0 ? (
                 <div className="bg-card rounded-xl border border-border p-8 text-center flex flex-col items-center gap-4">
                   <img src={mascotSearch} alt="" className="w-36 h-36 sm:w-44 sm:h-44 object-contain" loading="lazy" />
-                  <p className="text-muted-foreground">
-                    {query ? 'Žádní uživatelé nenalezeni' : 'Zadej hledaný výraz a najdi kamarády'}
-                  </p>
+                  <p className="text-muted-foreground">Nikoho takového jsme nenašli. Zkus přezdívku.</p>
                 </div>
               ) : (
                 <div className="space-y-2">

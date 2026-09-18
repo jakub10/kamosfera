@@ -16,6 +16,7 @@ const Messages = lazy(() => import("./pages/Messages"));
 const Search = lazy(() => import("./pages/Search"));
 const Notifications = lazy(() => import("./pages/Notifications"));
 const Groups = lazy(() => import("./pages/Groups"));
+const Games = lazy(() => import("./pages/Games"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient({
@@ -53,6 +54,7 @@ const App = () => (
               <Route path="/search" element={<Search />} />
               <Route path="/notifications" element={<Notifications />} />
               <Route path="/groups" element={<Groups />} />
+              <Route path="/games" element={<Games />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

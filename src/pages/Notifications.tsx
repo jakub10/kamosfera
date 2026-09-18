@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Sidebar } from '@/components/social/Sidebar';
@@ -8,7 +9,8 @@ import { MobileHeader } from '@/components/social/MobileHeader';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Loader2, Bell, Heart, MessageCircle, UserPlus, Check } from 'lucide-react';
-import mascotSad from '@/assets/mascot-sad.png';
+import mascotSleep from '@/assets/mascot-sleep.png';
+import { getReaction } from '@/lib/reactions';
 import { formatDistanceToNow } from 'date-fns';
 import { cs } from 'date-fns/locale';
 
@@ -33,6 +35,7 @@ interface Notification {
 
 const Notifications = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentProfile, setCurrentProfile] = useState<Profile | null>(null);
@@ -150,7 +153,13 @@ const Notifications = () => {
       case 'comment':
         return <MessageCircle className="h-5 w-5 text-blue-500" />;
       case 'follow':
+      case 'friend_request':
+      case 'friend_accepted':
         return <UserPlus className="h-5 w-5 text-green-500" />;
+      case 'message':
+      case 'message_request':
+      case 'message_accepted':
+        return <MessageCircle className="h-5 w-5 text-primary" />;
       default:
         return <Bell className="h-5 w-5 text-primary" />;
     }
@@ -159,14 +168,26 @@ const Notifications = () => {
   const getMessage = (notification: Notification) => {
     const name = notification.from_profile?.full_name || 'Někdo';
     switch (notification.type) {
-      case 'like':
-        return `${name} dal/a like tvému příspěvku`;
+      case 'like': {
+        const r = getReaction(notification.message);
+        return r
+          ? `${name} ${r.sentenceOne} u tvého příspěvku`
+          : `${name} reagoval/a na tvůj příspěvek`;
+      }
+      case 'friend_request':
+        return `${name} chce být tvůj kamarád`;
+      case 'friend_accepted':
+        return `${name} přijal/a tvoje kamarádství`;
       case 'comment':
         return `${name} okomentoval/a tvůj příspěvek`;
       case 'follow':
         return `${name} tě začal/a sledovat`;
       case 'message':
         return `${name} ti poslal/a zprávu`;
+      case 'message_request':
+        return `${name} ti chce psát — podívej se, jestli si chcete povídat`;
+      case 'message_accepted':
+        return `${name} přijal/a tvou zprávu, můžete si psát`;
       default:
         return notification.message || 'Nové oznámení';
     }
@@ -205,7 +226,7 @@ const Notifications = () => {
             </div>
           ) : notifications.length === 0 ? (
             <div className="bg-card rounded-xl border border-border p-8 text-center flex flex-col items-center gap-4">
-              <img src={mascotSad} alt="" className="w-40 h-40 sm:w-48 sm:h-48 object-contain" loading="lazy" />
+              <img src={mascotSleep} alt="" className="w-40 h-40 sm:w-48 sm:h-48 object-contain" loading="lazy" />
               <p className="text-muted-foreground">
                 Zatím nemáš žádná oznámení. Až se něco stane, dáme ti vědět!
               </p>
@@ -220,7 +241,17 @@ const Notifications = () => {
                       ? 'bg-card border-border'
                       : 'bg-primary/5 border-primary/20'
                   }`}
-                  onClick={() => !notification.read && markAsRead(notification.id)}
+                  onClick={() => {
+                    if (!notification.read) markAsRead(notification.id);
+                    if (['message', 'message_request', 'message_accepted'].includes(notification.type)) {
+                      navigate('/messages');
+                    } else if (['friend_request', 'friend_accepted', 'follow'].includes(notification.type) && notification.from_user_id) {
+                      navigate(`/profile/${notification.from_user_id}`);
+                    } else if (['like', 'comment', 'mention'].includes(notification.type)) {
+                      // Příspěvek je můj — najdu ho na svém profilu.
+                      navigate('/profile');
+                    }
+                  }}
                 >
                   <div className="flex-shrink-0">
                     {notification.from_profile ? (

@@ -1,5 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Heart, MessageCircle, Share2, Bookmark, MoreHorizontal, Send, Trash2, Crown, Languages } from 'lucide-react';
+import { MessageCircle, Share2, Bookmark, MoreHorizontal, Send, Trash2, Crown, Languages } from 'lucide-react';
+import { ReactionPicker } from '@/components/social/ReactionPicker';
+import { ReactionSummary, type Reactor } from '@/components/social/ReactionSummary';
+import type { ReactionKind } from '@/lib/reactions';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -73,9 +76,8 @@ interface Comment {
 }
 
 export function PostCard({ post, onLikeChange, onPostDeleted }: PostCardProps) {
-  const [isLiked, setIsLiked] = useState(post.is_liked || false);
-  const [likesCount, setLikesCount] = useState(post.likes_count || 0);
-  const [isAnimating, setIsAnimating] = useState(false);
+  const [reactors, setReactors] = useState<Reactor[]>([]);
+  const [reacting, setReacting] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [comments, setComments] = useState<Comment[]>([]);
@@ -96,41 +98,80 @@ export function PostCard({ post, onLikeChange, onPostDeleted }: PostCardProps) {
   const bgClass = getBackgroundClass(post.background_style || null);
   const dateLocale = i18n.language === 'en' ? enUS : i18n.language === 'sk' ? sk : cs;
 
-  const handleLike = async () => {
+  // Reakce se načítají zvlášť pro každý příspěvek: kdo reagoval a jak.
+  // Počet nikde neukazujeme — v síti pár kamarádů je jméno cennější než číslo.
+  useEffect(() => {
+    let cancelled = false;
+    supabase.rpc('post_reactions', { _post_id: post.id }).then(({ data }) => {
+      if (cancelled || !data) return;
+      setReactors(
+        data.map((r) => ({
+          kind: r.kind as ReactionKind,
+          user_id: r.user_id,
+          full_name: r.full_name,
+          avatar_url: r.avatar_url,
+        }))
+      );
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [post.id]);
+
+  const myReaction = reactors.find((r) => r.user_id === user?.id)?.kind ?? null;
+
+  const handleReact = async (kind: ReactionKind) => {
     if (!user) {
       toast({
         title: 'Přihlášení vyžadováno',
-        description: 'Pro lajkování se musíš přihlásit.',
+        description: 'Pro reakce se musíš přihlásit.',
         variant: 'destructive',
       });
       return;
     }
 
-    setIsAnimating(true);
-    setTimeout(() => setIsAnimating(false), 600);
+    const previous = reactors;
+    const me: Reactor = {
+      kind,
+      user_id: user.id,
+      full_name: 'Ty',
+      avatar_url: null,
+    };
 
-    if (isLiked) {
-      setIsLiked(false);
-      setLikesCount((prev) => prev - 1);
-      const { error } = await supabase
-        .from('likes')
-        .delete()
-        .eq('post_id', post.id)
-        .eq('user_id', user.id);
-      if (error) {
-        setIsLiked(true);
-        setLikesCount((prev) => prev + 1);
-      }
-    } else {
-      setIsLiked(true);
-      setLikesCount((prev) => prev + 1);
-      const { error } = await supabase
-        .from('likes')
-        .insert({ post_id: post.id, user_id: user.id });
-      if (error) {
-        setIsLiked(false);
-        setLikesCount((prev) => prev - 1);
-      }
+    // Stejná reakce podruhé = vzít ji zpět. Jiná = vyměnit.
+    const removing = myReaction === kind;
+    setReactors(
+      removing
+        ? reactors.filter((r) => r.user_id !== user.id)
+        : [...reactors.filter((r) => r.user_id !== user.id), me]
+    );
+    setReacting(true);
+
+    const { error } = removing
+      ? await supabase.from('likes').delete().eq('post_id', post.id).eq('user_id', user.id)
+      : await supabase
+          .from('likes')
+          .upsert({ post_id: post.id, user_id: user.id, kind }, { onConflict: 'user_id,post_id' });
+
+    setReacting(false);
+
+    if (error) {
+      setReactors(previous);
+      toast({ title: 'Nepovedlo se', description: 'Zkus to prosím znovu.', variant: 'destructive' });
+      return;
+    }
+
+    // Načíst znovu, ať má „Ty" správné jméno a avatar.
+    const { data } = await supabase.rpc('post_reactions', { _post_id: post.id });
+    if (data) {
+      setReactors(
+        data.map((r) => ({
+          kind: r.kind as ReactionKind,
+          user_id: r.user_id,
+          full_name: r.full_name,
+          avatar_url: r.avatar_url,
+        }))
+      );
     }
     onLikeChange?.();
   };
@@ -350,10 +391,11 @@ export function PostCard({ post, onLikeChange, onPostDeleted }: PostCardProps) {
     checkSaved();
   }, [user, post.id]);
 
-  // Double click to like
+  // Dvojklik = rychlé „To je super", ale jen když ještě žádná reakce není.
+  // Nesmí přepsat vědomě vybrané „Jsem s tebou".
   const handleDoubleClick = () => {
-    if (!isLiked && user) {
-      handleLike();
+    if (!myReaction && user) {
+      void handleReact('super');
     }
   };
 
@@ -437,18 +479,13 @@ export function PostCard({ post, onLikeChange, onPostDeleted }: PostCardProps) {
           </div>
         )}
 
+        {/* Kdo reagoval — jména a tváře, ne počet */}
+        <ReactionSummary reactors={reactors} />
+
         {/* Actions */}
         <div className="flex items-center justify-between pt-3 border-t border-border">
           <div className="flex gap-1">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleLike}
-              className={`gap-2 like-button ${isLiked ? 'liked text-red-500' : 'text-muted-foreground'} ${isAnimating ? 'animate-heartBeat' : ''}`}
-            >
-              <Heart className={`h-5 w-5 ${isLiked ? 'fill-current' : ''}`} />
-              <span>{likesCount}</span>
-            </Button>
+            <ReactionPicker current={myReaction} onPick={handleReact} disabled={reacting} />
             <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground" onClick={openComments}>
               <MessageCircle className="h-5 w-5" />
               <span>{commentsCount}</span>

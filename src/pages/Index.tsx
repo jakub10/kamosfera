@@ -64,8 +64,8 @@ const Index = () => {
               </h1>
               <p className="text-lg text-primary/80 mb-2">Dětská sociální síť</p>
               <p className="text-xl lg:text-2xl text-muted-foreground mb-8">
-                Bezpečné místo pro děti, kde mohou sdílet, 
-                navazovat přátelství a objevovat nové věci.
+                Místo pro kamarády ze školy — příspěvky, zprávy, hry a robot,
+                který dává pozor, aby tu bylo bezpečno.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Button
@@ -106,7 +106,7 @@ const Index = () => {
               </div>
               <h3 className="text-xl font-semibold mb-2">Najdi přátele</h3>
               <p className="text-muted-foreground">
-                Propoj se s lidmi z celého světa. Buduj vztahy a komunitu.
+                Tvoji kamarádi ze školy, nikdo cizí. Kdo ti chce psát a není kamarád, musí nejdřív počkat, jestli chceš ty.
               </p>
             </div>
             <div className="bg-card rounded-2xl p-8 border border-border text-center animate-fadeIn" style={{ animationDelay: '0.2s' }}>

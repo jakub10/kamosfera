@@ -109,9 +109,23 @@ export function VoiceAgentModal({ isOpen, onClose }: VoiceAgentModalProps) {
   };
 
   function stopRecognitionOnly() {
-    try { recognitionRef.current?.onend && (recognitionRef.current.onend = null); } catch {}
-    try { recognitionRef.current?.stop(); } catch {}
-    try { recognitionRef.current?.abort(); } catch {}
+    // Rozpoznávání řeči umí házet výjimky podle toho, v jakém je zrovna stavu.
+    // Při úklidu nás to nezajímá — jde jen o to, aby přestalo poslouchat.
+    try {
+      if (recognitionRef.current?.onend) recognitionRef.current.onend = null;
+    } catch {
+      /* mikrofon už mohl být uvolněn */
+    }
+    try {
+      recognitionRef.current?.stop();
+    } catch {
+      /* rozpoznávání už neběží */
+    }
+    try {
+      recognitionRef.current?.abort();
+    } catch {
+      /* rozpoznávání už neběží */
+    }
     recognitionRef.current = null;
   };
 

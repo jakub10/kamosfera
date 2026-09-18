@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Social Network Design System - SocialConnect */
+/* Social Network Design System - Kamosféra */
 
 @layer base {
   :root {
@@ -256,6 +256,53 @@
   }
 
   /* VIP PRO MAX effects */
+  /* --- Reakce na příspěvky --- */
+
+  /* Lišta bublin vyjede zpod tlačítka. */
+  @keyframes reactionTrayIn {
+    from { opacity: 0; transform: translateY(8px) scale(.94); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .reaction-tray {
+    animation: reactionTrayIn .18s cubic-bezier(.2, .9, .3, 1.2) both;
+    transform-origin: bottom left;
+  }
+
+  /* Každá bublina o chlup později než ta předchozí — odtud ten pocit,
+     že vyletí, a ne že se objeví. */
+  @keyframes reactionOptionIn {
+    from { opacity: 0; transform: translateY(10px) scale(.6); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .reaction-option {
+    animation: reactionOptionIn .26s cubic-bezier(.2, .9, .3, 1.4) both;
+    animation-delay: var(--delay, 0ms);
+  }
+
+  /* Vybraná reakce dosedne do tlačítka. */
+  @keyframes reactionPop {
+    0%   { transform: scale(.4) rotate(-12deg); }
+    55%  { transform: scale(1.3) rotate(4deg); }
+    100% { transform: scale(1) rotate(0); }
+  }
+  .reaction-pop {
+    display: inline-block;
+    animation: reactionPop .38s cubic-bezier(.2, .9, .3, 1.3) both;
+  }
+
+  /* Kdo si vypnul animace, ať dostane totéž, jen bez poskakování. */
+  @media (prefers-reduced-motion: reduce) {
+    .reaction-tray,
+    .reaction-option,
+    .reaction-pop {
+      animation: none;
+    }
+    .reaction-option:hover,
+    .reaction-option:focus-visible {
+      transform: none;
+    }
+  }
+
   @keyframes spinSlow {
     from { transform: rotate(0deg); }
     to { transform: rotate(360deg); }
