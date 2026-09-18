@@ -395,7 +395,7 @@ BEGIN
     VALUES (_conv.id, _me, _clean_intro);
 
     INSERT INTO public.notifications (user_id, type, from_user_id, message)
-    VALUES (_target_user_id, 'message_request', _me, 'Nová žiadosť o konverzáciu');
+    VALUES (_target_user_id, 'message_request', _me, 'ti chce psát');
 
     INSERT INTO public.safety_events (kind, actor_id, target_id)
     VALUES ('request_sent', _me, _target_user_id);
@@ -451,7 +451,7 @@ BEGIN
      WHERE id = _conv.id;
 
     INSERT INTO public.notifications (user_id, type, from_user_id, message)
-    VALUES (_other, 'message', _me, 'Prijal si tvoju žiadosť o konverzáciu');
+    VALUES (_other, 'message_accepted', _me, 'přijal/a tvou zprávu');
 
     INSERT INTO public.safety_events (kind, actor_id, target_id)
     VALUES ('request_accepted', _me, _other);

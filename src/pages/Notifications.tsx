@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Sidebar } from '@/components/social/Sidebar';
@@ -33,6 +34,7 @@ interface Notification {
 
 const Notifications = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentProfile, setCurrentProfile] = useState<Profile | null>(null);
@@ -151,6 +153,10 @@ const Notifications = () => {
         return <MessageCircle className="h-5 w-5 text-blue-500" />;
       case 'follow':
         return <UserPlus className="h-5 w-5 text-green-500" />;
+      case 'message':
+      case 'message_request':
+      case 'message_accepted':
+        return <MessageCircle className="h-5 w-5 text-primary" />;
       default:
         return <Bell className="h-5 w-5 text-primary" />;
     }
@@ -167,6 +173,10 @@ const Notifications = () => {
         return `${name} tě začal/a sledovat`;
       case 'message':
         return `${name} ti poslal/a zprávu`;
+      case 'message_request':
+        return `${name} ti chce psát — podívej se, jestli si chcete povídat`;
+      case 'message_accepted':
+        return `${name} přijal/a tvou zprávu, můžete si psát`;
       default:
         return notification.message || 'Nové oznámení';
     }
@@ -220,7 +230,12 @@ const Notifications = () => {
                       ? 'bg-card border-border'
                       : 'bg-primary/5 border-primary/20'
                   }`}
-                  onClick={() => !notification.read && markAsRead(notification.id)}
+                  onClick={() => {
+                    if (!notification.read) markAsRead(notification.id);
+                    if (['message', 'message_request', 'message_accepted'].includes(notification.type)) {
+                      navigate('/messages');
+                    }
+                  }}
                 >
                   <div className="flex-shrink-0">
                     {notification.from_profile ? (
