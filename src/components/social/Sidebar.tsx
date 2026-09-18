@@ -1,4 +1,4 @@
-import { Home, Search, Bell, MessageCircle, Bookmark, User, Settings, LogOut, Users, Gamepad2 } from 'lucide-react';
+import { Home, Search, Bell, MessageCircle, Bookmark, User, Settings, LogOut, Users, Gamepad2, Compass } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/hooks/useAuth';
@@ -28,6 +28,7 @@ export function Sidebar({ currentProfile }: SidebarProps) {
     { icon: MessageCircle, label: t('nav.messages'), path: '/messages', badge: unreadMessages },
     { icon: Users, label: t('nav.groups'), path: '/groups', badge: 0 },
     { icon: Gamepad2, label: 'Hry', path: '/games', badge: 0 },
+    { icon: Compass, label: 'Kamosvět', path: '/svet', badge: 0 },
     { icon: Bookmark, label: t('nav.saved'), path: '/saved', badge: 0 },
     { icon: User, label: t('nav.profile'), path: '/profile', badge: 0 },
     { icon: Settings, label: t('nav.settings'), path: '/settings', badge: 0 },

@@ -27,3 +27,6 @@ dist-ssr
 .env
 .env.*
 !.env.example
+
+# TypeScript build cache (generated; caused spurious diffs on every build)
+*.tsbuildinfo

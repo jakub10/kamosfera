@@ -44,6 +44,7 @@ jobs:
           VITE_SUPABASE_URL: https://example.supabase.co
           VITE_SUPABASE_PUBLISHABLE_KEY: ci-placeholder-key
           VITE_SUPABASE_PROJECT_ID: ci
+          VITE_KAMOSVET_URL: ""
 
   database:
     name: Migrace a bezpečnostní testy databáze

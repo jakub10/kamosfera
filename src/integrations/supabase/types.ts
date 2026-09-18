@@ -765,6 +765,9 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      are_friends: { Args: { _a: string; _b: string }; Returns: boolean }
+      block_user: { Args: { _user_id: string }; Returns: undefined }
+      blocked_for_me: { Args: { _other: string }; Returns: boolean }
       check_user_achievements: {
         Args: { _user_id: string }
         Returns: undefined
@@ -792,6 +795,31 @@ export type Database = {
       }
       is_group_public: { Args: { _group_id: string }; Returns: boolean }
       is_user_banned: { Args: { _user_id: string }; Returns: boolean }
+      kindness_given: {
+        Args: { _since?: string; _user_id: string }
+        Returns: { given: number; people: number; supportive: number; active_days: number }[]
+      }
+      post_reactions: {
+        Args: { _post_id: string }
+        Returns: {
+          kind: string
+          user_id: string
+          username: string
+          full_name: string
+          avatar_url: string
+          reacted_at: string
+        }[]
+      }
+      respond_to_conversation_request: {
+        Args: { _action: string; _conversation_id: string }
+        Returns: undefined
+      }
+      start_conversation: {
+        Args: { _intro?: string; _target_user_id: string }
+        Returns: { conversation_id: string; status: string }[]
+      }
+      unblock_user: { Args: { _user_id: string }; Returns: undefined }
+      world_seed: { Args: { _user_id?: string }; Returns: Json }
       purchase_vip_item: {
         Args: { _cost?: number; _item_id: string; _item_type: string }
         Returns: Json
