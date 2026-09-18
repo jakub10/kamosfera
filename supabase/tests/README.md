@@ -26,6 +26,7 @@ done
 # 3) samotné testy
 psql -d kamosfera_test -v ON_ERROR_STOP=1 -f supabase/tests/01_messaging_security.sql
 psql -d kamosfera_test -v ON_ERROR_STOP=1 -f supabase/tests/02_notifications.sql
+psql -d kamosfera_test -v ON_ERROR_STOP=1 -f supabase/tests/03_world_seed.sql
 ```
 
 Každý test, který projde, vypíše `OK`. Když něco selže, skript skončí chybou
@@ -52,3 +53,11 @@ Tyhle testy běží i v CI — workflow `.github/workflows/ci.yml`, úloha
 `database`, si pro ně nastartuje PostgreSQL a projde celou historii migrací
 od nuly. Pravidla, která jdou ověřit v prohlížeči (délka první zprávy, odkazy,
 přezdívky), hlídá `npm test`.
+
+## Zmluva s Kamosvětem
+
+`03_world_seed.sql` hlídá funkci `world_seed()` — jediné místo, odkud
+Kamosvět čte data Kamosféry. Test vloží do e-mailu, jména, příspěvku
+i zprávy značky `SENTINEL_*` a dokáže, že ani jedna se v seedu neobjeví.
+Identita (přezdívka, avatar, kamarádi) prochází; obsah nikdy.
+
