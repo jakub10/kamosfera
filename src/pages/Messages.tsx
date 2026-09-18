@@ -10,7 +10,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Send, MessageCircle, Search, ArrowLeft, Smile, Check, CheckCheck, Image, Trash2 } from 'lucide-react';
+import { Loader2, Send, MessageCircle, Search, ArrowLeft, Smile, Check, CheckCheck, Image, Trash2, Ban, X as XIcon, Clock } from 'lucide-react';
+import { MessageRequestDialog } from '@/components/social/MessageRequestDialog';
 import mascotChat from '@/assets/mascot-chat.png';
 import { formatDistanceToNow } from 'date-fns';
 import { cs } from 'date-fns/locale';
@@ -29,6 +30,8 @@ interface Conversation {
   participant_1: string;
   participant_2: string;
   updated_at: string;
+  status: string;
+  initiator_id: string | null;
   other_profile?: Profile;
   last_message?: string;
   unread_count?: number;
@@ -63,6 +66,9 @@ const Messages = () => {
   const [currentProfile, setCurrentProfile] = useState<Profile | null>(null);
   const [otherUserTyping, setOtherUserTyping] = useState(false);
   const [otherUserOnline, setOtherUserOnline] = useState(false);
+  const [requestTarget, setRequestTarget] = useState<Profile | null>(null);
+  const [sendingRequest, setSendingRequest] = useState(false);
+  const [respondingToRequest, setRespondingToRequest] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -342,7 +348,6 @@ const Messages = () => {
   const startConversation = async (otherUser: Profile) => {
     if (!user) return;
 
-    // Check if conversation already exists
     const existing = conversations.find(c =>
       (c.participant_1 === user.id && c.participant_2 === otherUser.user_id) ||
       (c.participant_2 === user.id && c.participant_1 === otherUser.user_id)
@@ -355,23 +360,84 @@ const Messages = () => {
       return;
     }
 
-    // Create new conversation
-    const { data, error } = await supabase
-      .from('conversations')
-      .insert({
-        participant_1: user.id,
-        participant_2: otherUser.user_id,
-      })
-      .select()
-      .single();
+    // Kamarádovi napíšeme rovnou, cizímu člověku přes žádost s krátkou zprávou.
+    const { data: isFriend } = await supabase.rpc('are_friends', {
+      _a: user.id,
+      _b: otherUser.user_id,
+    });
 
-    if (!error && data) {
-      const newConv = { ...data, other_profile: otherUser };
-      setConversations(prev => [newConv, ...prev]);
-      setSelectedConversation(newConv);
-      setSearchQuery('');
-      setSearchResults([]);
+    if (isFriend) {
+      await openConversation(otherUser);
+    } else {
+      setRequestTarget(otherUser);
     }
+  };
+
+  const openConversation = async (otherUser: Profile, intro?: string) => {
+    if (!user) return;
+    setSendingRequest(true);
+
+    const { error } = await supabase.rpc('start_conversation', {
+      _target_user_id: otherUser.user_id,
+      _intro: intro,
+    });
+
+    setSendingRequest(false);
+
+    if (error) {
+      toast({
+        title: 'Zprávu se nepodařilo odeslat',
+        description: error.message,
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setRequestTarget(null);
+    setSearchQuery('');
+    setSearchResults([]);
+    await fetchConversations();
+
+    if (intro) {
+      toast({
+        title: 'Žádost odeslána',
+        description: `${otherUser.full_name} se rozhodne, jestli si chcete psát.`,
+      });
+    }
+  };
+
+  // Odpověď na žádost: přijmout, nechat být, nebo zablokovat.
+  const respondToRequest = async (action: 'accept' | 'ignore' | 'block') => {
+    if (!selectedConversation) return;
+    setRespondingToRequest(true);
+
+    const { error } = await supabase.rpc('respond_to_conversation_request', {
+      _conversation_id: selectedConversation.id,
+      _action: action,
+    });
+
+    setRespondingToRequest(false);
+
+    if (error) {
+      toast({ title: 'Chyba', description: error.message, variant: 'destructive' });
+      return;
+    }
+
+    if (action === 'accept') {
+      setSelectedConversation({ ...selectedConversation, status: 'accepted' });
+      toast({ title: 'Žádost přijata', description: 'Teď si můžete psát.' });
+    } else {
+      setSelectedConversation(null);
+      toast({
+        title: action === 'block' ? 'Uživatel zablokován' : 'Žádost smazána',
+        description:
+          action === 'block'
+            ? 'Už ti nemůže psát a neuvidíš jeho příspěvky.'
+            : 'Zprávu jsme smazali. Nedozví se o tom.',
+      });
+    }
+
+    await fetchConversations();
   };
 
   const handleEmojiSelect = (emoji: { native: string }) => {
@@ -489,9 +555,16 @@ const Messages = () => {
                             </span>
                           )}
                         </div>
-                        <p className="text-sm text-muted-foreground truncate">
-                          {formatDistanceToNow(new Date(conv.updated_at), { addSuffix: true, locale: cs })}
-                        </p>
+                        {conv.status === 'pending' ? (
+                          <p className="text-sm text-amber-600 dark:text-amber-500 flex items-center gap-1 truncate">
+                            <Clock className="h-3 w-3 shrink-0" />
+                            {conv.initiator_id === user?.id ? 'Čeká na přijetí' : 'Chce ti psát'}
+                          </p>
+                        ) : (
+                          <p className="text-sm text-muted-foreground truncate">
+                            {formatDistanceToNow(new Date(conv.updated_at), { addSuffix: true, locale: cs })}
+                          </p>
+                        )}
                       </div>
                     </div>
                   );
@@ -603,7 +676,50 @@ const Messages = () => {
                   </div>
                 </ScrollArea>
 
-                {/* Message input */}
+                {/* Čekající žádost: místo psaní se nejdřív rozhodne, jestli konverzace vůbec začne */}
+                {selectedConversation.status === 'pending' ? (
+                  selectedConversation.initiator_id === user?.id ? (
+                    <div className="p-4 border-t border-border bg-muted/40 text-center">
+                      <p className="text-sm text-muted-foreground">
+                        Zpráva odeslána. Až ji {selectedConversation.other_profile?.full_name} přijme,
+                        budete si moct psát dál.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="p-4 border-t border-border bg-card space-y-3">
+                      <p className="text-sm text-muted-foreground text-center">
+                        {selectedConversation.other_profile?.full_name} ti chce psát.
+                        Nejste kamarádi — rozhodni se sám.
+                      </p>
+                      <div className="flex flex-wrap justify-center gap-2">
+                        <Button
+                          onClick={() => void respondToRequest('accept')}
+                          disabled={respondingToRequest}
+                        >
+                          <Check className="h-4 w-4 mr-2" />
+                          Přijmout
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => void respondToRequest('ignore')}
+                          disabled={respondingToRequest}
+                        >
+                          <XIcon className="h-4 w-4 mr-2" />
+                          Smazat
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          className="text-destructive hover:text-destructive"
+                          onClick={() => void respondToRequest('block')}
+                          disabled={respondingToRequest}
+                        >
+                          <Ban className="h-4 w-4 mr-2" />
+                          Zablokovat
+                        </Button>
+                      </div>
+                    </div>
+                  )
+                ) : (
                 <div className="p-4 border-t border-border bg-card">
                   <div className="flex gap-2 items-end">
                     <Popover>
@@ -639,6 +755,7 @@ const Messages = () => {
                     </Button>
                   </div>
                 </div>
+                )}
               </>
             ) : (
               <div className="flex-1 flex items-center justify-center text-muted-foreground p-6">
@@ -653,6 +770,16 @@ const Messages = () => {
         </div>
       </main>
       <MobileNav />
+
+      {requestTarget && (
+        <MessageRequestDialog
+          open={!!requestTarget}
+          onOpenChange={(open) => !open && setRequestTarget(null)}
+          recipientName={requestTarget.full_name}
+          sending={sendingRequest}
+          onSend={(intro) => void openConversation(requestTarget, intro)}
+        />
+      )}
     </div>
   );
 };

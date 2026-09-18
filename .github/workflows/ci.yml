@@ -1,0 +1,89 @@
+name: CI
+
+# Každá změna se zkontroluje dřív, než se sloučí do main.
+# Bez toho se rozbitá větev pozná až při nasazení.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    name: Typy, lint, testy a build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Instalace závislostí
+        run: npm ci
+
+      # Pozor: `tsc --noEmit` nad kořenovým tsconfig.json nezkontroluje NIC —
+      # ten soubor má "files": [] a jen odkazuje na dílčí projekty.
+      # Skutečnou kontrolu dělá `tsc -b`, který ty projekty projde.
+      - name: Kontrola typů
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Testy
+        run: npm test
+
+      # Build až nakonec — je nejpomalejší a nemá smysl ho pouštět,
+      # když neprošly rychlejší kontroly.
+      - name: Build
+        run: npm run build
+        env:
+          VITE_SUPABASE_URL: https://example.supabase.co
+          VITE_SUPABASE_PUBLISHABLE_KEY: ci-placeholder-key
+          VITE_SUPABASE_PROJECT_ID: ci
+
+  database:
+    name: Migrace a bezpečnostní testy databáze
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    env:
+      PGHOST: localhost
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGDATABASE: postgres
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Nahrazuje to, co jinak dodává Supabase (schéma auth, storage, realtime).
+      - name: Prostředí Supabase
+        run: psql -v ON_ERROR_STOP=1 -q -f supabase/tests/00_supabase_shim.sql
+
+      # Projde celou historii od nuly — odhalí migraci, která sama o sobě
+      # funguje, ale na čisté databázi neprojde.
+      - name: Přehrání všech migrací
+        run: |
+          for f in supabase/migrations/*.sql; do
+            echo "→ $f"
+            psql -v ON_ERROR_STOP=1 -q -f "$f"
+          done
+
+      - name: Bezpečnostní testy
+        run: psql -v ON_ERROR_STOP=1 -f supabase/tests/01_messaging_security.sql

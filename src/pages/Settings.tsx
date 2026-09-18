@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Sidebar } from '@/components/social/Sidebar';
@@ -10,7 +10,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Bell, Moon, Shield, LogOut, Lock, Crown } from 'lucide-react';
+import { Bell, Moon, Shield, LogOut, Lock, Crown, Ban, Loader2 } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { AvatarBuilder } from '@/components/profile/AvatarBuilder';
@@ -23,11 +24,21 @@ interface Profile {
   avatar_url: string | null;
 }
 
+interface BlockedUser {
+  blocked_id: string;
+  username: string;
+  full_name: string;
+  avatar_url: string | null;
+}
+
 const Settings = () => {
   const { user, signOut } = useAuth();
   const { toast } = useToast();
   const { activateVIP, isVIP } = useUserRole();
   const [currentProfile, setCurrentProfile] = useState<Profile | null>(null);
+  const [blockedUsers, setBlockedUsers] = useState<BlockedUser[]>([]);
+  const [loadingBlocked, setLoadingBlocked] = useState(true);
+  const [unblocking, setUnblocking] = useState<string | null>(null);
   const [notifications, setNotifications] = useState(true);
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [darkMode, setDarkMode] = useState(() => {
@@ -55,6 +66,61 @@ const Settings = () => {
     };
     fetchProfile();
   }, [user]);
+
+  // Blokovaní se čtou ze dvou míst: seznam ID vidí jen jeho vlastník,
+  // jména a avatary se doberou zvlášť z profilů.
+  const fetchBlockedUsers = useCallback(async () => {
+    if (!user) return;
+    setLoadingBlocked(true);
+
+    const { data: blocks } = await supabase
+      .from('user_blocks')
+      .select('blocked_id')
+      .eq('blocker_id', user.id);
+
+    if (!blocks?.length) {
+      setBlockedUsers([]);
+      setLoadingBlocked(false);
+      return;
+    }
+
+    const { data: profiles } = await supabase
+      .from('profiles')
+      .select('user_id, username, full_name, avatar_url')
+      .in('user_id', blocks.map((b) => b.blocked_id));
+
+    setBlockedUsers(
+      (profiles || []).map((p) => ({
+        blocked_id: p.user_id,
+        username: p.username,
+        full_name: p.full_name,
+        avatar_url: p.avatar_url,
+      }))
+    );
+    setLoadingBlocked(false);
+  }, [user]);
+
+  useEffect(() => {
+    void fetchBlockedUsers();
+  }, [fetchBlockedUsers]);
+
+  const unblockUser = async (blockedId: string) => {
+    setUnblocking(blockedId);
+    const { error } = await supabase.rpc('unblock_user', { _user_id: blockedId });
+    setUnblocking(null);
+
+    if (error) {
+      toast({
+        title: 'Odblokování se nezdařilo',
+        description: 'Zkus to prosím znovu.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setBlockedUsers((prev) => prev.filter((b) => b.blocked_id !== blockedId));
+    toast({ title: 'Odblokováno', description: 'Uživatel ti zase může psát.' });
+  };
 
   // Handle dark mode toggle
   const handleDarkModeChange = (enabled: boolean) => {
@@ -219,6 +285,55 @@ const Settings = () => {
                   onCheckedChange={setPrivateAccount}
                 />
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Blocked users */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Ban className="h-5 w-5" />
+                Zablokovaní
+              </CardTitle>
+              <CardDescription>
+                Tihle ti nemůžou psát a neuvidíš jejich příspěvky. Můžeš je kdykoli odblokovat.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {loadingBlocked ? (
+                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+              ) : blockedUsers.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  Nikoho nemáš zablokovaného.
+                </p>
+              ) : (
+                <ul className="space-y-3">
+                  {blockedUsers.map((blocked) => (
+                    <li key={blocked.blocked_id} className="flex items-center gap-3">
+                      <Avatar className="h-9 w-9">
+                        <AvatarImage src={blocked.avatar_url || ''} />
+                        <AvatarFallback>{blocked.full_name?.[0] || '?'}</AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium truncate">{blocked.full_name}</p>
+                        <p className="text-sm text-muted-foreground truncate">@{blocked.username}</p>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={unblocking === blocked.blocked_id}
+                        onClick={() => void unblockUser(blocked.blocked_id)}
+                      >
+                        {unblocking === blocked.blocked_id ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          'Odblokovat'
+                        )}
+                      </Button>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </CardContent>
           </Card>
 

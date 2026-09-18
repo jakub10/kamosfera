@@ -9,6 +9,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import mascotWave from '@/assets/mascot-wave.png';
 import { lovable } from '@/integrations/lovable';
+import { isValidUsername } from '@/lib/safety';
 
 interface AuthModalProps {
   open: boolean;
@@ -29,6 +30,7 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
   const [signupEmail, setSignupEmail] = useState('');
   const [signupPassword, setSignupPassword] = useState('');
   const [signupFullName, setSignupFullName] = useState('');
+  const [signupUsername, setSignupUsername] = useState('');
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,20 +57,36 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const username = signupUsername.trim().toLowerCase();
+    if (!isValidUsername(username)) {
+      toast({
+        title: 'Zkontroluj přezdívku',
+        description: '3 až 20 znaků, jen písmena bez háčků, číslice, tečka nebo podtržítko.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setIsLoading(true);
 
-    const { error } = await signUp(signupEmail, signupPassword, signupFullName);
+    const { error } = await signUp(signupEmail, signupPassword, signupFullName, username);
 
     if (error) {
+      // Hlášky ze Supabase chodí anglicky a prozrazují detaily o backendu.
+      // Dětem řekneme jen to, co s tím můžou udělat.
+      const taken = /already|duplicate|exists/i.test(error.message);
       toast({
-        title: 'Chyba registrace',
-        description: error.message,
+        title: 'Registrace se nezdařila',
+        description: taken
+          ? 'Tenhle email nebo přezdívka už někdo používá. Zkus jinou.'
+          : 'Zkus to prosím znovu za chvíli.',
         variant: 'destructive',
       });
     } else {
       toast({
         title: 'Účet vytvořen!',
-        description: 'Vítej v SocialConnect.',
+        description: 'Vítej v Kamosféře.',
       });
       onOpenChange(false);
     }
@@ -103,7 +121,7 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
             <img src={mascotWave} alt="Robot mává" className="w-24 h-24 object-contain" loading="lazy" />
           </div>
           <DialogTitle className="text-2xl font-bold text-center gradient-text">
-            SocialConnect
+            Kamosféra
           </DialogTitle>
         </DialogHeader>
 
@@ -192,6 +210,23 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
                   onChange={(e) => setSignupFullName(e.target.value)}
                   required
                 />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="signup-username">Přezdívka</Label>
+                <Input
+                  id="signup-username"
+                  type="text"
+                  placeholder="kamos_kuba"
+                  value={signupUsername}
+                  onChange={(e) => setSignupUsername(e.target.value)}
+                  required
+                  minLength={3}
+                  maxLength={20}
+                  autoComplete="username"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Tuhle uvidí ostatní. Nedávej do ní svoje příjmení ani rok narození.
+                </p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="signup-email">Email</Label>

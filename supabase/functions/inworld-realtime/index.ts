@@ -180,7 +180,7 @@ Deno.serve(async (req) => {
   browser.onmessage = (ev) => {
     const raw = typeof ev.data === "string" ? ev.data : "";
     if (!raw) return;
-    let parsed: any;
+    let parsed: Record<string, unknown> | undefined;
     try {
       parsed = JSON.parse(raw);
     } catch {

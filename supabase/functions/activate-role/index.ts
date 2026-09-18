@@ -7,7 +7,7 @@ const corsHeaders = {
 
 const VIP_CODE = Deno.env.get("VIP_ACTIVATION_CODE");
 const CREATOR_CODE = Deno.env.get("CREATOR_ACTIVATION_CODE");
-const VIP_PRO_MAX_CODE = Deno.env.get("VIP_PRO_MAX_ACTIVATION_CODE") ?? "Kubakamofera2026";
+const VIP_PRO_MAX_CODE = Deno.env.get("VIP_PRO_MAX_ACTIVATION_CODE");
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });

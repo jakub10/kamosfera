@@ -37,6 +37,11 @@ interface ActivationCode {
   created_at: string;
 }
 
+/** Z neznámé chyby vytáhne text, který jde ukázat uživateli. */
+function errorMessage(error: unknown): string | undefined {
+  return error instanceof Error ? error.message : undefined;
+}
+
 export function CreatorPanel() {
   const { isCreator, activateCreator, loading } = useUserRole();
   const { user } = useAuth();
@@ -80,16 +85,16 @@ export function CreatorPanel() {
         setRoleResults([]);
         return;
       }
-      const ids = profs.map((p: any) => p.user_id);
+      const ids = profs.map((p) => p.user_id);
       const { data: rolesRows } = await supabase
         .from('user_roles')
         .select('user_id, role')
         .in('user_id', ids);
       const byUser: Record<string, string[]> = {};
-      (rolesRows || []).forEach((r: any) => {
+      (rolesRows || []).forEach((r) => {
         byUser[r.user_id] = [...(byUser[r.user_id] || []), r.role];
       });
-      setRoleResults(profs.map((p: any) => ({ ...p, roles: byUser[p.user_id] || [] })));
+      setRoleResults(profs.map((p) => ({ ...p, roles: byUser[p.user_id] || [] })));
     } finally {
       setSearchingRoles(false);
     }
@@ -104,7 +109,7 @@ export function CreatorPanel() {
     if (error || !data?.success) {
       toast({
         title: 'Chyba',
-        description: (data as any)?.error || error?.message || 'Nepodařilo se změnit roli.',
+        description: (data as { error?: string } | null)?.error || error?.message || 'Nepodařilo se změnit roli.',
         variant: 'destructive',
       });
       return;
@@ -151,7 +156,7 @@ export function CreatorPanel() {
   const fetchCodes = async () => {
     if (!isCreator) return;
     setLoadingCodes(true);
-    const { data, error } = await (supabase as any)
+    const { data, error } = await supabase
       .from('activation_codes')
       .select('id, code, role, created_at')
       .order('created_at', { ascending: false });
@@ -161,7 +166,7 @@ export function CreatorPanel() {
 
   const generateCode = async (role: 'vip' | 'vip_pro_max') => {
     setGeneratingRole(role);
-    const { data, error } = await (supabase as any).rpc('create_activation_code', { _role: role });
+    const { data, error } = await supabase.rpc('create_activation_code', { _role: role });
     setGeneratingRole(null);
     if (error) {
       toast({ title: 'Chyba', description: error.message, variant: 'destructive' });
@@ -172,11 +177,17 @@ export function CreatorPanel() {
       description: `Kód: ${data}`,
     });
     await fetchCodes();
-    try { await navigator.clipboard.writeText(data as string); } catch {}
+    // Schránka může být zakázaná (jiná záložka, starší prohlížeč).
+    // Kód je vidět v toastu výše, takže na selhání kopírování nezáleží.
+    try {
+      await navigator.clipboard.writeText(data as string);
+    } catch {
+      /* kopírování není povinné */
+    }
   };
 
   const deleteCode = async (id: string) => {
-    const { error } = await (supabase as any).from('activation_codes').delete().eq('id', id);
+    const { error } = await supabase.from('activation_codes').delete().eq('id', id);
     if (error) {
       toast({ title: 'Chyba', description: error.message, variant: 'destructive' });
       return;
@@ -188,7 +199,9 @@ export function CreatorPanel() {
     try {
       await navigator.clipboard.writeText(code);
       toast({ title: '📋 Zkopírováno', description: code });
-    } catch {}
+    } catch {
+      /* schránka může být zakázaná — kód je vidět na obrazovce */
+    }
   };
 
   useEffect(() => {
@@ -241,10 +254,10 @@ export function CreatorPanel() {
 
       // Refresh flagged posts
       await fetchFlaggedPosts();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: 'Chyba',
-        description: error.message || 'Nepodařilo se spustit moderaci.',
+        description: errorMessage(error) || 'Nepodařilo se spustit moderaci.',
         variant: 'destructive',
       });
     } finally {
@@ -273,10 +286,10 @@ export function CreatorPanel() {
       
       // Remove from flagged list if present
       setFlaggedPosts(prev => prev.filter(fp => fp.post_id !== idToDelete));
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: 'Chyba',
-        description: error.message || 'Nepodařilo se smazat příspěvek.',
+        description: errorMessage(error) || 'Nepodařilo se smazat příspěvek.',
         variant: 'destructive',
       });
     } finally {
@@ -320,10 +333,10 @@ export function CreatorPanel() {
       setUserIdToBan('');
       setBanReason('');
       fetchBannedUsers();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: 'Chyba',
-        description: error.message || 'Nepodařilo se zablokovat uživatele.',
+        description: errorMessage(error) || 'Nepodařilo se zablokovat uživatele.',
         variant: 'destructive',
       });
     } finally {
@@ -345,7 +358,7 @@ export function CreatorPanel() {
         description: 'Uživatel byl odebrán ze seznamu zablokovaných.',
       });
       fetchBannedUsers();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: 'Chyba',
         description: 'Nepodařilo se odblokovat uživatele.',

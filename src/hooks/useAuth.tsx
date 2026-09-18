@@ -6,7 +6,12 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
-  signUp: (email: string, password: string, fullName: string) => Promise<{ error: Error | null }>;
+  signUp: (
+    email: string,
+    password: string,
+    fullName: string,
+    username: string
+  ) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
 }
@@ -36,7 +41,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signUp = async (email: string, password: string, fullName: string) => {
+  // Prezývka je veřejná, e-mail ne. Proto se nikdy neodvozuje z adresy —
+  // z `jan.novak2013@…` by vznikl profil s celým jménem i ročníkem narození.
+  const signUp = async (
+    email: string,
+    password: string,
+    fullName: string,
+    username: string
+  ) => {
     const { error } = await supabase.auth.signUp({
       email,
       password,
@@ -44,7 +56,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         emailRedirectTo: window.location.origin,
         data: {
           full_name: fullName,
-          username: email.split('@')[0],
+          username: username.trim().toLowerCase(),
         },
       },
     });

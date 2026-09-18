@@ -131,23 +131,71 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          initiator_id: string | null
           participant_1: string
           participant_2: string
+          status: string
           updated_at: string
         }
         Insert: {
           created_at?: string
           id?: string
+          initiator_id?: string | null
           participant_1: string
           participant_2: string
+          status?: string
           updated_at?: string
         }
         Update: {
           created_at?: string
           id?: string
+          initiator_id?: string | null
           participant_1?: string
           participant_2?: string
+          status?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      safety_events: {
+        Row: {
+          actor_id: string | null
+          created_at: string
+          id: string
+          kind: string
+          target_id: string | null
+        }
+        Insert: {
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          kind: string
+          target_id?: string | null
+        }
+        Update: {
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          kind?: string
+          target_id?: string | null
+        }
+        Relationships: []
+      }
+      user_blocks: {
+        Row: {
+          blocked_id: string
+          blocker_id: string
+          created_at: string
+        }
+        Insert: {
+          blocked_id: string
+          blocker_id: string
+          created_at?: string
+        }
+        Update: {
+          blocked_id?: string
+          blocker_id?: string
+          created_at?: string
         }
         Relationships: []
       }
@@ -765,6 +813,9 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      are_friends: { Args: { _a: string; _b: string }; Returns: boolean }
+      block_user: { Args: { _user_id: string }; Returns: undefined }
+      blocked_for_me: { Args: { _other: string }; Returns: boolean }
       check_user_achievements: {
         Args: { _user_id: string }
         Returns: undefined
@@ -791,7 +842,20 @@ export type Database = {
         Returns: boolean
       }
       is_group_public: { Args: { _group_id: string }; Returns: boolean }
+      is_blocked_between: {
+        Args: { _a: string; _b: string }
+        Returns: boolean
+      }
       is_user_banned: { Args: { _user_id: string }; Returns: boolean }
+      respond_to_conversation_request: {
+        Args: { _action: string; _conversation_id: string }
+        Returns: undefined
+      }
+      start_conversation: {
+        Args: { _intro?: string; _target_user_id: string }
+        Returns: { conversation_id: string; status: string }[]
+      }
+      unblock_user: { Args: { _user_id: string }; Returns: undefined }
       purchase_vip_item: {
         Args: { _cost?: number; _item_id: string; _item_type: string }
         Returns: Json

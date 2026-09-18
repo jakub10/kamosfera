@@ -10,7 +10,24 @@ import { PostCard } from '@/components/social/PostCard';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Loader2, MapPin, Link as LinkIcon, Calendar, MessageCircle, UserPlus, UserCheck, UserX, Check, X as XIcon } from 'lucide-react';
+import { Loader2, MapPin, Link as LinkIcon, Calendar, MessageCircle, UserPlus, UserCheck, UserX, Check, X as XIcon, Ban, MoreHorizontal } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { MessageRequestDialog } from '@/components/social/MessageRequestDialog';
 import { format } from 'date-fns';
 import { cs } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
@@ -48,6 +65,9 @@ interface Post {
 
 const UserProfile = () => {
   const { userId } = useParams<{ userId: string }>();
+  const [requestOpen, setRequestOpen] = useState(false);
+  const [sendingRequest, setSendingRequest] = useState(false);
+  const [blockConfirmOpen, setBlockConfirmOpen] = useState(false);
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -192,28 +212,67 @@ const UserProfile = () => {
     setLoading(false);
   };
 
-  const startConversation = async () => {
-    if (!user || !profile) return;
-
-    // Check if conversation exists
-    const { data: existing } = await supabase
-      .from('conversations')
-      .select('id')
-      .or(`and(participant_1.eq.${user.id},participant_2.eq.${profile.user_id}),and(participant_1.eq.${profile.user_id},participant_2.eq.${user.id})`)
-      .maybeSingle();
-
-    if (existing) {
-      navigate('/messages');
+  // Kamarádovi se píše rovnou. Komu ještě nejsi kamarád, ten nejdřív pošle
+  // jednu krátkou zprávu a čeká, jestli ji druhá strana přijme.
+  const handleMessageClick = () => {
+    if (friendshipStatus === 'accepted') {
+      void openConversation();
     } else {
-      // Create new conversation
-      await supabase
-        .from('conversations')
-        .insert({
-          participant_1: user.id,
-          participant_2: profile.user_id,
-        });
+      setRequestOpen(true);
+    }
+  };
+
+  const openConversation = async (intro?: string) => {
+    if (!user || !profile) return;
+    setSendingRequest(true);
+
+    const { error } = await supabase.rpc('start_conversation', {
+      _target_user_id: profile.user_id,
+      _intro: intro,
+    });
+
+    setSendingRequest(false);
+
+    if (error) {
+      toast({
+        title: 'Zprávu se nepodařilo odeslat',
+        description: error.message,
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setRequestOpen(false);
+
+    if (intro) {
+      toast({
+        title: 'Žádost odeslána',
+        description: `${profile.full_name} se rozhodne, jestli si chcete psát.`,
+      });
+    } else {
       navigate('/messages');
     }
+  };
+
+  const blockUser = async () => {
+    if (!profile) return;
+
+    const { error } = await supabase.rpc('block_user', { _user_id: profile.user_id });
+
+    if (error) {
+      toast({
+        title: 'Blokování se nezdařilo',
+        description: error.message,
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    toast({
+      title: 'Uživatel zablokován',
+      description: `${profile.full_name} ti už nemůže psát a neuvidíš jeho příspěvky.`,
+    });
+    navigate('/');
   };
 
   const sendFriendRequest = async () => {
@@ -363,10 +422,26 @@ const UserProfile = () => {
                         Přátelé
                       </Button>
                     )}
-                    <Button size="sm" onClick={startConversation} className="shrink-0">
+                    <Button size="sm" onClick={handleMessageClick} className="shrink-0">
                       <MessageCircle className="h-4 w-4 mr-2" />
                       Zpráva
                     </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm" className="shrink-0" aria-label="Další možnosti">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem
+                          className="text-destructive focus:text-destructive"
+                          onSelect={() => setBlockConfirmOpen(true)}
+                        >
+                          <Ban className="h-4 w-4 mr-2" />
+                          Zablokovat
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </>
                 )}
                 {isOwnProfile && (
@@ -468,6 +543,38 @@ const UserProfile = () => {
 
       <RightSidebar />
       <MobileNav />
+
+      {profile && (
+        <MessageRequestDialog
+          open={requestOpen}
+          onOpenChange={setRequestOpen}
+          recipientName={profile.full_name}
+          sending={sendingRequest}
+          onSend={(intro) => void openConversation(intro)}
+        />
+      )}
+
+      <AlertDialog open={blockConfirmOpen} onOpenChange={setBlockConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Zablokovat {profile?.full_name}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Nebude ti moct psát ani tě nikde najít a zmizí ti jeho příspěvky
+              a komentáře. Pokud jste kamarádi, kamarádství se zruší.
+              Zablokování můžeš kdykoli vrátit v nastavení.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Zpět</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => void blockUser()}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Zablokovat
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

@@ -1,73 +1,75 @@
-# Welcome to your Lovable project
+# Kamosféra
 
-## Project info
+Bezpečná sociální síť pro děti — příspěvky, stories, skupiny, zprávy, hry
+a AI kamarád. Česky, pro kamarády ze školy.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+## Spuštění
 
-## How can I edit this code?
+Potřebuješ Node.js 20 nebo novější.
 
-There are several ways of editing your application.
-
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+```bash
+npm install
+cp .env.example .env     # a doplň hodnoty ze Supabase
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+Aplikace pak běží na `http://localhost:8080`.
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+Do `.env` patří **jen** veřejný (anon) klíč ze Supabase. Všechno s prefixem
+`VITE_` se zabalí do JavaScriptu v prohlížeči, takže service-role klíč by
+si odtud kdokoli přečetl. Soubor `.env` je schválně v `.gitignore`.
 
-**Use GitHub Codespaces**
+## Příkazy
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+| Příkaz | Co dělá |
+|---|---|
+| `npm run dev` | Vývojový server |
+| `npm run build` | Produkční build |
+| `npm run typecheck` | Kontrola typů (`tsc -b`, ne `tsc --noEmit` — viz níže) |
+| `npm run lint` | ESLint |
+| `npm test` | Testy v prohlížečovém prostředí |
 
-## What technologies are used for this project?
+> **Pozor na typovou kontrolu.** Kořenový `tsconfig.json` má `"files": []`
+> a jen odkazuje na dílčí projekty. `npx tsc --noEmit` proto **nezkontroluje
+> vůbec nic** a tváří se, že je všechno v pořádku. Skutečnou kontrolu dělá
+> `npm run typecheck`.
 
-This project is built with:
+## Jak je to postavené
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+- **Frontend** — React 18, Vite, TypeScript, Tailwind, shadcn/ui
+- **Backend** — Supabase: PostgreSQL s Row Level Security, Auth, Storage, Realtime
+- **Edge funkce** (Deno) — AI chat přes Groq, hlasový agent přes Inworld,
+  moderace obsahu, překlady, správa rolí
 
-## How can I deploy this project?
+```
+src/
+  components/   UI — social, profile, games, auth, ui (shadcn)
+  pages/        Obrazovky (Index, Messages, Groups, Profile, …)
+  hooks/        useAuth, useUserRole, useAchievements, …
+  lib/safety.ts Bezpečnostní pravidla sdílená s databází
+supabase/
+  migrations/   Historie schématu — celá, přehratelná od nuly
+  functions/    Edge funkce
+  tests/        Testy RLS a ochrany zpráv (README uvnitř)
+```
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+## Bezpečnost
 
-## Can I connect a custom domain to my Lovable project?
+Síť je pro děti, takže pár pravidel platí bez výjimky:
 
-Yes, you can!
+- **Soukromé zprávy.** Kamarádi si píšou bez omezení. Kdo kamarád není, pošle
+  jednu krátkou zprávu bez odkazů a druhá strana rozhodne, jestli konverzace
+  začne. Druhá zpráva neprojde — brání tomu databáze, ne tlačítko v UI.
+- **Blokování.** Obousměrné, schová i příspěvky a komentáře. Spravuje se
+  v Nastavení.
+- **Role.** Nikdo si nepřidělí roli sám — chrání to restriktivní RLS politika
+  i databázový trigger.
+- **Bezpečnostní deník.** Creator vidí, kdo koho oslovil a kdo koho zablokoval,
+  ale **nikdy obsah zpráv**. Dohled bez čtení soukromé komunikace.
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+Tahle pravidla hlídají testy v `supabase/tests/` a běží i v CI. Když někdo
+sáhne do migrací tak, že se ochrana dá obejít, build spadne.
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+Pravidla, která platí na obou stranách (délka první zprávy, odkazy, přezdívky),
+jsou v `src/lib/safety.ts` a zároveň v migraci. **Změna na jedné straně bez
+druhé je chyba** — poslední slovo má vždycky databáze.
