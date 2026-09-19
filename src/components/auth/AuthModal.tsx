@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import mascotWave from '@/assets/mascot-wave.png';
-import { lovable } from '@/integrations/lovable';
+import { signInWithGoogle } from '@/lib/googleSignIn';
 import { isValidUsername } from '@/lib/safety';
 
 interface AuthModalProps {
@@ -103,19 +103,24 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
 
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
-    const result = await lovable.auth.signInWithOAuth('google', {
-      redirect_uri: window.location.origin,
-    });
-    if (result.error) {
+    const { error, redirected, needsSetup } = await signInWithGoogle();
+
+    if (error) {
       toast({
-        title: 'Chyba přihlášení přes Google',
-        description: result.error.message || 'Zkus to prosím znovu.',
+        title: 'Přihlášení přes Google nejde',
+        description: needsSetup
+          ? 'Google zatím není pro Kamosféru zapnutý. Zatím se přihlas emailem.'
+          : 'Zkus to prosím znovu, nebo se přihlas emailem.',
         variant: 'destructive',
       });
       setIsLoading(false);
       return;
     }
-    if (result.redirected) return;
+
+    // Prohlížeč odchází na Google; zavírat okno nebo vypínat spinner
+    // už nemá smysl.
+    if (redirected) return;
+
     onOpenChange(false);
     setIsLoading(false);
   };
