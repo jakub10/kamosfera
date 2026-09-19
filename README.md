@@ -34,6 +34,29 @@ si odtud kdokoli přečetl. Soubor `.env` je schválně v `.gitignore`.
 > vůbec nic** a tváří se, že je všechno v pořádku. Skutečnou kontrolu dělá
 > `npm run typecheck`.
 
+## Nasazení na Vercel
+
+Konfigurace je v `vercel.json`. Dvě věci v ní nejsou samozřejmé:
+
+**`installCommand` je `npm install`, ne `npm ci`.** Lovable commituje přímo
+do `main` a aktualizuje jen `bun.lockb`, takže `package-lock.json` občas
+přestane sedět. `npm ci` na to spadne (`EUSAGE`) a web je dole, aniž by se
+v kódu cokoli změnilo — přesně to se už jednou stalo. `npm install` to
+přežije. Přísné `npm ci` zůstává v CI, kde se rozejití zámků pozná dřív:
+**produkce shovívavá, kontrola přísná.**
+
+**`rewrites` na `index.html`.** Routování běží v prohlížeči; bez tohohle
+vrací přímé otevření `/svet` nebo `/messages` chybu 404. Statické soubory
+se servírují dřív, takže se to nedotkne `/assets`.
+
+> Do `vercel.json` nepatří komentáře. JSON je nemá a Vercel validuje schéma —
+> neznámá vlastnost (třeba `"//"`) shodí build dřív, než vůbec začne.
+> Hlídá to test `src/test/vercelConfig.test.ts`.
+
+Aplikace potřebuje `VITE_SUPABASE_URL` a `VITE_SUPABASE_PUBLISHABLE_KEY`
+(Settings → Environment Variables). Bez nich se místo aplikace ukáže
+stránka, která řekne, co doplnit.
+
 ## Jak je to postavené
 
 - **Frontend** — React 18, Vite, TypeScript, Tailwind, shadcn/ui
