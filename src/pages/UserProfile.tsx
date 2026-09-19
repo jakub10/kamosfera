@@ -64,8 +64,6 @@ interface Post {
 }
 
 const UserProfile = () => {
-  // Messaging and blocking APIs are newer than the generated client schema.
-  const socialClient = supabase as any;
   const { userId } = useParams<{ userId: string }>();
   const [requestOpen, setRequestOpen] = useState(false);
   const [sendingRequest, setSendingRequest] = useState(false);
@@ -228,7 +226,7 @@ const UserProfile = () => {
     if (!user || !profile) return;
     setSendingRequest(true);
 
-    const { error } = await socialClient.rpc('start_conversation', {
+    const { error } = await supabase.rpc('start_conversation', {
       _target_user_id: profile.user_id,
       _intro: intro,
     });
@@ -259,7 +257,7 @@ const UserProfile = () => {
   const blockUser = async () => {
     if (!profile) return;
 
-    const { error } = await socialClient.rpc('block_user', { _user_id: profile.user_id });
+    const { error } = await supabase.rpc('block_user', { _user_id: profile.user_id });
 
     if (error) {
       toast({
