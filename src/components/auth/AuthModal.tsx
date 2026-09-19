@@ -8,8 +8,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import mascotWave from '@/assets/mascot-wave.png';
-import { lovable } from '@/integrations/lovable';
+import { signInWithGoogle } from '@/lib/googleSignIn';
 import { isValidUsername } from '@/lib/safety';
+import { explainAuthError } from '@/lib/authErrors';
 
 interface AuthModalProps {
   open: boolean;
@@ -39,11 +40,7 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
     const { error } = await signIn(loginEmail, loginPassword);
 
     if (error) {
-      toast({
-        title: 'Chyba přihlášení',
-        description: 'Nesprávný email nebo heslo.',
-        variant: 'destructive',
-      });
+      toast({ ...explainAuthError(error, 'přihlášení'), variant: 'destructive' });
     } else {
       toast({
         title: 'Vítej zpět!',
@@ -73,16 +70,8 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
     const { error, needsEmailConfirmation } = await signUp(signupEmail, signupPassword, signupFullName, username);
 
     if (error) {
-      // Hlášky ze Supabase chodí anglicky a prozrazují detaily o backendu.
-      // Dětem řekneme jen to, co s tím můžou udělat.
-      const taken = /already|duplicate|exists/i.test(error.message);
-      toast({
-        title: 'Registrace se nezdařila',
-        description: taken
-          ? 'Tenhle email nebo přezdívka už někdo používá. Zkus jinou.'
-          : 'Zkus to prosím znovu za chvíli.',
-        variant: 'destructive',
-      });
+      // Dítě dostane srozumitelnou větu, konzole skutečnou chybu.
+      toast({ ...explainAuthError(error, 'registrace'), variant: 'destructive' });
     } else if (needsEmailConfirmation) {
       toast({
         title: 'Ještě jeden krok',
@@ -103,19 +92,24 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
 
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
-    const result = await lovable.auth.signInWithOAuth('google', {
-      redirect_uri: window.location.origin,
-    });
-    if (result.error) {
+    const { error, redirected, needsSetup } = await signInWithGoogle();
+
+    if (error) {
       toast({
-        title: 'Chyba přihlášení přes Google',
-        description: result.error.message || 'Zkus to prosím znovu.',
+        title: 'Přihlášení přes Google nejde',
+        description: needsSetup
+          ? 'Google zatím není pro Kamosféru zapnutý. Zatím se přihlas emailem.'
+          : 'Zkus to prosím znovu, nebo se přihlas emailem.',
         variant: 'destructive',
       });
       setIsLoading(false);
       return;
     }
-    if (result.redirected) return;
+
+    // Prohlížeč odchází na Google; zavírat okno nebo vypínat spinner
+    // už nemá smysl.
+    if (redirected) return;
+
     onOpenChange(false);
     setIsLoading(false);
   };
