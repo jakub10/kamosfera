@@ -155,8 +155,8 @@ Deno.serve(async (req) => {
     });
 
     api.on("error", (e: Error) => console.error("Inworld WS error:", e?.message || e));
-    api.on("close", (code: number, reason: Buffer) => {
-      console.log("Inworld WS closed:", code, reason?.toString?.());
+    api.on("close", (code: number, reason: Uint8Array) => {
+      console.log("Inworld WS closed:", code, new TextDecoder().decode(reason));
       if (browser.readyState === WebSocket.OPEN) browser.close();
     });
   };
@@ -192,7 +192,14 @@ Deno.serve(async (req) => {
       return;
     }
     // For conversation.item.create, ensure no embedded instructions override
-    if (t === "conversation.item.create" && parsed?.item?.role === "system") {
+    const item = parsed?.item;
+    if (
+      t === "conversation.item.create" &&
+      typeof item === "object" &&
+      item !== null &&
+      "role" in item &&
+      item.role === "system"
+    ) {
       console.warn("Blocked client attempt to inject system item");
       return;
     }

@@ -82,8 +82,8 @@ export async function handleChatRequest(req: Request, options: ChatOptions): Pro
       global: { headers: { Authorization: authHeader } },
     });
     const token = authHeader.replace("Bearer ", "");
-    const { data: claims, error: authErr } = await authClient.auth.getClaims(token);
-    const userId = claims?.claims?.sub;
+    const { data: userData, error: authErr } = await authClient.auth.getUser(token);
+    const userId = userData.user?.id;
     if (authErr || !userId) return json({ error: "Unauthorized" }, 401);
 
     const GROQ_API_KEY = Deno.env.get("GROQ_API_KEY");

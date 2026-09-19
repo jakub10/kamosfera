@@ -32,6 +32,8 @@ interface BlockedUser {
 }
 
 const Settings = () => {
+  // Blocking APIs are newer than the generated client schema.
+  const socialClient = supabase as any;
   const { user, signOut } = useAuth();
   const { toast } = useToast();
   const { activateVIP, isVIP } = useUserRole();
@@ -73,7 +75,7 @@ const Settings = () => {
     if (!user) return;
     setLoadingBlocked(true);
 
-    const { data: blocks } = await supabase
+    const { data: blocks } = await socialClient
       .from('user_blocks')
       .select('blocked_id')
       .eq('blocker_id', user.id);
@@ -87,7 +89,7 @@ const Settings = () => {
     const { data: profiles } = await supabase
       .from('profiles')
       .select('user_id, username, full_name, avatar_url')
-      .in('user_id', blocks.map((b) => b.blocked_id));
+      .in('user_id', blocks.map((b: { blocked_id: string }) => b.blocked_id));
 
     setBlockedUsers(
       (profiles || []).map((p) => ({
@@ -106,7 +108,7 @@ const Settings = () => {
 
   const unblockUser = async (blockedId: string) => {
     setUnblocking(blockedId);
-    const { error } = await supabase.rpc('unblock_user', { _user_id: blockedId });
+    const { error } = await socialClient.rpc('unblock_user', { _user_id: blockedId });
     setUnblocking(null);
 
     if (error) {

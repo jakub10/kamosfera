@@ -76,6 +76,9 @@ interface Comment {
 }
 
 export function PostCard({ post, onLikeChange, onPostDeleted }: PostCardProps) {
+  // These reaction APIs are deployed by a newer database migration than the
+  // generated client schema currently exposes.
+  const socialClient = supabase as any;
   const [reactors, setReactors] = useState<Reactor[]>([]);
   const [reacting, setReacting] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
@@ -102,7 +105,7 @@ export function PostCard({ post, onLikeChange, onPostDeleted }: PostCardProps) {
   // Počet nikde neukazujeme — v síti pár kamarádů je jméno cennější než číslo.
   useEffect(() => {
     let cancelled = false;
-    supabase.rpc('post_reactions', { _post_id: post.id }).then(({ data }) => {
+    socialClient.rpc('post_reactions', { _post_id: post.id }).then(({ data }: { data: Reactor[] | null }) => {
       if (cancelled || !data) return;
       setReactors(
         data.map((r) => ({
@@ -148,8 +151,8 @@ export function PostCard({ post, onLikeChange, onPostDeleted }: PostCardProps) {
     setReacting(true);
 
     const { error } = removing
-      ? await supabase.from('likes').delete().eq('post_id', post.id).eq('user_id', user.id)
-      : await supabase
+      ? await socialClient.from('likes').delete().eq('post_id', post.id).eq('user_id', user.id)
+      : await socialClient
           .from('likes')
           .upsert({ post_id: post.id, user_id: user.id, kind }, { onConflict: 'user_id,post_id' });
 
@@ -162,7 +165,7 @@ export function PostCard({ post, onLikeChange, onPostDeleted }: PostCardProps) {
     }
 
     // Načíst znovu, ať má „Ty" správné jméno a avatar.
-    const { data } = await supabase.rpc('post_reactions', { _post_id: post.id });
+    const { data }: { data: Reactor[] | null } = await socialClient.rpc('post_reactions', { _post_id: post.id });
     if (data) {
       setReactors(
         data.map((r) => ({
