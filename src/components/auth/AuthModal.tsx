@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import mascotWave from '@/assets/mascot-wave.png';
 import { signInWithGoogle } from '@/lib/googleSignIn';
 import { isValidUsername } from '@/lib/safety';
+import { explainAuthError } from '@/lib/authErrors';
 
 interface AuthModalProps {
   open: boolean;
@@ -39,11 +40,7 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
     const { error } = await signIn(loginEmail, loginPassword);
 
     if (error) {
-      toast({
-        title: 'Chyba přihlášení',
-        description: 'Nesprávný email nebo heslo.',
-        variant: 'destructive',
-      });
+      toast({ ...explainAuthError(error, 'přihlášení'), variant: 'destructive' });
     } else {
       toast({
         title: 'Vítej zpět!',
@@ -73,16 +70,8 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
     const { error, needsEmailConfirmation } = await signUp(signupEmail, signupPassword, signupFullName, username);
 
     if (error) {
-      // Hlášky ze Supabase chodí anglicky a prozrazují detaily o backendu.
-      // Dětem řekneme jen to, co s tím můžou udělat.
-      const taken = /already|duplicate|exists/i.test(error.message);
-      toast({
-        title: 'Registrace se nezdařila',
-        description: taken
-          ? 'Tenhle email nebo přezdívka už někdo používá. Zkus jinou.'
-          : 'Zkus to prosím znovu za chvíli.',
-        variant: 'destructive',
-      });
+      // Dítě dostane srozumitelnou větu, konzole skutečnou chybu.
+      toast({ ...explainAuthError(error, 'registrace'), variant: 'destructive' });
     } else if (needsEmailConfirmation) {
       toast({
         title: 'Ještě jeden krok',
