@@ -1,6 +1,11 @@
 // Inworld Realtime Speech-to-Speech WebSocket proxy
 // Browser <-> this edge function (WS) <-> Inworld Realtime API (WS)
 // Uses npm:ws because Deno's native WebSocket cannot set custom headers.
+//
+// POZOR: `npm:` si rieši Deno sám při nasazení edge funkce. `ws` proto
+// NEPATŘÍ do package.json frontendu — když se tam přidá, přestane sedět
+// package-lock.json a `npm ci` na Vercelu spadne na EUSAGE (build se
+// rozbije, aniž by se v kódu cokoli změnilo).
 
 import WS from "npm:ws@8.18.0";
 

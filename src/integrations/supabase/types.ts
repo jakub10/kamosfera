@@ -129,6 +129,8 @@ export type Database = {
       }
       conversations: {
         Row: {
+          status: string
+          initiator_id: string | null
           created_at: string
           id: string
           participant_1: string
@@ -136,6 +138,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          status?: string
+          initiator_id?: string | null
           created_at?: string
           id?: string
           participant_1: string
@@ -143,6 +147,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          status?: string
+          initiator_id?: string | null
           created_at?: string
           id?: string
           participant_1?: string
@@ -298,18 +304,21 @@ export type Database = {
       }
       likes: {
         Row: {
+          kind: string
           created_at: string
           id: string
           post_id: string
           user_id: string
         }
         Insert: {
+          kind?: string
           created_at?: string
           id?: string
           post_id: string
           user_id: string
         }
         Update: {
+          kind?: string
           created_at?: string
           id?: string
           post_id?: string
@@ -608,6 +617,48 @@ export type Database = {
           },
         ]
       }
+      user_blocks: {
+        Row: {
+          blocked_id: string
+          blocker_id: string
+          created_at: string
+        }
+        Insert: {
+          blocked_id: string
+          blocker_id: string
+          created_at?: string
+        }
+        Update: {
+          blocked_id?: string
+          blocker_id?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
+      safety_events: {
+        Row: {
+          actor_id: string | null
+          created_at: string
+          id: string
+          kind: string
+          target_id: string | null
+        }
+        Insert: {
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          kind: string
+          target_id?: string | null
+        }
+        Update: {
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          kind?: string
+          target_id?: string | null
+        }
+        Relationships: []
+      }
       user_game_stats: {
         Row: {
           clicker_best: number
@@ -806,7 +857,7 @@ export type Database = {
           user_id: string
           username: string
           full_name: string
-          avatar_url: string
+          avatar_url: string | null
           reacted_at: string
         }[]
       }

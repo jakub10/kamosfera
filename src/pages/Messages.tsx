@@ -53,8 +53,6 @@ interface PresenceData {
 }
 
 const Messages = () => {
-  // Conversation-request APIs are newer than the generated client schema.
-  const socialClient = supabase as any;
   const { user } = useAuth();
   const { toast } = useToast();
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -365,7 +363,7 @@ const Messages = () => {
     }
 
     // Kamarádovi napíšeme rovnou, cizímu člověku přes žádost s krátkou zprávou.
-    const { data: isFriend } = await socialClient.rpc('are_friends', {
+    const { data: isFriend } = await supabase.rpc('are_friends', {
       _a: user.id,
       _b: otherUser.user_id,
     });
@@ -381,7 +379,7 @@ const Messages = () => {
     if (!user) return;
     setSendingRequest(true);
 
-    const { error } = await socialClient.rpc('start_conversation', {
+    const { error } = await supabase.rpc('start_conversation', {
       _target_user_id: otherUser.user_id,
       _intro: intro,
     });
@@ -415,7 +413,7 @@ const Messages = () => {
     if (!selectedConversation) return;
     setRespondingToRequest(true);
 
-    const { error } = await socialClient.rpc('respond_to_conversation_request', {
+    const { error } = await supabase.rpc('respond_to_conversation_request', {
       _conversation_id: selectedConversation.id,
       _action: action,
     });

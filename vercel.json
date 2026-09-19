@@ -1,0 +1,21 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+
+  "//": [
+    "installCommand: Lovable commituje přímo do main a upravuje jen bun.lockb,",
+    "takže package-lock.json občas přestane sedět. `npm ci` na to spadne",
+    "(EUSAGE) a web je dole, aniž by se v kódu cokoli změnilo. `npm install`",
+    "to přežije. Přísný zůstává CI, kde `npm ci` drift odhalí — produkce je",
+    "shovívavá, kontrola je přísná.",
+    "",
+    "rewrites: aplikace má routování v prohlížeči. Bez tohohle vrací přímé",
+    "otevření /svet nebo /messages chybu 404. Statické soubory se servírují",
+    "dřív, takže se to nedotkne /assets."
+  ],
+
+  "installCommand": "npm install --no-audit --no-fund",
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+
+  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+}

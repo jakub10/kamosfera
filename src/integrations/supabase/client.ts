@@ -6,13 +6,30 @@ import { brokeredPreviewStorage } from './previewAuthStorage';
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
+/**
+ * Chybí nastavení? Řekni to nahlas.
+ *
+ * Hodnoty se do aplikace zapékají při buildu. Když je prostředí nemá (na
+ * Vercelu chybí proměnné, lokálně chybí `.env`), `createClient` by rovnou
+ * vyhodil výjimku, celý modul by se nenačetl a dítě by vidělo bílou
+ * obrazovku bez jediného vodítka. Tenhle příznak čte `main.tsx` a místo
+ * prázdna ukáže, co je potřeba nastavit.
+ */
+export const supabaseConfigMissing = !SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY;
+
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
-export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
-  auth: {
-    storage: brokeredPreviewStorage(),
-    persistSession: true,
-    autoRefreshToken: true,
+// Zástupné hodnoty drží modul při životě, aby se aplikace vůbec načetla a
+// stihla vysvětlit, co chybí. Žádný požadavek se s nimi nikam nedostane.
+export const supabase = createClient<Database>(
+  SUPABASE_URL || 'https://nenastaveno.invalid',
+  SUPABASE_PUBLISHABLE_KEY || 'nenastaveno',
+  {
+    auth: {
+      storage: brokeredPreviewStorage(),
+      persistSession: true,
+      autoRefreshToken: true,
+    },
   }
-});
+);
