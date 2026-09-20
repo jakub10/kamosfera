@@ -25,8 +25,14 @@ describe('chyby přihlášení', () => {
     expect(`${friendly.title} ${friendly.description}`).toMatch(expected);
   });
 
-  it('neznámou chybu nezamlčí, jen ji nevysvětlí', () => {
+  it('neznámou chybu ukáže i s tím, co řekl server', () => {
     const friendly = explainAuthError(new Error('něco úplně jiného'), 'test');
     expect(friendly.title).toBe('Nepovedlo se');
+    expect(friendly.description).toContain('něco úplně jiného');
+  });
+
+  it('rozpoznanou chybu technickým textem nezatěžuje', () => {
+    const friendly = explainAuthError(new Error('Invalid API key'), 'test');
+    expect(friendly.description).not.toContain('Invalid API key');
   });
 });

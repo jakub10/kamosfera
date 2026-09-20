@@ -103,10 +103,20 @@ const RULES: Rule[] = [
   },
 ];
 
-const FALLBACK: FriendlyAuthError = {
-  title: 'Nepovedlo se',
-  description: 'Zkus to prosím znovu. Pokud to bude trvat, dej vědět správci.',
-};
+/**
+ * Neznámou chybu nezamlčíme. Schovat i tu znamená, že se problém nedá
+ * odladit bez otevírání konzole — a to po nikom chtít nejde. Rozpoznané
+ * případy zůstávají v lidské řeči; tenhle jeden ukáže i to, co řekl server.
+ */
+function fallback(message: string): FriendlyAuthError {
+  const detail = message.trim().slice(0, 200);
+  return {
+    title: 'Nepovedlo se',
+    description: detail
+      ? `Zkus to prosím znovu. Pokud to bude trvat, ukaž tohle správci: ${detail}`
+      : 'Zkus to prosím znovu. Pokud to bude trvat, dej vědět správci.',
+  };
+}
 
 /**
  * Přeloží chybu na větu pro dítě a **zároveň ji vypíše do konzole**, ať se
@@ -118,5 +128,5 @@ export function explainAuthError(error: unknown, context: string): FriendlyAuthE
   // Tohle je ta část, která nesmí zmizet: v devtools má být pravda.
   console.error(`[auth] ${context} selhalo:`, error);
 
-  return RULES.find((rule) => rule.match.test(message))?.friendly ?? FALLBACK;
+  return RULES.find((rule) => rule.match.test(message))?.friendly ?? fallback(message);
 }
