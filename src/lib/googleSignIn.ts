@@ -1,30 +1,17 @@
 import { supabase } from '@/integrations/supabase/client';
-import { lovable } from '@/integrations/lovable';
 
 /**
- * Přihlášení přes Google, ať aplikace běží kdekoli.
+ * Přihlášení přes Google.
  *
- * Proč to není jednořádkové: balík @lovable.dev/cloud-auth-js posílá
- * prohlížeč na **relativní** cestu `/~oauth/initiate`. To je Lovableova
- * serverová infrastruktura — na jejich hostingu ta cesta existuje, na
- * Vercelu ne, takže přihlášení skončilo na 404.
+ * Dřív to tudy neteklo přímo: balík `@lovable.dev/cloud-auth-js` posílal
+ * prohlížeč na **relativní** cestu `/~oauth/initiate`, což je serverová
+ * infrastruktura Lovable. Na jejich hostingu existuje, na Vercelu ne —
+ * a přihlášení končilo na 404.
  *
- * Takže: na Lovable surface necháme broker (sdílí přihlášení s editorem),
- * všude jinde jdeme nativně přes Supabase, což funguje na libovolné doméně.
+ * Od chvíle, kdy Kamosféra běží na vlastním Supabase projektu, není důvod
+ * mít dvě cesty. Zůstala jedna, nativní, která funguje na libovolné doméně.
+ * Podmínkou je nastavený Google provider v Supabase (viz README).
  */
-
-// Stejný seznam, jaký používá previewAuthStorage.ts.
-const LOVABLE_ZONES = [
-  'lovableproject.com',
-  'lovableproject-dev.com',
-  'lovable.app',
-  'gpt-eng.com',
-  'gptengineer.run',
-];
-
-export function onLovableHost(host = typeof window === 'undefined' ? '' : window.location.hostname): boolean {
-  return LOVABLE_ZONES.some((zone) => host === zone || host.endsWith('.' + zone));
-}
 
 /** Hláška ze Supabase, když Google není v projektu zapnutý. */
 export function isProviderDisabled(message: string | undefined): boolean {
@@ -40,17 +27,6 @@ export interface GoogleSignInResult {
 }
 
 export async function signInWithGoogle(): Promise<GoogleSignInResult> {
-  if (onLovableHost()) {
-    const result = await lovable.auth.signInWithOAuth('google', {
-      redirect_uri: window.location.origin,
-    });
-    return {
-      error: result.error ?? null,
-      redirected: Boolean(result.redirected),
-      needsSetup: false,
-    };
-  }
-
   const { error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: { redirectTo: window.location.origin },

@@ -38,8 +38,12 @@ Deno.serve(async (req) => {
       });
     }
 
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    if (!LOVABLE_API_KEY) throw new Error('LOVABLE_API_KEY not configured');
+    // Groq, ne Lovable gateway: klíč k té bráně patří k projektu v Lovable
+    // Cloud a s přechodem na vlastní Supabase by přestal platit. Groq už
+    // stejně pohání AI kamaráda (viz _shared/groq-chat.ts), takže tu je
+    // jeden klíč místo dvou.
+    const GROQ_API_KEY = Deno.env.get('GROQ_API_KEY');
+    if (!GROQ_API_KEY) throw new Error('GROQ_API_KEY not configured');
 
     const body = await req.json().catch(() => ({}));
     const text = String(body.text ?? '').slice(0, 4000);
@@ -60,14 +64,14 @@ Deno.serve(async (req) => {
       return `__IMG${tokens.length - 1}__`;
     });
 
-    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        Authorization: `Bearer ${GROQ_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'google/gemini-3-flash-preview',
+        model: 'llama-3.3-70b-versatile',
         messages: [
           {
             role: 'system',
@@ -80,14 +84,14 @@ Deno.serve(async (req) => {
 
     if (!response.ok) {
       const errText = await response.text();
-      console.error('AI gateway error:', response.status, errText);
+      console.error('Groq error:', response.status, errText);
       if (response.status === 429) {
         return new Response(JSON.stringify({ error: 'Rate limited, try again later' }), {
           status: 429,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
-      throw new Error(`AI gateway error: ${response.status}`);
+      throw new Error(`Groq error: ${response.status}`);
     }
 
     const data = await response.json();

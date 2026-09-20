@@ -59,28 +59,27 @@ stránka, která řekne, co doplnit.
 
 ## Přihlášení přes Google
 
-Nefunguje samo od sebe mimo Lovable a stojí za to vědět proč.
+Jde jednou cestou — nativně přes Supabase, takže funguje na libovolné
+doméně. (Dřív tu byla ještě druhá, přes `@lovable.dev/cloud-auth-js`, který
+posílá prohlížeč na **relativní** `/~oauth/initiate`. To je serverová cesta
+Lovable; na Vercelu neexistuje a přihlášení končilo na 404. S vlastním
+Supabase projektem nebyl důvod ji držet.)
 
-Balík `@lovable.dev/cloud-auth-js` posílá prohlížeč na **relativní** cestu
-`/~oauth/initiate`. To je Lovableova serverová infrastruktura — na jejich
-hostingu existuje, na Vercelu ne, takže přihlášení skončí na 404.
+Potřebuje to jednorázové nastavení — kroky jsou v
+[docs/PRECHOD-NA-VLASTNI-SUPABASE.md](docs/PRECHOD-NA-VLASTNI-SUPABASE.md),
+část *Přihlášení*. Dokud nastavené není, tlačítko řekne, že Google zatím
+není zapnutý, a pošle uživatele na přihlášení e-mailem — to funguje bez
+čehokoli dalšího.
 
-`src/lib/googleSignIn.ts` proto rozhoduje podle domény: na Lovable surface
-nechá broker (sdílí přihlášení s editorem), všude jinde jde nativně přes
-Supabase. Hlídá to test `src/test/googleSignIn.test.ts`.
+## Databáze
 
-Aby nativní cesta fungovala, je potřeba jednorázově nastavit:
+Kamosféra běží na vlastním Supabase projektu. Celé schéma je v
+`supabase/migrations/` a jde přehrát od nuly (`npx supabase db push
+--include-all`) včetně úložišť na obrázky — takže postavit databázi znovu
+je otázka jednoho příkazu.
 
-1. **Google Cloud Console** → OAuth client (typ *Web application*), a mezi
-   *Authorized redirect URIs* přidat
-   `https://uhlkuofwittcveeyyjzz.supabase.co/auth/v1/callback`.
-2. **Supabase** → Authentication → Providers → Google: zapnout a vložit
-   Client ID a Client Secret z předchozího kroku.
-3. **Supabase** → Authentication → URL Configuration: *Site URL* na adresu
-   webu a mezi *Redirect URLs* přidat i adresy náhledů z Vercelu.
-
-Dokud to nastavené není, tlačítko řekne, že Google zatím není zapnutý, a
-pošle uživatele na přihlášení emailem — což funguje bez čehokoli dalšího.
+Jak založit nový projekt, nasadit funkce a nastavit klíče popisuje
+[docs/PRECHOD-NA-VLASTNI-SUPABASE.md](docs/PRECHOD-NA-VLASTNI-SUPABASE.md).
 
 ## Jak je to postavené
 
