@@ -58,6 +58,12 @@ Projde-li to bez chyby, stojí kompletní schéma: profily, příspěvky, zpráv
 se žádostmi o konverzaci, blokování, bezpečnostní deník, reakce, hry
 i `world_seed()` pro Kamosvět.
 
+> **Export z Lovable má rozbité kódování.** Soubor, co odtamtud spadne,
+> má českou diakritiku převedenou přes čínskou znakovou sadu — „První
+> příspěvek" v něm vypadá jako „Prvn铆 p艡铆sp臎vek". Nahrát se takhle nesmí,
+> jinak v aplikaci zůstanou čínské znaky. Schéma i obsah tabulky
+> `achievements` staví migrace správně, takže tenhle export není potřeba.
+
 Kontrola v dashboardu: **Table Editor** → mají tam být tabulky `profiles`,
 `posts`, `conversations`, `user_blocks`, `safety_events`; **Storage** → 
 úložiště na avatary a obrázky.
