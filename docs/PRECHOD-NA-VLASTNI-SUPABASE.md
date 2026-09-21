@@ -154,9 +154,43 @@ Vite zapéká proměnné **při buildu**, takže po změně je nutné pustit
 
 ---
 
-## 6. Zkouška
+## 6. Data ze staré Kamosféry
 
-1. Otevřít `https://kamosfera.online`, založit nový účet.
+Nová databáze startuje prázdná. Účty, příspěvky a zprávy se přenesou
+jedním SQL souborem, který vyrobí `scripts/prenos_dat.py` z exportu
+(jednotlivé tabulky jako CSV ze záložky Cloud → Database).
+
+```bash
+python3 scripts/prenos_dat.py export/ ucty.txt > import.sql
+```
+
+`ucty.txt` je seznam e-mailů, jeden na řádek, ze záložky **Users**.
+K profilům se přiřadí podle toho, že stará Kamosféra odvozovala přezdívku
+z e-mailu — kdo se hlásil jako `karel.vomacka@…`, měl přezdívku
+`karel.vomacka`. Byla to
+díra do soukromí a je zalepená; tady se naposled hodí.
+
+Výsledný `import.sql` pak celý najednou do **SQL editoru**. Je to jedna
+transakce a na konci si sám zkontroluje počty — když něco nesedí, vypíše
+to a nic se neuloží.
+
+> **Ten soubor obsahuje e-maily dětí a obsah jejich soukromých zpráv.**
+> Po použití ho smaž. Proto ho taky hlídá `.gitignore`.
+
+**Hesla se přenést nedají** — v exportu nejsou. Každý dostane stejné
+dočasné heslo a hned si ho změní. Kdo se dosud hlásil přes Google, může
+dál: účet se spáruje podle e-mailu, jakmile je Google nastavený podle
+kroku 3.
+
+**Obrázky** (5 avatarů, 8 v příspěvcích) leží ve starém úložišti. Skript
+`stiahni-obrazky.sh`, který vznikne vedle, je stáhne; nahrát se musí do
+stejnojmenných bucketů (`avatars`, `posts`) a na stejnou cestu. Adresy
+pak přepíše `UPDATE` na konci toho skriptu.
+
+## 7. Zkouška
+
+1. Otevřít `https://kamosfera.online` a přihlásit se dočasným heslem —
+   měly by být vidět staré příspěvky i konverzace.
 2. Napsat příspěvek, přidat reakci, nahrát obrázek.
 3. Zkusit poslat zprávu někomu, kdo není kamarád — musí projít jedna
    krátká zpráva bez odkazu a druhá už ne.
