@@ -30,3 +30,11 @@ dist-ssr
 
 # TypeScript build cache (generated; caused spurious diffs on every build)
 *.tsbuildinfo
+
+# Prenos dát zo starej Kamosféry. Vygenerované SQL obsahuje e-maily detí
+# a obsah ich súkromných správ — do gitu nepatrí. Postup je v
+# scripts/prenos_dat.py, dáta si každý vygeneruje zo svojho exportu.
+import.sql
+stiahni-obrazky.sh
+export/
+ucty.txt
