@@ -1,32 +1,12 @@
 import { describe, it, expect } from 'vitest';
-import { onLovableHost, isProviderDisabled } from '@/lib/googleSignIn';
+import { isProviderDisabled } from '@/lib/googleSignIn';
 
 /**
- * Lovable posílá přihlášení na relativní `/~oauth/initiate`, což je jejich
- * serverová cesta. Mimo jejich hosting neexistuje a uživatel skončí na 404 —
- * přesně to se stalo na Vercelu. Tohle hlídá, že broker použijeme jen tam,
- * kde opravdu je.
+ * Přihlášení přes Google jde jednou cestou — nativně přes Supabase. Dřív tu
+ * byla ještě druhá, Lovable broker na relativní `/~oauth/initiate`; mimo
+ * jejich hosting ta cesta neexistuje a uživatel skončil na 404. S vlastním
+ * Supabase projektem není co větvit.
  */
-describe('kde použít Lovable broker', () => {
-  it.each([
-    'preview--abc.lovable.app',
-    'id-preview--x.lovableproject.com',
-    'lovable.app',
-    'neco.gpt-eng.com',
-  ])('na Lovable hostingu ano: %s', (host) => {
-    expect(onLovableHost(host)).toBe(true);
-  });
-
-  it.each([
-    'kamosfera.vercel.app',
-    'kamosfera.cz',
-    'localhost',
-    'lovable.app.zlyweb.cz',
-  ])('jinde ne: %s', (host) => {
-    expect(onLovableHost(host)).toBe(false);
-  });
-});
-
 describe('Google není zapnutý v Supabase', () => {
   it('pozná hlášku a nabídne nastavení místo dalšího pokusu', () => {
     expect(isProviderDisabled('Unsupported provider: provider is not enabled')).toBe(true);

@@ -1,9 +1,10 @@
 import type { LucideIcon } from 'lucide-react';
-import { Bot, Brain, Crown, Gamepad2, MessageSquare, MousePointer2, Shield, Star, Volume2 } from 'lucide-react';
+import { Blocks, Bot, Brain, Crown, Gamepad2, MessageSquare, MousePointer2, Shield, Star, Volume2 } from 'lucide-react';
 import { AIChatWindow } from './AIChatWindow';
 import { AIChatbotModal } from './AIChatbotModal';
 import { BrawlGame } from './BrawlGame';
 import { ClickerGame } from './ClickerGame';
+import { KamostavbaGame } from './KamostavbaGame';
 import { MemoryGame } from './MemoryGame';
 import { SnakeGame } from './SnakeGame';
 import { TowerDefenseGame } from './TowerDefenseGame';
@@ -19,7 +20,7 @@ import { VoiceAgentModal } from './VoiceAgentModal';
  */
 
 export type GameId =
-  | 'brawl' | 'snake' | 'tower' | 'memory' | 'clicker' | 'vip-puzzle'
+  | 'brawl' | 'snake' | 'tower' | 'memory' | 'clicker' | 'vip-puzzle' | 'kamostavba'
   | 'ai' | 'chatbot' | 'voice';
 
 export interface GameItem {
@@ -33,9 +34,12 @@ export interface GameItem {
   /** Hra, nebo AI kamarád? Na stránce Hry jsou zvlášť. */
   kind: 'game' | 'ai';
   vip?: boolean;
+  /** Novinka — dostane štítek, ať si jí děti všimnou. */
+  fresh?: boolean;
 }
 
 export const GAME_ITEMS: GameItem[] = [
+  { id: 'kamostavba', icon: Blocks,     labelKey: 'Kamostavba',    blurb: 'Postav Kamosféru až k vlajce. Blok po bloku.', color: 'from-rose-500 to-amber-500',    kind: 'game', fresh: true },
   { id: 'brawl',   icon: Star,          labelKey: 'Brawlosféra',   blurb: 'Aréna. Kdo vydrží nejdýl?',                   color: 'from-amber-400 to-yellow-600', kind: 'game' },
   { id: 'snake',   icon: Gamepad2,      labelKey: 'fab.snake',     blurb: 'Klasika. Nesněz sám sebe.',                   color: 'from-green-500 to-emerald-600', kind: 'game' },
   { id: 'tower',   icon: Shield,        labelKey: 'fab.tower',     blurb: 'Postav věže, ubraň cestu.',                    color: 'from-orange-500 to-red-600',   kind: 'game' },
@@ -65,6 +69,7 @@ export function GameModals({ active, onClose }: GameModalsProps) {
       <VIPPuzzleGame isOpen={active === 'vip-puzzle'} onClose={onClose} />
       <VoiceAgentModal isOpen={active === 'voice'} onClose={onClose} />
       <BrawlGame isOpen={active === 'brawl'} onClose={onClose} />
+      <KamostavbaGame isOpen={active === 'kamostavba'} onClose={onClose} />
     </>
   );
 }

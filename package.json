@@ -17,7 +17,6 @@
     "@emoji-mart/data": "^1.2.1",
     "@emoji-mart/react": "^1.1.1",
     "@hookform/resolvers": "^3.10.0",
-    "@lovable.dev/cloud-auth-js": "^1.1.2",
     "@radix-ui/react-accordion": "^1.2.11",
     "@radix-ui/react-alert-dialog": "^1.1.14",
     "@radix-ui/react-aspect-ratio": "^1.1.7",
@@ -97,5 +96,5 @@
     "vite": "^5.4.19",
     "vitest": "^3.2.4"
   },
-  "description": "Kamosféra — bezpečná sociální síť pro děti."
+  "description": "Kamosf\u00e9ra \u2014 bezpe\u010dn\u00e1 soci\u00e1ln\u00ed s\u00ed\u0165 pro d\u011bti."
 }
