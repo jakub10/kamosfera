@@ -202,7 +202,13 @@ z e-mailu — kdo se hlásil jako `karel.vomacka@…`, měl přezdívku
 díra do soukromí a je zalepená; tady se naposled hodí.
 
 Výsledný `2-import.sql` pak — stejně jako schéma — celý najednou do
-**SQL editoru**. Je to jedna
+**SQL editoru**.
+
+> **V SQL editoru musí být vypnuté RLS.** Editor umí dotazy pouštět tak,
+> jako by je poslalo dítě z prohlížeče; pak ale platí stejná ochranná
+> pravidla, která tu databázi hlídají — a ta vložení zvenčí zakazují.
+> Import na tom spadne hned na první tabulce (`kamo_users`). Import je
+> správcovská operace a jako správce má běžet. Je to jedna
 transakce a na konci si sám zkontroluje počty — když něco nesedí, vypíše
 to a nic se neuloží.
 
