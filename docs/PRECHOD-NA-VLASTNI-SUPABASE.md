@@ -43,7 +43,12 @@ Po založení: **Project Settings → API**. Odtud jsou potřeba dvě hodnoty:
 
 ## 2. Schéma databáze
 
-V terminálu, v adresáři s repozitářem:
+**Bez terminálu.** V Supabase vlevo **SQL editor** → **New query** → vložit
+celý soubor `1-schema.sql` → **Run**. Chvíli to běží, pak se dole ukáže
+`Success`. Hotovo.
+
+Ten soubor je všech 46 migrací slepených za sebou; vyrobí ho
+`scripts/schema_do_jedneho_suboru.sh`. Kdo terminál má, může místo toho:
 
 ```bash
 npx supabase login
@@ -51,24 +56,22 @@ npx supabase link --project-ref <ref>
 npx supabase db push --include-all
 ```
 
-`--include-all` je důležité: bez něj Supabase CLI přeskočí migrace starší,
-než je poslední zaznamenaná — a tady se nahrává celá historie najednou.
+`--include-all` je tam důležité: bez něj CLI přeskočí migrace starší, než
+je poslední zaznamenaná, a tady se nahrává celá historie najednou.
 
-Projde-li to bez chyby, stojí kompletní schéma: profily, příspěvky, zprávy
-se žádostmi o konverzaci, blokování, bezpečnostní deník, reakce, hry
-i `world_seed()` pro Kamosvět.
+Ať tak nebo tak, po doběhnutí stojí kompletní schéma: profily, příspěvky,
+zprávy se žádostmi o konverzaci, blokování, bezpečnostní deník, reakce,
+hry i `world_seed()` pro Kamosvět.
 
 > **Export z Lovable má rozbité kódování.** Soubor, co odtamtud spadne,
 > má českou diakritiku převedenou přes čínskou znakovou sadu — „První
 > příspěvek" v něm vypadá jako „Prvn铆 p艡铆sp臎vek". Nahrát se takhle nesmí,
-> jinak v aplikaci zůstanou čínské znaky. Schéma i obsah tabulky
-> `achievements` staví migrace správně, takže tenhle export není potřeba.
+> jinak v aplikaci zůstanou čínské znaky. Obsah tabulky `achievements`
+> staví migrace správně, takže tenhle export není potřeba.
 
 Kontrola v dashboardu: **Table Editor** → mají tam být tabulky `profiles`,
-`posts`, `conversations`, `user_blocks`, `safety_events`; **Storage** → 
+`posts`, `conversations`, `user_blocks`, `safety_events`; **Storage** →
 úložiště na avatary a obrázky.
-
----
 
 ## 3. Přihlášení
 
@@ -161,7 +164,7 @@ jedním SQL souborem, který vyrobí `scripts/prenos_dat.py` z exportu
 (jednotlivé tabulky jako CSV ze záložky Cloud → Database).
 
 ```bash
-python3 scripts/prenos_dat.py export/ ucty.txt > import.sql
+python3 scripts/prenos_dat.py export/ ucty.txt > 2-import.sql
 ```
 
 `ucty.txt` je seznam e-mailů, jeden na řádek, ze záložky **Users**.
@@ -170,7 +173,8 @@ z e-mailu — kdo se hlásil jako `karel.vomacka@…`, měl přezdívku
 `karel.vomacka`. Byla to
 díra do soukromí a je zalepená; tady se naposled hodí.
 
-Výsledný `import.sql` pak celý najednou do **SQL editoru**. Je to jedna
+Výsledný `2-import.sql` pak — stejně jako schéma — celý najednou do
+**SQL editoru**. Je to jedna
 transakce a na konci si sám zkontroluje počty — když něco nesedí, vypíše
 to a nic se neuloží.
 
