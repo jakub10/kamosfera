@@ -57,11 +57,35 @@ TO authenticated
 USING (true);
 
 -- 3. Realtime: require authentication for channel topic subscriptions
-ALTER TABLE realtime.messages ENABLE ROW LEVEL SECURITY;
+--
+-- `realtime.messages` nie je naša tabuľka — patrí Supabase a v novom projekte
+-- ju vlastní `supabase_realtime_admin`. SQL editor beží pod rolou, ktorá na ňu
+-- nesiaha, a celá schéma by na tom spadla („must be owner of table messages").
+-- Preto to skúsime a keď sa nedá, povieme to nahlas namiesto pádu.
+DO $rt$
+BEGIN
+  EXECUTE 'ALTER TABLE realtime.messages ENABLE ROW LEVEL SECURITY';
+EXCEPTION
+  -- Nové projekty Supabase majú RLS na tejto tabuľke zapnuté už od začiatku,
+  -- takže keď sa nedá siahnuť, spravidla je aj tak zapnuté.
+  WHEN insufficient_privilege THEN
+    RAISE NOTICE 'realtime.messages: RLS sa nedalo zapnúť (chýbajú práva).';
+  WHEN undefined_table THEN NULL;
+END $rt$;
 
-DROP POLICY IF EXISTS "Authenticated users can subscribe to realtime" ON realtime.messages;
-CREATE POLICY "Authenticated users can subscribe to realtime"
-ON realtime.messages
-FOR SELECT
-TO authenticated
-USING (true);
+DO $rt$
+BEGIN
+  EXECUTE 'DROP POLICY IF EXISTS "Authenticated users can subscribe to realtime" ON realtime.messages';
+  EXECUTE $sql$
+    CREATE POLICY "Authenticated users can subscribe to realtime"
+    ON realtime.messages
+    FOR SELECT
+    TO authenticated
+    USING (true)
+  $sql$;
+EXCEPTION
+  WHEN insufficient_privilege THEN
+    RAISE NOTICE 'realtime.messages: politiku nešlo vytvoriť (chýbajú práva).';
+  WHEN duplicate_object THEN NULL;
+  WHEN undefined_table THEN NULL;
+END $rt$;

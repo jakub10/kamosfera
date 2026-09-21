@@ -20,32 +20,45 @@ USING (false);
 DROP POLICY IF EXISTS "Authenticated users can subscribe to realtime" ON public.messages;
 
 -- 3. realtime.messages: scope channel access to topics owned by the user
-DROP POLICY IF EXISTS "Authenticated users can subscribe to realtime" ON realtime.messages;
-DROP POLICY IF EXISTS "authenticated_can_select_realtime" ON realtime.messages;
-
--- Allow only topics that match the user's id, conversation participation, or group membership
-CREATE POLICY "Users can subscribe to their own realtime topics"
-ON realtime.messages
-FOR SELECT
-TO authenticated
-USING (
-  -- User's own topic by uid
-  (realtime.topic() = (SELECT auth.uid())::text)
-  -- Conversation channels: topic format conversation:<id>
-  OR EXISTS (
-    SELECT 1 FROM public.conversations c
-    WHERE 'conversation:' || c.id::text = realtime.topic()
-      AND (c.participant_1 = (SELECT auth.uid()) OR c.participant_2 = (SELECT auth.uid()))
-  )
-  -- Group channels: topic format group:<id>
-  OR EXISTS (
-    SELECT 1 FROM public.group_members gm
-    WHERE 'group:' || gm.group_id::text = realtime.topic()
-      AND gm.user_id = (SELECT auth.uid())
-  )
-  -- Public broadcast topics (posts/stories feed)
-  OR realtime.topic() IN ('posts', 'stories', 'public')
-);
+--
+-- Toto je tá ochrana, ktorá bráni dieťaťu prihlásiť sa na odber cudzej
+-- konverzácie a čítať ju naživo. `realtime.messages` však patrí Supabase
+-- a SQL editor na ňu nemusí mať práva — vtedy sa to nedá spraviť tadeto
+-- a treba to dohnať inak. Kontrola úplne na konci schémy o tom povie.
+DO $rt$
+BEGIN
+  EXECUTE 'DROP POLICY IF EXISTS "Authenticated users can subscribe to realtime" ON realtime.messages';
+  EXECUTE 'DROP POLICY IF EXISTS "authenticated_can_select_realtime" ON realtime.messages';
+  EXECUTE $sql$
+    CREATE POLICY "Users can subscribe to their own realtime topics"
+    ON realtime.messages
+    FOR SELECT
+    TO authenticated
+    USING (
+      -- User's own topic by uid
+      (realtime.topic() = (SELECT auth.uid())::text)
+      -- Conversation channels: topic format conversation:<id>
+      OR EXISTS (
+        SELECT 1 FROM public.conversations c
+        WHERE 'conversation:' || c.id::text = realtime.topic()
+          AND (c.participant_1 = (SELECT auth.uid()) OR c.participant_2 = (SELECT auth.uid()))
+      )
+      -- Group channels: topic format group:<id>
+      OR EXISTS (
+        SELECT 1 FROM public.group_members gm
+        WHERE 'group:' || gm.group_id::text = realtime.topic()
+          AND gm.user_id = (SELECT auth.uid())
+      )
+      -- Public broadcast topics (posts/stories feed)
+      OR realtime.topic() IN ('posts', 'stories', 'public')
+    )
+  $sql$;
+EXCEPTION
+  WHEN insufficient_privilege THEN
+    RAISE WARNING 'realtime.messages: politika odberov sa NEVYTVORILA (chýbajú práva). Bez nej si môže ktokoľvek prihlásiť odber cudzej konverzácie.';
+  WHEN duplicate_object THEN NULL;
+  WHEN undefined_table THEN NULL;
+END $rt$;
 
 -- 4. notifications: restrict types and require valid context
 DROP POLICY IF EXISTS "Users can create notifications for others" ON public.notifications;

@@ -69,6 +69,34 @@ hry i `world_seed()` pro Kamosvět.
 > jinak v aplikaci zůstanou čínské znaky. Obsah tabulky `achievements`
 > staví migrace správně, takže tenhle export není potřeba.
 
+### Ochrana odběrů naživo
+
+Na konci schématu se ozve jedna kontrola. Když řekne **„Odběry naživo jsou
+chráněné"**, je vše v pořádku a tuhle část přeskoč.
+
+Když se ozve varování, že politika **nevznikla**: tabulka `realtime.messages`
+patří Supabase, ne nám, a SQL editor na ni nemusí mít práva. Jde o pravidlo,
+které drží, že dítě si může přihlásit odběr jen svých konverzací a skupin.
+Bez něj si kdokoli přihlásí odběr cizího kanálu a čte zprávy, jak přicházejí —
+RLS nad `public.messages` to nezachytí, protože ta hlídá čtení tabulky,
+ne odběr kanálu.
+
+Zbytek databáze je v pořádku a aplikace poběží. Dorovnat to jde dvěma
+způsoby:
+
+- **Supabase CLI** (`npx supabase db push --include-all`) běží pod rolí,
+  která na tu tabulku dosáhne, a politiku vytvoří.
+- Nebo **Realtime úplně vypnout**, dokud to není nastavené: Database →
+  Replication → odebrat tabulky z publikace. Aplikace pak neaktualizuje
+  živě, ale nic neuniká.
+
+Kontrola se dá spustit kdykoli znovu:
+
+```sql
+SELECT policyname FROM pg_policies
+WHERE schemaname = 'realtime' AND tablename = 'messages';
+```
+
 Kontrola v dashboardu: **Table Editor** → mají tam být tabulky `profiles`,
 `posts`, `conversations`, `user_blocks`, `safety_events`; **Storage** →
 úložiště na avatary a obrázky.
