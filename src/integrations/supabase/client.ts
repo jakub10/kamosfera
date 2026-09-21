@@ -4,9 +4,12 @@
 // Když ho něco přepíše, je potřeba to sem vrátit.
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
+import { cleanEnvValue, describeConfig } from './config';
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+// Kopírování z dashboardu občas přinese i neviditelné znaky. Ty pryč —
+// s nimi klíč funguje dál. Co zbude, prověří `describeConfig`.
+const SUPABASE_URL = cleanEnvValue(import.meta.env.VITE_SUPABASE_URL);
+const SUPABASE_PUBLISHABLE_KEY = cleanEnvValue(import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY);
 
 /**
  * Chybí nastavení? Řekni to nahlas.
@@ -17,7 +20,8 @@ const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
  * obrazovku bez jediného vodítka. Tenhle příznak čte `main.tsx` a místo
  * prázdna ukáže, co je potřeba nastavit.
  */
-export const supabaseConfigMissing = !SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY;
+export const supabaseConfig = describeConfig(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+export const supabaseConfigMissing = supabaseConfig.kind !== 'ok';
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
@@ -25,8 +29,8 @@ export const supabaseConfigMissing = !SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY;
 // Zástupné hodnoty drží modul při životě, aby se aplikace vůbec načetla a
 // stihla vysvětlit, co chybí. Žádný požadavek se s nimi nikam nedostane.
 export const supabase = createClient<Database>(
-  SUPABASE_URL || 'https://nenastaveno.invalid',
-  SUPABASE_PUBLISHABLE_KEY || 'nenastaveno',
+  supabaseConfig.kind === 'ok' ? SUPABASE_URL : 'https://nenastaveno.invalid',
+  supabaseConfig.kind === 'ok' ? SUPABASE_PUBLISHABLE_KEY : 'nenastaveno',
   {
     auth: {
       // Sezení drží prohlížeč. Dřív tu byl broker, který ho přes postMessage

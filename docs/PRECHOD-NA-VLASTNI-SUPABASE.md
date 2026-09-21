@@ -183,6 +183,21 @@ VITE_SUPABASE_PUBLISHABLE_KEY=<anon key>
 Vite zapéká proměnné **při buildu**, takže po změně je nutné pustit
 **Redeploy**. Bez toho web dál mluví se starou databází.
 
+> **Klíč kopíruj tlačítkem Copy, ne myší.** V Supabase je potřeba ho
+> nejdřív odkrýt a teprve pak kopírovat. Ručním označením se snadno vezme
+> i verze zakrytá tečkami (`••••`) nebo useknutá třemi tečkami (`…`) —
+> vypadá to správně, ale jsou to znaky, které se nedají poslat v HTTP
+> hlavičce. Prohlížeč pak shodí úplně první požadavek hláškou
+>
+> ```
+> Failed to read the 'headers' property from 'RequestInit':
+> String contains non ISO-8859-1 code point
+> ```
+>
+> ze které se o klíči nepozná vůbec nic. Aplikace to teď pozná sama a
+> místo téhle hlášky řekne, který znak to je a co s ním; neviditelné
+> pasažéry (nulová šířka, BOM) si rovnou umyje a běží dál.
+
 ---
 
 ## 6. Data ze staré Kamosféry
