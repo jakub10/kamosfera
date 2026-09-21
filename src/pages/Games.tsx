@@ -70,7 +70,14 @@ const Games = () => {
           )}
         </span>
         <span className="min-w-0">
-          <span className="block font-semibold">{label(item)}</span>
+          <span className="flex items-center gap-2 font-semibold">
+            {label(item)}
+            {item.fresh && (
+              <span className="rounded-full bg-rose-500/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-rose-500">
+                Nové
+              </span>
+            )}
+          </span>
           <span className="block text-sm text-muted-foreground">{item.blurb}</span>
         </span>
       </button>

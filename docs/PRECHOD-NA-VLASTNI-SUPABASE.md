@@ -74,9 +74,14 @@ Kontrola v dashboardu: **Table Editor** → mají tam být tabulky `profiles`,
 
 **Authentication → URL Configuration**
 
-- *Site URL*: `https://kamosfera.vercel.app`
-- *Redirect URLs*: přidat i adresy náhledů z Vercelu
-  (`https://kamosfera-*.vercel.app`), jinak se z nich nejde přihlásit.
+- *Site URL*: `https://kamosfera.online`
+- *Redirect URLs*: k tomu ještě `https://kamosfera.vercel.app` a adresy
+  náhledů (`https://kamosfera-*.vercel.app`) — jinak se z nich nejde
+  přihlásit a testovat před ostrým nasazením nejde.
+
+Adresa v *Site URL* je ta, na kterou se posílají odkazy z e-mailů. Patří
+sem doména, ne `vercel.app`, jinak dětem chodí odkazy jinam, než na čem
+web běží.
 
 **Authentication → Providers → Email**
 
@@ -88,6 +93,8 @@ Kontrola v dashboardu: **Table Editor** → mají tam být tabulky `profiles`,
 
 1. Google Cloud Console → *Credentials* → OAuth client, typ *Web application*.
 2. Mezi *Authorized redirect URIs*: `https://<ref>.supabase.co/auth/v1/callback`
+   (adresa Supabase, ne `kamosfera.online` — Google se baví se Supabase,
+   teprve ten pak pustí dítě zpátky na web)
 3. Client ID a Client Secret vložit v Supabase a providera zapnout.
 
 Dokud Google zapnutý není, tlačítko to řekne a pošle uživatele na
@@ -127,6 +134,14 @@ Pak **Edge Functions → Secrets** (nebo `npx supabase secrets set KLÍČ=hodnot
 
 ## 5. Vercel
 
+**Settings → Domains** → přidat `kamosfera.online` a `www.kamosfera.online`.
+Vercel ukáže, co nastavit u registrátora domény — většinou `A` záznam pro
+kořen a `CNAME` pro `www`. Než se změna rozejde po internetu, může to
+trvat i pár hodin; do té doby dál funguje adresa na `vercel.app`.
+
+Certifikát (HTTPS) si Vercel vystaví sám, jakmile záznamy sedí. Žádné
+`http://` — prohlížeče by u přihlašování nadávaly a právem.
+
 **Settings → Environment Variables** — přepsat na nové hodnoty z kroku 1:
 
 ```
@@ -141,7 +156,7 @@ Vite zapéká proměnné **při buildu**, takže po změně je nutné pustit
 
 ## 6. Zkouška
 
-1. Otevřít `https://kamosfera.vercel.app`, založit nový účet.
+1. Otevřít `https://kamosfera.online`, založit nový účet.
 2. Napsat příspěvek, přidat reakci, nahrát obrázek.
 3. Zkusit poslat zprávu někomu, kdo není kamarád — musí projít jedna
    krátká zpráva bez odkazu a druhá už ne.
