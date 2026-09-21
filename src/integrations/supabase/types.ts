@@ -19,6 +19,7 @@ export type Database = {
           category: string
           created_at: string
           description: string
+          game_type: string | null
           icon: string
           id: string
           name: string
@@ -29,6 +30,7 @@ export type Database = {
           category: string
           created_at?: string
           description: string
+          game_type?: string | null
           icon: string
           id?: string
           name: string
@@ -39,6 +41,7 @@ export type Database = {
           category?: string
           created_at?: string
           description?: string
+          game_type?: string | null
           icon?: string
           id?: string
           name?: string
