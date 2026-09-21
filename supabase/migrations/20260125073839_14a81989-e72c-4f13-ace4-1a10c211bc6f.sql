@@ -175,6 +175,42 @@ CREATE TRIGGER on_auth_user_created
     FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 
 -- Enable realtime for posts, likes, comments
-ALTER PUBLICATION supabase_realtime ADD TABLE public.posts;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.likes;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.comments;
+DO $realtime$
+BEGIN
+  ALTER PUBLICATION supabase_realtime ADD TABLE public.posts;
+EXCEPTION
+  -- Tabuľka už v publikácii je (migrácie sa prehrávajú aj na hotovej databáze).
+  WHEN duplicate_object THEN NULL;
+  -- SQL editor v Supabase beží pod rolou, ktorá na publikáciu nesiaha.
+  -- Realtime sa dá zapnúť klikom v Database → Replication; kvôli tomuto
+  -- nemá padnúť celá schéma.
+  WHEN insufficient_privilege THEN
+    RAISE NOTICE 'Realtime: % — zapni ručne v Database → Replication.', 'public.posts';
+  WHEN undefined_object THEN NULL;
+END $realtime$;
+DO $realtime$
+BEGIN
+  ALTER PUBLICATION supabase_realtime ADD TABLE public.likes;
+EXCEPTION
+  -- Tabuľka už v publikácii je (migrácie sa prehrávajú aj na hotovej databáze).
+  WHEN duplicate_object THEN NULL;
+  -- SQL editor v Supabase beží pod rolou, ktorá na publikáciu nesiaha.
+  -- Realtime sa dá zapnúť klikom v Database → Replication; kvôli tomuto
+  -- nemá padnúť celá schéma.
+  WHEN insufficient_privilege THEN
+    RAISE NOTICE 'Realtime: % — zapni ručne v Database → Replication.', 'public.likes';
+  WHEN undefined_object THEN NULL;
+END $realtime$;
+DO $realtime$
+BEGIN
+  ALTER PUBLICATION supabase_realtime ADD TABLE public.comments;
+EXCEPTION
+  -- Tabuľka už v publikácii je (migrácie sa prehrávajú aj na hotovej databáze).
+  WHEN duplicate_object THEN NULL;
+  -- SQL editor v Supabase beží pod rolou, ktorá na publikáciu nesiaha.
+  -- Realtime sa dá zapnúť klikom v Database → Replication; kvôli tomuto
+  -- nemá padnúť celá schéma.
+  WHEN insufficient_privilege THEN
+    RAISE NOTICE 'Realtime: % — zapni ručne v Database → Replication.', 'public.comments';
+  WHEN undefined_object THEN NULL;
+END $realtime$;
