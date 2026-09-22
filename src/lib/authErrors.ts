@@ -23,9 +23,9 @@ interface Rule {
 
 const RULES: Rule[] = [
   {
-    // Supabase vrátí tohle, když selže trigger handle_new_user — typicky
-    // proto, že v databázi ještě neběžely migrace.
-    match: /database error|saving new user/i,
+    // Při registraci: selhal trigger handle_new_user — typicky proto, že
+    // v databázi ještě neběžely migrace.
+    match: /saving new user/i,
     friendly: {
       title: 'Databáze účet nevytvořila',
       description: 'Vypadá to na nedodělané nastavení databáze, ne na chybu u tebe. Dej vědět tomu, kdo Kamosféru spravuje.',
@@ -109,6 +109,14 @@ const RULES: Rule[] = [
  * případy zůstávají v lidské řeči; tenhle jeden ukáže i to, co řekl server.
  */
 function fallback(message: string): FriendlyAuthError {
+  if (/database error/i.test(message)) {
+    return {
+      title: 'Chyba v databázi',
+      description:
+        'Nejde o chybu u tebe — je to v nastavení databáze. Ukaž tohle správci: ' +
+        message.trim().slice(0, 200),
+    };
+  }
   const detail = message.trim().slice(0, 200);
   return {
     title: 'Nepovedlo se',

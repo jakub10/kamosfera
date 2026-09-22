@@ -146,6 +146,29 @@ SELECT
 FROM kamo_users u
 ON CONFLICT (id) DO NOTHING;
 
+-- Prihlasovanie v Supabase číta tieto stĺpce ako text a na NULL padne
+-- s „Database error querying schema". Keď účet zakladá Supabase sám,
+-- vyplní ich prázdnym textom; tu to treba spraviť ručne. Nie každá verzia
+-- má všetky, tak podľa toho, čo tam je.
+DO $kamo$
+DECLARE stlpec text;
+BEGIN
+  FOREACH stlpec IN ARRAY ARRAY[
+    'confirmation_token', 'recovery_token',
+    'email_change_token_new', 'email_change_token_current', 'email_change',
+    'phone_change', 'phone_change_token', 'reauthentication_token'
+  ] LOOP
+    IF EXISTS (
+      SELECT 1 FROM information_schema.columns
+      WHERE table_schema = 'auth' AND table_name = 'users' AND column_name = stlpec
+    ) THEN
+      EXECUTE format(
+        'UPDATE auth.users SET %I = '''' WHERE %I IS NULL AND id IN (SELECT id FROM kamo_users)',
+        stlpec, stlpec);
+    END IF;
+  END LOOP;
+END $kamo$;
+
 -- Bez záznamu v `identities` sa prihlásenie heslom neuchytí. Tvar tejto
 -- tabuľky sa medzi verziami Supabase líšil, tak podľa toho, čo tam je.
 DO $kamo$
@@ -319,6 +342,10 @@ DELETE FROM public.notifications;
     print("-- 5. Kontrola. Keď niektorý riadok nesedí, COMMIT nedávaj a napíš.")
     checks = [
         ("účty", "SELECT count(*) FROM auth.users", len(users)),
+        ("účty s prázdnym tokenom (prihlásenie by padlo)",
+         "SELECT count(*) FROM auth.users WHERE confirmation_token IS NULL "
+         "OR recovery_token IS NULL OR email_change_token_new IS NULL "
+         "OR email_change IS NULL", 0),
         ("profily", "SELECT count(*) FROM public.profiles", len(profiles)),
         ("príspevky", "SELECT count(*) FROM public.posts", len(t("posts"))),
         ("komentáre", "SELECT count(*) FROM public.comments", len(t("comments"))),
