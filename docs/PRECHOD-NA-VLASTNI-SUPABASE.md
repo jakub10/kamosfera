@@ -69,6 +69,13 @@ hry i `world_seed()` pro Kamosvět.
 > jinak v aplikaci zůstanou čínské znaky. Obsah tabulky `achievements`
 > staví migrace správně, takže tenhle export není potřeba.
 
+> **Schéma `public` nemazat.** Nové Supabase má v ní nastavené, že každá
+> nová tabulka dostane práva pro `anon`, `authenticated` a `service_role`.
+> `DROP SCHEMA public CASCADE` to nastavení smaže s ní — tabulky pak
+> vzniknou bez práv, přihlášení projde (běží mimo `public`), ale stránka je
+> prázdná, protože na každý dotaz přijde „permission denied". Kdyby se to
+> stalo, práva vrátí `scripts/prava_supabase.sql`.
+
 ### Ochrana odběrů naživo
 
 Na konci schématu se ozve jedna kontrola. Když řekne **„Odběry naživo jsou
