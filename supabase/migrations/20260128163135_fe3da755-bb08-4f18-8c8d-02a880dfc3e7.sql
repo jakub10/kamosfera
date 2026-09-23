@@ -137,5 +137,29 @@ FOR EACH ROW
 EXECUTE FUNCTION public.update_conversation_timestamp();
 
 -- Enable realtime for messages
-ALTER PUBLICATION supabase_realtime ADD TABLE public.messages;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.notifications;
+DO $realtime$
+BEGIN
+  ALTER PUBLICATION supabase_realtime ADD TABLE public.messages;
+EXCEPTION
+  -- Tabuľka už v publikácii je (migrácie sa prehrávajú aj na hotovej databáze).
+  WHEN duplicate_object THEN NULL;
+  -- SQL editor v Supabase beží pod rolou, ktorá na publikáciu nesiaha.
+  -- Realtime sa dá zapnúť klikom v Database → Replication; kvôli tomuto
+  -- nemá padnúť celá schéma.
+  WHEN insufficient_privilege THEN
+    RAISE NOTICE 'Realtime: % — zapni ručne v Database → Replication.', 'public.messages';
+  WHEN undefined_object THEN NULL;
+END $realtime$;
+DO $realtime$
+BEGIN
+  ALTER PUBLICATION supabase_realtime ADD TABLE public.notifications;
+EXCEPTION
+  -- Tabuľka už v publikácii je (migrácie sa prehrávajú aj na hotovej databáze).
+  WHEN duplicate_object THEN NULL;
+  -- SQL editor v Supabase beží pod rolou, ktorá na publikáciu nesiaha.
+  -- Realtime sa dá zapnúť klikom v Database → Replication; kvôli tomuto
+  -- nemá padnúť celá schéma.
+  WHEN insufficient_privilege THEN
+    RAISE NOTICE 'Realtime: % — zapni ručne v Database → Replication.', 'public.notifications';
+  WHEN undefined_object THEN NULL;
+END $realtime$;

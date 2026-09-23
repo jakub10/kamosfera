@@ -43,7 +43,12 @@ Po založení: **Project Settings → API**. Odtud jsou potřeba dvě hodnoty:
 
 ## 2. Schéma databáze
 
-V terminálu, v adresáři s repozitářem:
+**Bez terminálu.** V Supabase vlevo **SQL editor** → **New query** → vložit
+celý soubor `1-schema.sql` → **Run**. Chvíli to běží, pak se dole ukáže
+`Success`. Hotovo.
+
+Ten soubor je všech 46 migrací slepených za sebou; vyrobí ho
+`scripts/schema_do_jedneho_suboru.sh`. Kdo terminál má, může místo toho:
 
 ```bash
 npx supabase login
@@ -51,24 +56,57 @@ npx supabase link --project-ref <ref>
 npx supabase db push --include-all
 ```
 
-`--include-all` je důležité: bez něj Supabase CLI přeskočí migrace starší,
-než je poslední zaznamenaná — a tady se nahrává celá historie najednou.
+`--include-all` je tam důležité: bez něj CLI přeskočí migrace starší, než
+je poslední zaznamenaná, a tady se nahrává celá historie najednou.
 
-Projde-li to bez chyby, stojí kompletní schéma: profily, příspěvky, zprávy
-se žádostmi o konverzaci, blokování, bezpečnostní deník, reakce, hry
-i `world_seed()` pro Kamosvět.
+Ať tak nebo tak, po doběhnutí stojí kompletní schéma: profily, příspěvky,
+zprávy se žádostmi o konverzaci, blokování, bezpečnostní deník, reakce,
+hry i `world_seed()` pro Kamosvět.
 
 > **Export z Lovable má rozbité kódování.** Soubor, co odtamtud spadne,
 > má českou diakritiku převedenou přes čínskou znakovou sadu — „První
 > příspěvek" v něm vypadá jako „Prvn铆 p艡铆sp臎vek". Nahrát se takhle nesmí,
-> jinak v aplikaci zůstanou čínské znaky. Schéma i obsah tabulky
-> `achievements` staví migrace správně, takže tenhle export není potřeba.
+> jinak v aplikaci zůstanou čínské znaky. Obsah tabulky `achievements`
+> staví migrace správně, takže tenhle export není potřeba.
+
+> **Schéma `public` nemazat.** Nové Supabase má v ní nastavené, že každá
+> nová tabulka dostane práva pro `anon`, `authenticated` a `service_role`.
+> `DROP SCHEMA public CASCADE` to nastavení smaže s ní — tabulky pak
+> vzniknou bez práv, přihlášení projde (běží mimo `public`), ale stránka je
+> prázdná, protože na každý dotaz přijde „permission denied". Kdyby se to
+> stalo, práva vrátí `scripts/prava_supabase.sql`.
+
+### Ochrana odběrů naživo
+
+Na konci schématu se ozve jedna kontrola. Když řekne **„Odběry naživo jsou
+chráněné"**, je vše v pořádku a tuhle část přeskoč.
+
+Když se ozve varování, že politika **nevznikla**: tabulka `realtime.messages`
+patří Supabase, ne nám, a SQL editor na ni nemusí mít práva. Jde o pravidlo,
+které drží, že dítě si může přihlásit odběr jen svých konverzací a skupin.
+Bez něj si kdokoli přihlásí odběr cizího kanálu a čte zprávy, jak přicházejí —
+RLS nad `public.messages` to nezachytí, protože ta hlídá čtení tabulky,
+ne odběr kanálu.
+
+Zbytek databáze je v pořádku a aplikace poběží. Dorovnat to jde dvěma
+způsoby:
+
+- **Supabase CLI** (`npx supabase db push --include-all`) běží pod rolí,
+  která na tu tabulku dosáhne, a politiku vytvoří.
+- Nebo **Realtime úplně vypnout**, dokud to není nastavené: Database →
+  Replication → odebrat tabulky z publikace. Aplikace pak neaktualizuje
+  živě, ale nic neuniká.
+
+Kontrola se dá spustit kdykoli znovu:
+
+```sql
+SELECT policyname FROM pg_policies
+WHERE schemaname = 'realtime' AND tablename = 'messages';
+```
 
 Kontrola v dashboardu: **Table Editor** → mají tam být tabulky `profiles`,
-`posts`, `conversations`, `user_blocks`, `safety_events`; **Storage** → 
+`posts`, `conversations`, `user_blocks`, `safety_events`; **Storage** →
 úložiště na avatary a obrázky.
-
----
 
 ## 3. Přihlášení
 
@@ -152,11 +190,67 @@ VITE_SUPABASE_PUBLISHABLE_KEY=<anon key>
 Vite zapéká proměnné **při buildu**, takže po změně je nutné pustit
 **Redeploy**. Bez toho web dál mluví se starou databází.
 
+> **Klíč kopíruj tlačítkem Copy, ne myší.** V Supabase je potřeba ho
+> nejdřív odkrýt a teprve pak kopírovat. Ručním označením se snadno vezme
+> i verze zakrytá tečkami (`••••`) nebo useknutá třemi tečkami (`…`) —
+> vypadá to správně, ale jsou to znaky, které se nedají poslat v HTTP
+> hlavičce. Prohlížeč pak shodí úplně první požadavek hláškou
+>
+> ```
+> Failed to read the 'headers' property from 'RequestInit':
+> String contains non ISO-8859-1 code point
+> ```
+>
+> ze které se o klíči nepozná vůbec nic. Aplikace to teď pozná sama a
+> místo téhle hlášky řekne, který znak to je a co s ním; neviditelné
+> pasažéry (nulová šířka, BOM) si rovnou umyje a běží dál.
+
 ---
 
-## 6. Zkouška
+## 6. Data ze staré Kamosféry
 
-1. Otevřít `https://kamosfera.online`, založit nový účet.
+Nová databáze startuje prázdná. Účty, příspěvky a zprávy se přenesou
+jedním SQL souborem, který vyrobí `scripts/prenos_dat.py` z exportu
+(jednotlivé tabulky jako CSV ze záložky Cloud → Database).
+
+```bash
+python3 scripts/prenos_dat.py export/ ucty.txt > 2-import.sql
+```
+
+`ucty.txt` je seznam e-mailů, jeden na řádek, ze záložky **Users**.
+K profilům se přiřadí podle toho, že stará Kamosféra odvozovala přezdívku
+z e-mailu — kdo se hlásil jako `karel.vomacka@…`, měl přezdívku
+`karel.vomacka`. Byla to
+díra do soukromí a je zalepená; tady se naposled hodí.
+
+Výsledný `2-import.sql` pak — stejně jako schéma — celý najednou do
+**SQL editoru**.
+
+> **V SQL editoru musí být vypnuté RLS.** Editor umí dotazy pouštět tak,
+> jako by je poslalo dítě z prohlížeče; pak ale platí stejná ochranná
+> pravidla, která tu databázi hlídají — a ta vložení zvenčí zakazují.
+> Import na tom spadne hned na první tabulce (`kamo_users`). Import je
+> správcovská operace a jako správce má běžet. Je to jedna
+transakce a na konci si sám zkontroluje počty — když něco nesedí, vypíše
+to a nic se neuloží.
+
+> **Ten soubor obsahuje e-maily dětí a obsah jejich soukromých zpráv.**
+> Po použití ho smaž. Proto ho taky hlídá `.gitignore`.
+
+**Hesla se přenést nedají** — v exportu nejsou. Každý dostane stejné
+dočasné heslo a hned si ho změní. Kdo se dosud hlásil přes Google, může
+dál: účet se spáruje podle e-mailu, jakmile je Google nastavený podle
+kroku 3.
+
+**Obrázky** (5 avatarů, 8 v příspěvcích) leží ve starém úložišti. Skript
+`stiahni-obrazky.sh`, který vznikne vedle, je stáhne; nahrát se musí do
+stejnojmenných bucketů (`avatars`, `posts`) a na stejnou cestu. Adresy
+pak přepíše `UPDATE` na konci toho skriptu.
+
+## 7. Zkouška
+
+1. Otevřít `https://kamosfera.online` a přihlásit se dočasným heslem —
+   měly by být vidět staré příspěvky i konverzace.
 2. Napsat příspěvek, přidat reakci, nahrát obrázek.
 3. Zkusit poslat zprávu někomu, kdo není kamarád — musí projít jedna
    krátká zpráva bez odkazu a druhá už ne.

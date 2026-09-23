@@ -64,6 +64,15 @@ LANGUAGE sql IMMUTABLE AS $$ SELECT string_to_array(name, '/') $$;
 
 GRANT USAGE ON SCHEMA public, auth, storage, realtime TO anon, authenticated, service_role;
 
+-- Supabase dáva každej novej tabuľke v `public` práva pre tieto roly
+-- automaticky. Náhrada to predtým nerobila — a testy tak bežali v prísnejších
+-- podmienkach než ostrá databáza: „permission denied" vyzeral ako fungujúca
+-- ochrana. Kto čo smie, má rozhodovať RLS, nie chýbajúce práva; a presne to
+-- sa tu má overovať.
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO anon, authenticated, service_role;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO anon, authenticated, service_role;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON FUNCTIONS TO anon, authenticated, service_role;
+
 CREATE PUBLICATION supabase_realtime;
 CREATE OR REPLACE FUNCTION realtime.topic() RETURNS text
 LANGUAGE sql STABLE AS $$ SELECT current_setting('realtime.topic', true) $$;

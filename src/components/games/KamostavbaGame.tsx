@@ -152,6 +152,9 @@ function drawBlock(
 
 export function KamostavbaGame({ isOpen, onClose }: KamostavbaGameProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
+  const stageRef = useRef<HTMLDivElement>(null);
+  const [size, setSize] = useState<{ w: number; h: number } | null>(null);
   const gameRef = useRef<Game>(freshGame());
   const rafRef = useRef<number>();
 
@@ -161,6 +164,34 @@ export function KamostavbaGame({ isOpen, onClose }: KamostavbaGameProps) {
 
   useEffect(() => {
     if (isOpen) setBest(readBest());
+  }, [isOpen]);
+
+  // Plátno sa dřív natáhlo na celou šířku okna a výšku dopočítalo z poměru
+  // stran — na výšku obrazovky se nedívalo vůbec. Na notebooku tak okno
+  // přeteklo o 74 px a spodek věže i tlačítko po pádu byly mimo obrazovku.
+  // Teď se velikost počítá z místa, které opravdu zbývá: šířka karty, nebo
+  // výška okna bez hlavičky a patičky — co je menší. Poměr stran zůstává.
+  useEffect(() => {
+    if (!isOpen) return;
+    const fit = () => {
+      const card = cardRef.current;
+      const stage = stageRef.current;
+      if (!card || !stage) return;
+      const viewH = window.visualViewport?.height ?? window.innerHeight;
+      const pad = window.innerWidth < 640 ? 16 : 32;
+      const chrome = card.offsetHeight - stage.offsetHeight;
+      const maxW = card.clientWidth;
+      const maxH = Math.max(220, viewH - pad - chrome);
+      const h = Math.min(maxW * (H / W), maxH);
+      setSize({ w: Math.floor(h * (W / H)), h: Math.floor(h) });
+    };
+    fit();
+    window.addEventListener('resize', fit);
+    window.visualViewport?.addEventListener('resize', fit);
+    return () => {
+      window.removeEventListener('resize', fit);
+      window.visualViewport?.removeEventListener('resize', fit);
+    };
   }, [isOpen]);
 
   const drop = useCallback(() => {
@@ -365,8 +396,8 @@ export function KamostavbaGame({ isOpen, onClose }: KamostavbaGameProps) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-      <div className="w-full max-w-md bg-card border border-border rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/50 backdrop-blur-sm">
+      <div ref={cardRef} className="w-full max-w-md bg-card border border-border rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
         <div className="flex items-center justify-between p-3 border-b border-border bg-gradient-to-r from-amber-500/10 to-rose-500/10">
           <h3 className="font-semibold">🧱 Kamostavba</h3>
           <div className="flex items-center gap-3 text-sm">
@@ -401,14 +432,19 @@ export function KamostavbaGame({ isOpen, onClose }: KamostavbaGameProps) {
           </div>
         </div>
 
-        <div className="relative bg-black/20">
+        <div ref={stageRef} className="relative flex justify-center bg-gradient-to-b from-[#0f1a38] to-[#2e2051]">
           <canvas
             ref={canvasRef}
             onPointerDown={(e) => {
               e.preventDefault();
               drop();
             }}
-            style={{ width: '100%', height: 'auto', display: 'block', touchAction: 'none' }}
+            style={{
+              width: size ? `${size.w}px` : '100%',
+              height: size ? `${size.h}px` : 'auto',
+              display: 'block',
+              touchAction: 'none',
+            }}
             className="cursor-pointer"
             role="button"
             tabIndex={0}
@@ -433,7 +469,7 @@ export function KamostavbaGame({ isOpen, onClose }: KamostavbaGameProps) {
           )}
         </div>
 
-        <p className="p-3 text-center text-xs text-muted-foreground">
+        <p className="px-3 py-2 text-center text-xs text-muted-foreground">
           Klepni, nebo zmáčkni mezerník. Trefíš-li se přesně, kostka se ti kousek vrátí.
         </p>
       </div>

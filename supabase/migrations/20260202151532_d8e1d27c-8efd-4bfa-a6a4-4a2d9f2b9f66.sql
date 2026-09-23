@@ -142,4 +142,16 @@ FOR DELETE
 USING (auth.uid() = sender_id);
 
 -- Enable realtime for group messages
-ALTER PUBLICATION supabase_realtime ADD TABLE public.group_messages;
+DO $realtime$
+BEGIN
+  ALTER PUBLICATION supabase_realtime ADD TABLE public.group_messages;
+EXCEPTION
+  -- Tabuľka už v publikácii je (migrácie sa prehrávajú aj na hotovej databáze).
+  WHEN duplicate_object THEN NULL;
+  -- SQL editor v Supabase beží pod rolou, ktorá na publikáciu nesiaha.
+  -- Realtime sa dá zapnúť klikom v Database → Replication; kvôli tomuto
+  -- nemá padnúť celá schéma.
+  WHEN insufficient_privilege THEN
+    RAISE NOTICE 'Realtime: % — zapni ručne v Database → Replication.', 'public.group_messages';
+  WHEN undefined_object THEN NULL;
+END $realtime$;
