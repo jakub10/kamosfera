@@ -97,3 +97,6 @@ jobs:
 
       - name: Testy odznaků za hry
         run: psql -v ON_ERROR_STOP=1 -f supabase/tests/04_game_achievements.sql
+
+      - name: Testy Pevnosti a Nájazdu
+        run: psql -v ON_ERROR_STOP=1 -f supabase/tests/05_fortress.sql

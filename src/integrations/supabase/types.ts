@@ -160,6 +160,77 @@ export type Database = {
         }
         Relationships: []
       }
+      fortress_raids: {
+        Row: {
+          created_at: string
+          fortress_id: string
+          id: string
+          raider_id: string
+          replay: Json
+          success: boolean
+          time_ms: number
+          trap_hits: number
+        }
+        Insert: {
+          created_at?: string
+          fortress_id: string
+          id?: string
+          raider_id: string
+          replay: Json
+          success: boolean
+          time_ms: number
+          trap_hits?: number
+        }
+        Update: {
+          created_at?: string
+          fortress_id?: string
+          id?: string
+          raider_id?: string
+          replay?: Json
+          success?: boolean
+          time_ms?: number
+          trap_hits?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fortress_raids_fortress_id_fkey"
+            columns: ["fortress_id"]
+            isOneToOne: false
+            referencedRelation: "fortresses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fortresses: {
+        Row: {
+          created_at: string
+          grid: Json
+          id: string
+          owner_id: string
+          proof: Json | null
+          published: boolean
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          grid: Json
+          id?: string
+          owner_id: string
+          proof?: Json | null
+          published?: boolean
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          grid?: Json
+          id?: string
+          owner_id?: string
+          proof?: Json | null
+          published?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       friendships: {
         Row: {
           addressee_id: string
@@ -819,6 +890,44 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      fortress_browse: {
+        Args: never
+        Returns: {
+          avatar_url: string | null
+          full_name: string
+          grid: Json
+          id: string
+          is_friend: boolean
+          my_best_ms: number | null
+          owner_id: string
+          raids: number
+          successes: number
+          updated_at: string
+          username: string
+        }[]
+      }
+      fortress_leaderboard: {
+        Args: { _limit?: number }
+        Returns: {
+          avatar_url: string | null
+          full_name: string
+          id: string
+          owner_id: string
+          raids: number
+          successes: number
+          username: string
+        }[]
+      }
+      fortress_profile: {
+        Args: { _owner: string }
+        Returns: {
+          grid: Json
+          id: string
+          published: boolean
+          raids: number
+          successes: number
+        }[]
+      }
       are_friends: { Args: { _a: string; _b: string }; Returns: boolean }
       block_user: { Args: { _user_id: string }; Returns: undefined }
       blocked_for_me: { Args: { _other: string }; Returns: boolean }
