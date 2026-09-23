@@ -126,7 +126,7 @@ const Pevnost = () => {
             </div>
           </header>
 
-          <nav className="flex gap-1 overflow-x-auto rounded-2xl bg-muted p-1">
+          <nav className="grid grid-cols-2 gap-1 rounded-2xl bg-muted p-1 sm:flex">
             {TABS.map((t) => {
               const Icon = t.icon;
               return (

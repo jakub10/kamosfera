@@ -73,9 +73,19 @@ export function RunView({ cells, mode, title, replay, claimed, onFinish, onClose
   const [runId, setRunId] = useState(0);
   const touch = useMemo(isTouch, []);
 
+  // Len pri vývoji: automatický test v prehliadači potrebuje vidieť, kde
+  // postavička stojí, aby pustil šípku na správnom políčku. Do ostrého
+  // buildu sa to nedostane — `import.meta.env.DEV` je tam false a Vite
+  // vetvu vyhodí.
+  useEffect(() => {
+    if (import.meta.env.DEV) (window as unknown as Record<string, unknown>).__pevnost = stateRef;
+  });
+
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const [ts, setTs] = useState(24);
+  const tsRef = useRef(ts);
+  tsRef.current = ts;
 
   // Veľkosť políčka podľa miesta, ktoré naozaj je — celé číslo, aby boli
   // kocky ostré.
@@ -212,6 +222,50 @@ export function RunView({ cells, mode, title, replay, claimed, onFinish, onClose
     if (mode !== 'replay') onFinish?.(r, makeReplay(playCells, codesRef.current));
   }, [mode, onFinish, playCells]);
 
+  // Kreslenie je stabilná funkcia: veľkosť políčka číta z refu, takže zmena
+  // veľkosti okna nereštartuje slučku hry a doznievanie po konci má čím kresliť.
+  const draw = useCallback((sub: number, now: number) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    const ts = tsRef.current;
+    const px = ts * W;
+    if (canvas.width !== px * dpr) {
+      canvas.width = px * dpr;
+      canvas.height = ts * H * dpr;
+    }
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, px, ts * H);
+    ctx.save();
+    if (shake.current > 0) {
+      ctx.translate((Math.random() - 0.5) * shake.current, (Math.random() - 0.5) * shake.current);
+      shake.current *= 0.85;
+      if (shake.current < 0.4) shake.current = 0;
+    }
+    drawRun(ctx, stateRef.current, { ts, time: now, ownerView: mode === 'test' }, sub);
+
+    particles.current = particles.current.filter((p) => p.life < p.max);
+    for (const p of particles.current) {
+      p.life++;
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += 0.004;
+      ctx.globalAlpha = 1 - p.life / p.max;
+      ctx.fillStyle = p.color;
+      ctx.fillRect((p.x - p.size / 2) * ts, (p.y - p.size / 2) * ts, p.size * ts, p.size * ts);
+    }
+    ctx.globalAlpha = 1;
+    ctx.restore();
+
+    if (flash.current > 0) {
+      ctx.fillStyle = `rgba(239,68,68,${flash.current * 0.35})`;
+      ctx.fillRect(0, 0, px, ts * H);
+      flash.current = Math.max(0, flash.current - 0.03);
+    }
+  }, [mode]);
+
   // Hlavná slučka: simulácia po pevných krokoch, kreslenie podľa obrazovky.
   useEffect(() => {
     if (phase !== 'running') return;
@@ -250,61 +304,28 @@ export function RunView({ cells, mode, title, replay, claimed, onFinish, onClose
       const replayOver = mode === 'replay' && s.tick >= replayCodes.length;
       if (s.status !== 'running' || replayOver) {
         finish(s);
-        // Doznievanie efektov po konci.
-        const tail = (t: number) => {
-          draw(1, t);
-          if (particles.current.length) raf = requestAnimationFrame(tail);
-        };
-        raf = requestAnimationFrame(tail);
         return;
       }
       raf = requestAnimationFrame(loop);
     };
 
-    const draw = (sub: number, now: number) => {
-      const canvas = canvasRef.current;
-      if (!canvas) return;
-      const dpr = Math.min(2, window.devicePixelRatio || 1);
-      const px = ts * W;
-      if (canvas.width !== px * dpr) {
-        canvas.width = px * dpr;
-        canvas.height = ts * H * dpr;
-      }
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return;
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      ctx.clearRect(0, 0, px, ts * H);
-      ctx.save();
-      if (shake.current > 0) {
-        ctx.translate((Math.random() - 0.5) * shake.current, (Math.random() - 0.5) * shake.current);
-        shake.current *= 0.85;
-        if (shake.current < 0.4) shake.current = 0;
-      }
-      drawRun(ctx, stateRef.current, { ts, time: now, ownerView: mode === 'test' }, sub);
-
-      particles.current = particles.current.filter((p) => p.life < p.max);
-      for (const p of particles.current) {
-        p.life++;
-        p.x += p.vx;
-        p.y += p.vy;
-        p.vy += 0.004;
-        ctx.globalAlpha = 1 - p.life / p.max;
-        ctx.fillStyle = p.color;
-        ctx.fillRect((p.x - p.size / 2) * ts, (p.y - p.size / 2) * ts, p.size * ts, p.size * ts);
-      }
-      ctx.globalAlpha = 1;
-      ctx.restore();
-
-      if (flash.current > 0) {
-        ctx.fillStyle = `rgba(239,68,68,${flash.current * 0.35})`;
-        ctx.fillRect(0, 0, px, ts * H);
-        flash.current = Math.max(0, flash.current - 0.03);
-      }
-    };
-
     raf = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(raf);
-  }, [phase, mode, speed, ts, replayCodes, react, finish, runId]);
+  }, [phase, mode, speed, replayCodes, react, finish, draw, runId]);
+
+  // Po konci nechať úlomky a konfety dopadnúť. Vlastný efekt, lebo slučku
+  // hry React pri zmene fázy zruší — a s ňou by na plátne zamrzli.
+  useEffect(() => {
+    if (phase !== 'done') return;
+    let raf = 0;
+    const t0 = performance.now();
+    const tick = (t: number) => {
+      draw(1, t);
+      if (particles.current.length && t - t0 < 4000) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [phase, draw, ts]);
 
   // Pred štartom aspoň nakresliť mapu, aby odpočet nebežal nad prázdnom.
   useEffect(() => {
