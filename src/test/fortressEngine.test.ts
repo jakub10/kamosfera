@@ -183,3 +183,28 @@ describe('záznam', () => {
     expect(replayMatches(replay, { success: true, timeMs: 500, hits: 3 })).toBe(false);
   });
 });
+
+describe('štartovacia pevnosť', () => {
+  it('je platná a nechá miesto na stavbu', async () => {
+    const { STARTER_CELLS } = await import('@/games/fortress/templates');
+    expect(gridProblems(STARTER_CELLS)).toEqual([]);
+    expect(gridCost(STARTER_CELLS)).toBe(31);
+  });
+
+  it('dá sa prejsť — kľúč, dvere, poklad a späť', async () => {
+    const { STARTER_CELLS } = await import('@/games/fortress/templates');
+    const route = [
+      ...hold(U, 11), // pozdĺž ľavého okraja hore k riadku s kľúčom
+      ...hold(R, 2), //  kľúč
+      ...hold(D, 4),
+      ...hold(R, 9), //  pod dvere
+      ...hold(U, 6), //  dvere, cez rad píly, hore
+      ...hold(R, 2), //  poklad
+      ...hold(L, 2),
+      ...hold(D, 13), // von dverami a dole
+      ...hold(L, 11), // domov
+    ];
+    const s = simulate(STARTER_CELLS, route);
+    expect(s.status).toBe('won');
+  });
+});
