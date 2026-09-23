@@ -8,7 +8,7 @@ import { MobileNav } from '@/components/social/MobileNav';
 import { MobileHeader } from '@/components/social/MobileHeader';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Loader2, Bell, Heart, MessageCircle, UserPlus, Check } from 'lucide-react';
+import { Castle, Loader2, Bell, Heart, MessageCircle, UserPlus, Check } from 'lucide-react';
 import mascotSleep from '@/assets/mascot-sleep.png';
 import { getReaction } from '@/lib/reactions';
 import { formatDistanceToNow } from 'date-fns';
@@ -160,6 +160,8 @@ const Notifications = () => {
       case 'message_request':
       case 'message_accepted':
         return <MessageCircle className="h-5 w-5 text-primary" />;
+      case 'fortress_raid':
+        return <Castle className="h-5 w-5 text-amber-500" />;
       default:
         return <Bell className="h-5 w-5 text-primary" />;
     }
@@ -188,6 +190,11 @@ const Notifications = () => {
         return `${name} ti chce psát — podívej se, jestli si chcete povídat`;
       case 'message_accepted':
         return `${name} přijal/a tvou zprávu, můžete si psát`;
+      case 'fortress_raid': {
+        const ms = Number(notification.message);
+        const time = Number.isFinite(ms) ? ` za ${Math.round(ms / 1000)} s` : '';
+        return `${name} vykradol/a tvoju pevnosť${time}!`;
+      }
       default:
         return notification.message || 'Nové oznámení';
     }
@@ -247,6 +254,8 @@ const Notifications = () => {
                       navigate('/messages');
                     } else if (['friend_request', 'friend_accepted', 'follow'].includes(notification.type) && notification.from_user_id) {
                       navigate(`/profile/${notification.from_user_id}`);
+                    } else if (notification.type === 'fortress_raid') {
+                      navigate('/pevnost?tab=zaznamy');
                     } else if (['like', 'comment', 'mention'].includes(notification.type)) {
                       // Příspěvek je můj — najdu ho na svém profilu.
                       navigate('/profile');

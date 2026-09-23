@@ -1,3 +1,4 @@
+import { FortressCard } from '@/components/fortress/FortressCard';
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -516,6 +517,8 @@ const UserProfile = () => {
               </div>
             </CardContent>
           </Card>
+
+          <FortressCard ownerId={profile.user_id} isOwn={isOwnProfile} />
 
           {/* Posts */}
           <h2 className="text-xl font-semibold">Příspěvky</h2>

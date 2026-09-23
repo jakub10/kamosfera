@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Crown } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -31,6 +32,7 @@ const Games = () => {
   const { t } = useTranslation();
   const [currentProfile, setCurrentProfile] = useState<Profile | null>(null);
   const [active, setActive] = useState<GameId | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (!user) return;
@@ -53,7 +55,7 @@ const Games = () => {
     return (
       <button
         type="button"
-        onClick={() => setActive(item.id)}
+        onClick={() => (item.href ? navigate(item.href) : setActive(item.id))}
         className="group flex items-center gap-4 rounded-2xl border border-border bg-card p-4 text-left transition-all hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
         <span

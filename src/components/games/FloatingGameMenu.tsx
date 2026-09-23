@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Bot, Gamepad2, Brain, MousePointer2, Crown, Volume2, Shield, MessageSquare, Star } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
@@ -19,9 +20,13 @@ export function FloatingGameMenu() {
     .filter((g) => !g.vip || isVIP || isCreator)
     .map((g) => ({ ...g, label: g.labelKey.includes('.') ? t(g.labelKey) : g.labelKey }));
 
+  const navigate = useNavigate();
+
   const handleItemClick = (id: ActiveModal) => {
-    setActiveModal(id);
     setIsOpen(false);
+    const href = GAME_ITEMS.find((g) => g.id === id)?.href;
+    if (href) navigate(href);
+    else setActiveModal(id);
   };
 
   return (

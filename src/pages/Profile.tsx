@@ -1,3 +1,4 @@
+import { FortressCard } from '@/components/fortress/FortressCard';
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -365,6 +366,8 @@ const Profile = () => {
           </div>
 
 
+
+          {user && <FortressCard ownerId={user.id} isOwn />}
 
           {/* Tabs for content */}
           {/* Příspěvky první: profil je místo, kde dítě vidí sebe, ne obchod. */}
