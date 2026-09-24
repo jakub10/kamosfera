@@ -100,3 +100,6 @@ jobs:
 
       - name: Testy Pevnosti a Nájazdu
         run: psql -v ON_ERROR_STOP=1 -f supabase/tests/05_fortress.sql
+
+      - name: Testy Hviezdnej Hliadky
+        run: psql -v ON_ERROR_STOP=1 -f supabase/tests/06_star_patrol.sql

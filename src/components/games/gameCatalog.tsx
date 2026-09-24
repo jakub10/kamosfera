@@ -1,5 +1,5 @@
 import type { LucideIcon } from 'lucide-react';
-import { Blocks, Bot, Brain, Castle, Crown, Gamepad2, MessageSquare, MousePointer2, Shield, Star, Volume2 } from 'lucide-react';
+import { Blocks, Bot, Brain, Castle, Crown, Gamepad2, MessageSquare, MousePointer2, Rocket, Shield, Star, Volume2 } from 'lucide-react';
 import { AIChatWindow } from './AIChatWindow';
 import { AIChatbotModal } from './AIChatbotModal';
 import { BrawlGame } from './BrawlGame';
@@ -20,7 +20,7 @@ import { VoiceAgentModal } from './VoiceAgentModal';
  */
 
 export type GameId =
-  | 'brawl' | 'snake' | 'tower' | 'memory' | 'clicker' | 'vip-puzzle' | 'kamostavba' | 'pevnost'
+  | 'brawl' | 'snake' | 'tower' | 'memory' | 'clicker' | 'vip-puzzle' | 'kamostavba' | 'pevnost' | 'hliadka'
   | 'ai' | 'chatbot' | 'voice';
 
 export interface GameItem {
@@ -44,6 +44,7 @@ export interface GameItem {
 }
 
 export const GAME_ITEMS: GameItem[] = [
+  { id: 'hliadka',  icon: Rocket,        labelKey: 'Hviezdna Hliadka', blurb: 'Kartová hra so skrytými rolami. Kto je pirát? 4–7 kamarátov naživo.', color: 'from-indigo-600 to-violet-900', kind: 'game', fresh: true, href: '/hliadka' },
   { id: 'pevnost',  icon: Castle,        labelKey: 'Pevnosť & Nájazd', blurb: 'Postav pevnosť, schovaj poklad. Kamaráti majú 60 sekúnd.', color: 'from-slate-600 to-slate-800', kind: 'game', fresh: true, href: '/pevnost' },
   { id: 'kamostavba', icon: Blocks,     labelKey: 'Kamostavba',    blurb: 'Postav Kamosféru až k vlajce. Blok po bloku.', color: 'from-rose-500 to-amber-500',    kind: 'game' },
   { id: 'brawl',   icon: Star,          labelKey: 'Brawlosféra',   blurb: 'Aréna. Kdo vydrží nejdýl?',                   color: 'from-amber-400 to-yellow-600', kind: 'game' },
