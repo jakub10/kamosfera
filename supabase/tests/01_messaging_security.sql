@@ -43,10 +43,9 @@ INSERT INTO public.friendships (requester_id, addressee_id, status)
 VALUES ('11111111-1111-1111-1111-111111111111',
         '22222222-2222-2222-2222-222222222222', 'accepted');
 
--- V Supabase tieto práva nastavuje platforma; tu si ich dodáme sami.
-GRANT USAGE ON SCHEMA public TO authenticated;
-GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO authenticated;
-GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO authenticated;
+-- Práva nastavuje 00_supabase_shim.sql rovnako ako Supabase. Kedysi tu boli
+-- plošné GRANT na všetky tabuľky a funkcie — tie prebili zámerné REVOKE
+-- z migrácií a testy tak bežali s väčšími právami, než majú skutočné deti.
 
 CREATE OR REPLACE FUNCTION chk(_name text, _got boolean, _want boolean)
 RETURNS void LANGUAGE plpgsql AS $$

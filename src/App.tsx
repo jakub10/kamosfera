@@ -18,6 +18,7 @@ const Notifications = lazy(() => import("./pages/Notifications"));
 const Groups = lazy(() => import("./pages/Groups"));
 const Games = lazy(() => import("./pages/Games"));
 const Svet = lazy(() => import("./pages/Svet"));
+const Pevnost = lazy(() => import("./pages/Pevnost"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient({
@@ -57,6 +58,7 @@ const App = () => (
               <Route path="/groups" element={<Groups />} />
               <Route path="/games" element={<Games />} />
               <Route path="/svet" element={<Svet />} />
+              <Route path="/pevnost" element={<Pevnost />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

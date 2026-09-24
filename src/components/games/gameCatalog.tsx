@@ -1,5 +1,5 @@
 import type { LucideIcon } from 'lucide-react';
-import { Blocks, Bot, Brain, Crown, Gamepad2, MessageSquare, MousePointer2, Shield, Star, Volume2 } from 'lucide-react';
+import { Blocks, Bot, Brain, Castle, Crown, Gamepad2, MessageSquare, MousePointer2, Shield, Star, Volume2 } from 'lucide-react';
 import { AIChatWindow } from './AIChatWindow';
 import { AIChatbotModal } from './AIChatbotModal';
 import { BrawlGame } from './BrawlGame';
@@ -20,7 +20,7 @@ import { VoiceAgentModal } from './VoiceAgentModal';
  */
 
 export type GameId =
-  | 'brawl' | 'snake' | 'tower' | 'memory' | 'clicker' | 'vip-puzzle' | 'kamostavba'
+  | 'brawl' | 'snake' | 'tower' | 'memory' | 'clicker' | 'vip-puzzle' | 'kamostavba' | 'pevnost'
   | 'ai' | 'chatbot' | 'voice';
 
 export interface GameItem {
@@ -36,10 +36,16 @@ export interface GameItem {
   vip?: boolean;
   /** Novinka — dostane štítek, ať si jí děti všimnou. */
   fresh?: boolean;
+  /**
+   * Hra, která má vlastní stránku místo okna. Pevnost potřebuje editor,
+   * seznamy a záznamy — do modálního okna by se nevešla.
+   */
+  href?: string;
 }
 
 export const GAME_ITEMS: GameItem[] = [
-  { id: 'kamostavba', icon: Blocks,     labelKey: 'Kamostavba',    blurb: 'Postav Kamosféru až k vlajce. Blok po bloku.', color: 'from-rose-500 to-amber-500',    kind: 'game', fresh: true },
+  { id: 'pevnost',  icon: Castle,        labelKey: 'Pevnosť & Nájazd', blurb: 'Postav pevnosť, schovaj poklad. Kamaráti majú 60 sekúnd.', color: 'from-slate-600 to-slate-800', kind: 'game', fresh: true, href: '/pevnost' },
+  { id: 'kamostavba', icon: Blocks,     labelKey: 'Kamostavba',    blurb: 'Postav Kamosféru až k vlajce. Blok po bloku.', color: 'from-rose-500 to-amber-500',    kind: 'game' },
   { id: 'brawl',   icon: Star,          labelKey: 'Brawlosféra',   blurb: 'Aréna. Kdo vydrží nejdýl?',                   color: 'from-amber-400 to-yellow-600', kind: 'game' },
   { id: 'snake',   icon: Gamepad2,      labelKey: 'fab.snake',     blurb: 'Klasika. Nesněz sám sebe.',                   color: 'from-green-500 to-emerald-600', kind: 'game' },
   { id: 'tower',   icon: Shield,        labelKey: 'fab.tower',     blurb: 'Postav věže, ubraň cestu.',                    color: 'from-orange-500 to-red-600',   kind: 'game' },

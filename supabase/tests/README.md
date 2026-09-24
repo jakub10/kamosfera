@@ -28,6 +28,7 @@ psql -d kamosfera_test -v ON_ERROR_STOP=1 -f supabase/tests/01_messaging_securit
 psql -d kamosfera_test -v ON_ERROR_STOP=1 -f supabase/tests/02_notifications.sql
 psql -d kamosfera_test -v ON_ERROR_STOP=1 -f supabase/tests/03_world_seed.sql
 psql -d kamosfera_test -v ON_ERROR_STOP=1 -f supabase/tests/04_game_achievements.sql
+psql -d kamosfera_test -v ON_ERROR_STOP=1 -f supabase/tests/05_fortress.sql
 ```
 
 Každý test, který projde, vypíše `OK`. Když něco selže, skript skončí chybou

@@ -81,6 +81,24 @@ je otázka jednoho příkazu.
 Jak založit nový projekt, nasadit funkce a nastavit klíče popisuje
 [docs/PRECHOD-NA-VLASTNI-SUPABASE.md](docs/PRECHOD-NA-VLASTNI-SUPABASE.md).
 
+## Pevnosť & Nájazd
+
+Hra na stránce `/pevnost`: každý si postaví pevnosť 16×16 a schová v nej
+poklad, kamaráti ju vykrádajú v 60-sekundovom nájazde. Nikto nemusí byť
+online v rovnakom čase.
+
+- **Logika je deterministický kód, nikdy LLM** (`src/games/fortress/engine.ts`).
+  Beh ide po pevných krokoch a rovnaká mapa s rovnakými vstupmi dá vždy
+  rovnaký výsledok. Záznam nájazdu preto nie je video, ale zoznam
+  stlačení; prehrávač ho odohrá znova a overí, že sedí s výsledkom.
+- **Databáza stráži, čo sa dá overiť bez simulácie**
+  (`supabase/migrations/20260923120000_fortress_and_raids.sql`): tvar mapy
+  a rozpočet, zverejnenie len s dôkazom na presne tejto mape, dôkaz nečíta
+  nikto (je to cesta k pokladu), nájazd len za seba a na aktuálnej mape,
+  nie cez blokovanie, s limitom.
+- Testy: `src/test/fortressEngine.test.ts` (každý mechanizmus, aj to, že
+  štartovacia pevnosť sa dá prejsť) a `supabase/tests/05_fortress.sql`.
+
 ## Jak je to postavené
 
 - **Frontend** — React 18, Vite, TypeScript, Tailwind, shadcn/ui
