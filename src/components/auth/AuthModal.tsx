@@ -119,7 +119,7 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <div className="flex justify-center -mt-2">
-            <img src={mascotWave} alt="Robot mává" className="w-24 h-24 object-contain" loading="lazy" />
+            <img src={mascotWave} alt="Robot mává" className="w-24 h-24 object-contain [@media(max-height:720px)]:hidden" loading="lazy" />
           </div>
           <DialogTitle className="text-2xl font-bold text-center gradient-text">
             Kamosféra

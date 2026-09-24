@@ -5,7 +5,7 @@
  * Animácie (točiaca sa píla, pulzujúci poklad) idú z času obrazovky, nie
  * z ticku hry — na výsledok nemajú vplyv.
  */
-import { W, H, idx, type Tile, type RunState, MOVE_EVERY, SAW_EVERY } from './engine';
+import { W, H, type Tile, type RunState, MOVE_EVERY, SAW_EVERY } from './engine';
 
 export interface DrawOpts {
   /** Veľkosť jedného políčka v CSS pixeloch. */
@@ -306,6 +306,15 @@ function drawPit(ctx: CanvasRenderingContext2D, x: number, y: number, ts: number
   ctx.fill();
 }
 
+/**
+ * Vrstvy kreslenia: `base` je všetko, čo sa medzi snímkami nemení (dá sa
+ * nakresliť raz a potom len kopírovať), `anim` sú len živé kúsky navrch.
+ */
+type Layer = 'all' | 'base' | 'anim';
+
+/** Políčka, ktoré majú niečo živé (hýbe sa, bliká, točí). */
+const ANIMATED = new Set<string>(['k', 'T', '$', 'S', 'V']);
+
 function drawTile(
   ctx: CanvasRenderingContext2D,
   tile: Tile,
@@ -313,57 +322,114 @@ function drawTile(
   y: number,
   ts: number,
   o: DrawOpts,
-  extra: { hp?: number; revealed?: boolean }
+  extra: { hp?: number; revealed?: boolean },
+  layer: Layer = 'all'
 ) {
   const px = x * ts;
   const py = y * ts;
-  switch (tile) {
-    case '#':
-      brick(ctx, px, py, ts, C.stone[hash(x, y) % 3]);
-      return;
-    case 'b':
-      brick(ctx, px, py, ts, C.sand);
-      drawCracks(ctx, px, py, ts, extra.hp === 1);
-      return;
-    case 'D':
-      drawDoor(ctx, px, py, ts);
-      return;
+  if (layer !== 'anim') {
+    switch (tile) {
+      case '#':
+        brick(ctx, px, py, ts, C.stone[hash(x, y) % 3]);
+        return;
+      case 'b':
+        brick(ctx, px, py, ts, C.sand);
+        drawCracks(ctx, px, py, ts, extra.hp === 1);
+        return;
+      case 'D':
+        drawDoor(ctx, px, py, ts);
+        return;
+    }
+    floor(ctx, px, py, ts);
+    switch (tile) {
+      case '^':
+        drawSpikes(ctx, px, py, ts);
+        break;
+      case 'o':
+        if (extra.revealed) drawPit(ctx, px, py, ts);
+        else if (o.ownerView) drawFakeFloorHint(ctx, px, py, ts);
+        break;
+      case 'E':
+        drawEntrance(ctx, px, py, ts);
+        break;
+      case 'S':
+      case 'V':
+        drawSawAxis(ctx, px, py, ts, tile === 'V');
+        break;
+    }
   }
-  floor(ctx, px, py, ts);
+  if (layer === 'base') return;
   switch (tile) {
     case 'k':
       drawKey(ctx, px, py, ts, o.time);
       break;
-    case '^':
-      drawSpikes(ctx, px, py, ts);
-      break;
-    case 'o':
-      if (extra.revealed) drawPit(ctx, px, py, ts);
-      else if (o.ownerView) drawFakeFloorHint(ctx, px, py, ts);
-      break;
     case 'T':
       drawPortal(ctx, px, py, ts, o.time);
-      break;
-    case 'E':
-      drawEntrance(ctx, px, py, ts);
       break;
     case '$':
       drawChest(ctx, px + ts / 2, py + ts / 2, ts, o.time);
       break;
     case 'S':
     case 'V':
-      drawSawAxis(ctx, px, py, ts, tile === 'V');
       drawSaw(ctx, px + ts / 2, py + ts / 2, ts, o.time);
       break;
   }
 }
 
-/** Mapa bez nájazdníka — editor a náhľady. */
-export function drawCells(ctx: CanvasRenderingContext2D, cells: string, o: DrawOpts) {
-  for (let y = 0; y < H; y++) {
-    for (let x = 0; x < W; x++) {
-      drawTile(ctx, cells[idx(x, y)] as Tile, x, y, o.ts, o, {});
+/**
+ * Predkreslená nemenná vrstva mapy. Kresliť 256 kociek s nopmi a
+ * prechodmi farieb 60× za sekundu starší notebook nestíha — takto sa
+ * nakreslia raz a každý snímok sa len prekopíruje jeden obrázok.
+ * Prekreslí sa iba keď sa mapa zmení (rozbitý múr, otvorené dvere…).
+ */
+export interface BoardCache {
+  canvas: HTMLCanvasElement | null;
+  key: string;
+}
+
+export const newBoardCache = (): BoardCache => ({ canvas: null, key: '' });
+
+function paintBase(
+  ctx: CanvasRenderingContext2D,
+  cache: BoardCache | undefined,
+  key: string,
+  ts: number,
+  paint: (c: CanvasRenderingContext2D) => void
+) {
+  if (!cache || typeof document === 'undefined') {
+    paint(ctx);
+    return;
+  }
+  // Rozlíšenie obrazovky (zväčšenie v prehliadači, Retina) čítame z plátna,
+  // aby kópia bola rovnako ostrá ako kreslenie priamo.
+  const m = ctx.getTransform();
+  const scale = m.a || 1;
+  const fullKey = `${ts}|${scale}|${key}`;
+  if (cache.key !== fullKey || !cache.canvas) {
+    const c = cache.canvas ?? document.createElement('canvas');
+    c.width = Math.round(ts * W * scale);
+    c.height = Math.round(ts * H * scale);
+    const cx = c.getContext('2d');
+    if (!cx) {
+      paint(ctx);
+      return;
     }
+    cx.setTransform(scale, 0, 0, scale, 0, 0);
+    cx.clearRect(0, 0, ts * W, ts * H);
+    paint(cx);
+    cache.canvas = c;
+    cache.key = fullKey;
+  }
+  ctx.drawImage(cache.canvas, 0, 0, ts * W, ts * H);
+}
+
+/** Mapa bez nájazdníka — editor a náhľady. */
+export function drawCells(ctx: CanvasRenderingContext2D, cells: string, o: DrawOpts, cache?: BoardCache) {
+  paintBase(ctx, cache, `${o.ownerView ? 1 : 0}|${cells}`, o.ts, (c) => {
+    for (let i = 0; i < W * H; i++) drawTile(c, cells[i] as Tile, i % W, Math.floor(i / W), o.ts, o, {}, 'base');
+  });
+  for (let i = 0; i < W * H; i++) {
+    if (ANIMATED.has(cells[i])) drawTile(ctx, cells[i] as Tile, i % W, Math.floor(i / W), o.ts, o, {}, 'anim');
   }
   if (o.hover != null && o.hover >= 0) {
     const hx = (o.hover % W) * o.ts;
@@ -383,13 +449,20 @@ function lerp(a: number, b: number, t: number) {
  * Beh: mapa, píly, nájazdník. `sub` je zlomok ticku (0–1), aby pohyb
  * medzi krokmi hry nebol trhaný.
  */
-export function drawRun(ctx: CanvasRenderingContext2D, s: RunState, o: DrawOpts, sub: number) {
+export function drawRun(ctx: CanvasRenderingContext2D, s: RunState, o: DrawOpts, sub: number, cache?: BoardCache) {
   const ts = o.ts;
-  for (let y = 0; y < H; y++) {
-    for (let x = 0; x < W; x++) {
-      const i = idx(x, y);
-      drawTile(ctx, s.cells[i], x, y, ts, o, { hp: s.hp[i], revealed: s.revealed[i] });
+  const cells = s.cells.join('');
+  let hp = '';
+  for (const k in s.hp) hp += `${k}:${s.hp[k]},`;
+  let revealed = '';
+  for (let i = 0; i < s.revealed.length; i++) if (s.revealed[i]) revealed += `${i},`;
+  paintBase(ctx, cache, `${o.ownerView ? 1 : 0}|${cells}|${hp}|${revealed}`, ts, (c) => {
+    for (let i = 0; i < W * H; i++) {
+      drawTile(c, s.cells[i], i % W, Math.floor(i / W), ts, o, { hp: s.hp[i], revealed: s.revealed[i] }, 'base');
     }
+  });
+  for (let i = 0; i < W * H; i++) {
+    if (ANIMATED.has(s.cells[i])) drawTile(ctx, s.cells[i], i % W, Math.floor(i / W), ts, o, {}, 'anim');
   }
 
   const sawT = Math.min(1, ((s.tick % SAW_EVERY) + sub) / SAW_EVERY);

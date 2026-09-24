@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { W, H } from '@/games/fortress/engine';
-import { drawCells } from '@/games/fortress/render';
+import { drawCells, newBoardCache } from '@/games/fortress/render';
 
 interface Props {
   cells: string;
@@ -23,6 +23,7 @@ export function FortressBoard({
   onPointerDown, onPointerMove, onPointerUp, onHover,
 }: Props) {
   const ref = useRef<HTMLCanvasElement>(null);
+  const cache = useRef(newBoardCache());
 
   useEffect(() => {
     const canvas = ref.current;
@@ -35,7 +36,7 @@ export function FortressBoard({
     let raf = 0;
     const draw = (t: number) => {
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      drawCells(ctx, cells, { ts, time: t, ownerView, hover });
+      drawCells(ctx, cells, { ts, time: t, ownerView, hover }, cache.current);
       if (animate) raf = requestAnimationFrame(draw);
     };
     draw(0);
