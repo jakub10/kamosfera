@@ -224,7 +224,8 @@ END$$;
 DO $$
 DECLARE rid uuid; v jsonb; me int; cap int; ok boolean := true; x jsonb;
 BEGIN
-  rid := hh_t_game(5, 303);
+  -- dlhé semienko: krátke číslo by sa náhodou našlo vo vnútri ID alebo času
+  rid := hh_t_game(5, 7340277133059021);
   cap := hh_t_seat(rid, 'captain');
   -- pohľad hráča, ktorý nie je Kapitán
   SELECT seat INTO me FROM public.hh_players WHERE room_id = rid AND role <> 'captain' ORDER BY seat LIMIT 1;
