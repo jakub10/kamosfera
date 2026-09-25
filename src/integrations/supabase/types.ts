@@ -890,6 +890,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      hh_act: { Args: { _room: string; _action: Json }; Returns: Json }
+      hh_create: { Args: never; Returns: Json }
+      hh_invite: { Args: { _room: string; _friend: string }; Returns: undefined }
+      hh_join: { Args: { _code: string }; Returns: Json }
+      hh_leave: { Args: { _room: string }; Returns: undefined }
+      hh_my_rooms: { Args: never; Returns: Json }
+      hh_rematch: { Args: { _room: string }; Returns: Json }
+      hh_start: { Args: { _room: string }; Returns: Json }
+      hh_tick: { Args: { _room: string }; Returns: Json }
+      hh_view: { Args: { _room: string }; Returns: Json }
       fortress_browse: {
         Args: never
         Returns: {

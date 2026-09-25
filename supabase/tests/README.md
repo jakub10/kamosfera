@@ -29,6 +29,7 @@ psql -d kamosfera_test -v ON_ERROR_STOP=1 -f supabase/tests/02_notifications.sql
 psql -d kamosfera_test -v ON_ERROR_STOP=1 -f supabase/tests/03_world_seed.sql
 psql -d kamosfera_test -v ON_ERROR_STOP=1 -f supabase/tests/04_game_achievements.sql
 psql -d kamosfera_test -v ON_ERROR_STOP=1 -f supabase/tests/05_fortress.sql
+psql -d kamosfera_test -v ON_ERROR_STOP=1 -f supabase/tests/06_star_patrol.sql
 ```
 
 Každý test, který projde, vypíše `OK`. Když něco selže, skript skončí chybou
@@ -63,3 +64,16 @@ Kamosvět čte data Kamosféry. Test vloží do e-mailu, jména, příspěvku
 i zprávy značky `SENTINEL_*` a dokáže, že ani jedna se v seedu neobjeví.
 Identita (přezdívka, avatar, kamarádi) prochází; obsah nikdy.
 
+
+## Hviezdna Hliadka
+
+`06_star_patrol.sql` hlídá kartovou hru se skrytými rolemi. Pravidla běží
+v databázi, takže se testují přímo tady:
+
+- do tabulek s kartami, hráči a „semínkem" náhody se děti nedostanou, jen přes funkce `hh_*`;
+- každý vidí jen svou ruku a svou roli (a roli Kapitána, vyřazených a po konci hry všech);
+- co ukradl traktorový paprsek, ví jen zloděj a okradený;
+- tahat smí jen ten, kdo je na řadě, jen kartou, kterou má, a jen na hráče v dosahu;
+- laser jednou za tah, štít se zapne sám, salva, oprava, vybavení, odměna a trest za vyřazení;
+- všechny tři konce hry (posádka, piráti, Zbloudilá AI) a časovač, který nenechá nikoho zdržovat;
+- 16 celých her od rozdání po vítěze (4–7 hráčů), ve kterých se neztratí ani jedna karta.

@@ -5,7 +5,7 @@ import {
   expandInputs, replayMatches, remainingTicks, DX, DY,
   type Dir, type Replay, type RunResult, type RunState, type FxEvent,
 } from '@/games/fortress/engine';
-import { drawRun } from '@/games/fortress/render';
+import { drawRun, newBoardCache } from '@/games/fortress/render';
 import { play, countdownBeep, isMuted, setMuted } from '@/games/fortress/sfx';
 import { formatTime } from '@/games/fortress/api';
 import { Joystick, ActionButton } from './Joystick';
@@ -56,6 +56,7 @@ export function RunView({ cells, mode, title, replay, claimed, onFinish, onClose
   const stateRef = useRef<RunState>(initRun(playCells));
   const codesRef = useRef<number[]>([]);
   const particles = useRef<Particle[]>([]);
+  const boardCache = useRef(newBoardCache());
   const shake = useRef(0);
   const flash = useRef(0);
 
@@ -244,7 +245,7 @@ export function RunView({ cells, mode, title, replay, claimed, onFinish, onClose
       shake.current *= 0.85;
       if (shake.current < 0.4) shake.current = 0;
     }
-    drawRun(ctx, stateRef.current, { ts, time: now, ownerView: mode === 'test' }, sub);
+    drawRun(ctx, stateRef.current, { ts, time: now, ownerView: mode === 'test' }, sub, boardCache.current);
 
     particles.current = particles.current.filter((p) => p.life < p.max);
     for (const p of particles.current) {
@@ -272,7 +273,7 @@ export function RunView({ cells, mode, title, replay, claimed, onFinish, onClose
     let raf = 0;
     let last = performance.now();
     let acc = 0;
-    let hudTick = -1;
+    let hudKey = '';
 
     const loop = (now: number) => {
       const s = stateRef.current;
@@ -294,9 +295,14 @@ export function RunView({ cells, mode, title, replay, claimed, onFinish, onClose
         acc -= TICK_MS;
       }
 
-      if (s.tick !== hudTick) {
-        hudTick = s.tick;
-        setHud(hudOf(s));
+      // Panel nad hrou prekresliť len keď sa na ňom niečo naozaj zmení
+      // (sekunda, kľúč, zásah) — nie 20× za sekundu. Na slabšom notebooku
+      // to bol hlavný dôvod sekania.
+      const h = hudOf(s);
+      const key = `${Math.ceil((h.remaining * TICK_MS) / 1000)}|${h.keys}|${h.hits}|${h.treasure}`;
+      if (key !== hudKey) {
+        hudKey = key;
+        setHud(h);
       }
 
       draw(Math.min(1, acc / TICK_MS), now);
@@ -338,7 +344,7 @@ export function RunView({ cells, mode, title, replay, claimed, onFinish, onClose
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    drawRun(ctx, stateRef.current, { ts, time: 0, ownerView: mode === 'test' }, 0);
+    drawRun(ctx, stateRef.current, { ts, time: 0, ownerView: mode === 'test' }, 0, boardCache.current);
   }, [phase, ts, mode, runId]);
 
   const verified = mode === 'replay' && replay && claimed ? replayMatches(replay, claimed) : null;

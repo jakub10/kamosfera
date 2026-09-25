@@ -99,6 +99,28 @@ online v rovnakom čase.
 - Testy: `src/test/fortressEngine.test.ts` (každý mechanizmus, aj to, že
   štartovacia pevnosť sa dá prejsť) a `supabase/tests/05_fortress.sql`.
 
+## Hviezdna Hliadka
+
+Kartová hra so skrytými rolami pre 4–7 kamarátov naživo, na stránke
+`/hliadka`. Kapitán, posádka, piráti a Zblúdilá AI; lasery, štíty,
+salvy, traktorový lúč a vybavenie, ktoré mení dosah pri stole.
+
+- **Pravidlá bežia v databáze, nie v prehliadači**
+  (`supabase/migrations/20260925100000_star_patrol.sql`). Jediný vstup je
+  `hh_act(stôl, akcia)`: server skontroluje, či je hráč na ťahu, či kartu
+  naozaj má a či cieľ dosiahne. Žiadne LLM, náhoda ide z tajného semienka.
+- **Tajné ostáva tajné:** tabuľky s kartami, rolami a semienkom deti
+  nečítajú vôbec. Každý dostane cez `hh_view` len svoju ruku, svoju rolu,
+  rolu Kapitána a vyradených; ruky ostatných len ako počet.
+- **Nikto nezasekne hru:** na ťah je 45 s. Keď čas vyprší, ktokoľvek pri
+  stole „zaklope" (`hh_tick`) a ťah sa ukončí; kto zaspí trikrát po sebe,
+  vypadne. Po výpadku internetu stačí obnoviť stránku — hráč sa vráti na
+  svoje miesto.
+- Predsieň s kódom stola, odkazom a pozvánkami pre kamarátov (príde im
+  oznámenie), odveta s tou istou partiou.
+- Testy: `supabase/tests/06_star_patrol.sql` (65 kontrol vrátane 16 celých
+  hier) a `src/test/starPatrolText.test.ts`.
+
 ## Jak je to postavené
 
 - **Frontend** — React 18, Vite, TypeScript, Tailwind, shadcn/ui
