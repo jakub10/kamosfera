@@ -1,25 +1,27 @@
 // Renders a promo HTML page frame by frame into an MP4.
-// Usage: node promo/render.cjs                                  -> 15s teaser.html
-//        node promo/render.cjs --v30                            -> 30s teaser30.html + music.wav
-//        node promo/render.cjs [--v30] --stills 1.5 6 13.9      -> PNG stills for a quick check
+// Usage: node promo/render.cjs [--v15|--v30|--v2]              -> MP4 (default --v15)
+//        node promo/render.cjs --v2 --stills 1.5 6 13.9          -> PNG stills for a quick check
 // Needs playwright-core + a Chromium (CHROMIUM env), and ffmpeg (FFMPEG env or on PATH).
 const { chromium } = require('playwright-core');
 const { spawn } = require('child_process');
 const path = require('path');
 
 let args = process.argv.slice(2);
-const v30 = args[0] === '--v30';
-if (v30) args = args.slice(1);
-const cfg = v30
-  ? { html: 'teaser30.html', dur: 30, audio: 'music.wav', out: 'kamosfera-promo-30s.mp4' }
-  : { html: 'teaser.html', dur: 15, audio: null, out: 'kamosfera-teaser.mp4' };
+const CONFIGS = {
+  '--v15': { html: 'teaser.html', dur: 15, audio: null, out: 'kamosfera-teaser.mp4', scale: 1 },
+  '--v30': { html: 'teaser30.html', dur: 30, audio: 'music.wav', out: 'kamosfera-promo-30s.mp4', scale: 1 },
+  // v2: render at 4K (2160x3840), downscale with Lanczos -> sharper edges and text
+  '--v2': { html: 'teaser30v2.html', dur: 30, audio: 'music-v2.wav', out: 'kamosfera-promo-30s-v2.mp4', scale: 2 },
+};
+const cfg = CONFIGS[args[0]] || CONFIGS['--v15'];
+if (CONFIGS[args[0]]) args = args.slice(1);
 const FPS = 30, W = 1080, H = 1920;
 const stills = args[0] === '--stills' ? args.slice(1).map(Number) : null;
 const out = (!stills && args[0]) || path.join(__dirname, cfg.out);
 
 (async () => {
   const browser = await chromium.launch({ executablePath: process.env.CHROMIUM || undefined });
-  const page = await browser.newPage({ viewport: { width: W, height: H } });
+  const page = await browser.newPage({ viewport: { width: W, height: H }, deviceScaleFactor: cfg.scale });
   await page.goto('file://' + path.join(__dirname, cfg.html) + '?render');
   await page.evaluate(() => document.fonts.ready);
   await page.evaluate(() => Promise.all([...document.images].map(i => i.decode().catch(() => {}))));
@@ -39,7 +41,7 @@ const out = (!stills && args[0]) || path.join(__dirname, cfg.out);
   const ff = spawn(process.env.FFMPEG || 'ffmpeg', [
     '-y', '-loglevel', 'error', '-f', 'image2pipe', '-framerate', String(FPS), '-c:v', 'mjpeg', '-i', '-',
     ...audio,
-    '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-preset', 'slow', '-b:v', '6M', '-maxrate', '8M', '-bufsize', '12M',
+    '-vf', `scale=${W}:${H}:flags=lanczos`, '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-preset', 'slow', '-b:v', '6M', '-maxrate', '8M', '-bufsize', '12M',
     '-af', 'loudnorm=I=-14:TP=-1.5', '-c:a', 'aac', '-b:a', '192k', '-ar', '44100', '-shortest', '-movflags', '+faststart', out,
   ], { stdio: ['pipe', 'inherit', 'inherit'] });
 

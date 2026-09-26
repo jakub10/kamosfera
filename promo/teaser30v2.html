@@ -1,0 +1,593 @@
+<!doctype html>
+<html lang="sk">
+<head>
+<meta charset="utf-8">
+<title>Kamosféra 30s v2</title>
+<!-- Storyboard a ledger: promo/STORYBOARD.md. Každý snímok je čistá funkcia času: render(t). -->
+<style>
+  @font-face { font-family: 'Fredoka'; src: url(Fredoka-500.ttf); font-weight: 500; font-display: block; }
+  @font-face { font-family: 'Fredoka'; src: url(Fredoka-600.ttf); font-weight: 600; font-display: block; }
+  @font-face { font-family: 'Fredoka'; src: url(Fredoka-700.ttf); font-weight: 700; font-display: block; }
+  :root { --blue: #3b82f6; --purple: #a53ce6; --pink: #ec4899; --navy: #070b24; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1080px; height: 1920px; overflow: hidden; background: var(--navy); }
+  body { font-family: 'Fredoka', sans-serif; color: #fff; position: relative; }
+  .abs { position: absolute; }
+  .fill { position: absolute; inset: 0; }
+  .grad { background: linear-gradient(90deg, #60a5fa, #c084fc, #f472b6); -webkit-background-clip: text; background-clip: text; color: transparent; }
+
+  #bg { background: radial-gradient(1200px 1000px at 50% 40%, #16205a 0%, var(--navy) 70%); }
+  .leak { position: absolute; width: 1100px; height: 1100px; border-radius: 50%; filter: blur(140px); mix-blend-mode: screen; }
+  #leak1 { background: rgba(59,130,246,.55); }
+  #leak2 { background: rgba(165,60,230,.5); }
+  #leak3 { background: rgba(236,72,153,.35); }
+  #world { position: absolute; inset: 0; perspective: 1700px; }
+
+  /* Hook */
+  #hook { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  #hook .row { display: flex; gap: 30px; align-items: baseline; }
+  #hook .hw { font-size: 132px; font-weight: 700; line-height: 1.05; letter-spacing: -2px; display: inline-block; }
+  #hdot { display: inline-block; width: 30px; height: 30px; border-radius: 50%; background: #f472b6; margin-left: 8px; }
+  #bigdot { position: absolute; left: 0; top: 0; width: 100px; height: 100px; margin: -50px 0 0 -50px; border-radius: 50%;
+    background: radial-gradient(circle, #f472b6 0%, rgba(192,132,252,.75) 35%, rgba(96,165,250,.3) 55%, transparent 70%); }
+
+  /* Hero */
+  #hero { position: absolute; left: 540px; top: 900px; width: 0; height: 0; transform-style: preserve-3d; }
+  #ring3d { position: absolute; width: 1100px; height: 1100px; left: -550px; top: -550px; border-radius: 50%; border: 10px solid transparent;
+    background: linear-gradient(#0000,#0000) padding-box, conic-gradient(#60a5fa, #c084fc, #f472b6, #fbbf24, #60a5fa) border-box;
+    -webkit-mask: linear-gradient(#000 0 0) padding-box exclude, linear-gradient(#000 0 0);
+    mask: linear-gradient(#000 0 0) padding-box exclude, linear-gradient(#000 0 0); box-shadow: 0 0 60px rgba(192,132,252,.6); }
+  .planet { position: absolute; border-radius: 50%; }
+
+  /* Phone */
+  .rig { position: absolute; left: 50%; top: 50%; width: 418px; height: 872px; margin: -436px 0 0 -209px; transform-style: preserve-3d; }
+  .phone { position: absolute; inset: 0; border-radius: 62px; background: linear-gradient(145deg, #2a2f45, #0c0f1d 60%, #1c2033);
+    padding: 14px; box-shadow: 0 0 0 2px #454b66 inset, 0 60px 120px rgba(0,0,0,.6), 0 0 80px rgba(96,165,250,.25); }
+  .screen { position: relative; width: 390px; height: 844px; border-radius: 48px; overflow: hidden; background: #f9fafb; }
+  .screen > * { position: absolute; left: 0; top: 0; width: 390px; }
+  .notch { position: absolute; left: 50%; top: 24px; width: 110px; height: 30px; margin-left: -55px; border-radius: 20px; background: #05060c; }
+  .glare { position: absolute; inset: 14px; border-radius: 48px; pointer-events: none;
+    background: linear-gradient(115deg, transparent 30%, rgba(255,255,255,.28) 42%, transparent 55%); background-size: 300% 100%; mix-blend-mode: screen; }
+  .strip { height: 57px; background: url(shots/feed.png) 0 0 / 390px auto no-repeat; }
+  .navstrip { top: auto !important; bottom: 0; height: 65px; background: url(shots/feed.png) 0 100% / 390px auto no-repeat; }
+  .chip { position: absolute; padding: 18px 30px; border-radius: 999px; font-size: 44px; font-weight: 700; white-space: nowrap;
+    background: rgba(255,255,255,.94); color: #1e1b4b; box-shadow: 0 20px 50px rgba(0,0,0,.35), 0 0 0 3px rgba(192,132,252,.6); }
+  .emo { position: absolute; font-size: 110px; line-height: 1; filter: drop-shadow(0 20px 30px rgba(0,0,0,.4)); }
+
+  /* HTML chat, v štýle appky (farby odčítané zo screenshotu) */
+  #chatArea { top: 132px !important; height: 574px; background: rgb(249,250,251); overflow: hidden;
+    font-family: 'Inter', -apple-system, 'Segoe UI', Roboto, sans-serif; }
+  #chatList { position: absolute; left: 16px; right: 16px; top: 18px; display: flex; flex-direction: column; gap: 12px; }
+  .bub { max-width: 262px; padding: 10px 15px; font-size: 16.5px; line-height: 1.4; border-radius: 20px; }
+  .bub.in { align-self: flex-start; background: rgb(243,245,247); color: #0f172a; border-bottom-left-radius: 6px; transform-origin: 0 100%; }
+  .bub.out { align-self: flex-end; background: rgb(60,131,246); color: #fff; border-bottom-right-radius: 6px; transform-origin: 100% 100%; }
+  #typing { position: absolute; left: 16px; padding: 14px 18px; border-radius: 20px; border-bottom-left-radius: 6px; background: rgb(243,245,247); display: flex; gap: 6px; }
+  #typing i { width: 9px; height: 9px; border-radius: 50%; background: #94a3b8; display: block; }
+
+  #carousel { position: absolute; left: 50%; top: 50%; width: 0; height: 0; transform-style: preserve-3d; }
+  #carousel .rig { left: 0; top: 0; }
+
+  /* Safety */
+  #safe { background: radial-gradient(1000px 900px at 50% 45%, #1b2a6b, var(--navy) 70%); }
+  #safeFlood { background: radial-gradient(circle at 50% 47%, #f9a8d4, #ec4899 40%, #a53ce6 80%); }
+  .pulse { position: absolute; left: 540px; top: 840px; width: 0; height: 0; }
+  .pulse div { position: absolute; border-radius: 50%; border: 6px solid rgba(96,165,250,.8); }
+  .glass { position: absolute; left: 140px; width: 800px; height: 150px; border-radius: 40px; display: flex; align-items: center; gap: 30px;
+    padding: 0 44px; font-size: 58px; font-weight: 600; background: rgba(255,255,255,.1); border: 2px solid rgba(255,255,255,.25);
+    backdrop-filter: blur(20px); box-shadow: 0 20px 60px rgba(0,0,0,.3); }
+  .glass b { font-size: 74px; }
+
+  /* End */
+  #end { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  #rays { position: absolute; left: 50%; top: 45%; width: 2600px; height: 2600px; margin: -1300px 0 0 -1300px; border-radius: 50%;
+    background: repeating-conic-gradient(from 0deg, rgba(192,132,252,.22) 0deg 7deg, transparent 7deg 18deg);
+    -webkit-mask: radial-gradient(circle, #000 0%, transparent 60%); mask: radial-gradient(circle, #000 0%, transparent 60%); }
+  #callback { font-size: 66px; font-weight: 700; margin-bottom: 70px; letter-spacing: -1px; }
+  #logoWrap { position: relative; width: 560px; height: 560px; }
+  #logoRing { position: absolute; inset: -32px; border-radius: 50%; background: conic-gradient(#60a5fa, #c084fc, #f472b6, #fbbf24, #60a5fa); filter: blur(6px); }
+  #logo { position: absolute; inset: 0; border-radius: 50%; border: 10px solid var(--navy);
+    background: var(--navy) url(../public/logo.jpg) no-repeat; background-size: 724px auto; background-position: -82px -28px; }
+  #endName { font-size: 172px; font-weight: 700; margin-top: 56px; line-height: 1.12; display: flex; overflow: hidden; padding: 0 10px; }
+  #endName span { display: inline-block; }
+  #endTag { font-size: 60px; font-weight: 500; color: #d6dcff; margin-top: 18px; }
+  #cta { margin-top: 64px; padding: 32px 92px; border-radius: 999px; font-size: 78px; font-weight: 700;
+    background: linear-gradient(90deg, var(--blue), var(--purple), var(--pink)); box-shadow: 0 0 80px rgba(236,72,153,.6); }
+
+  /* Guide mascot */
+  #guide { position: absolute; left: 0; top: 0; width: 620px; height: 620px; margin: -310px 0 0 -310px; }
+  #guide img { position: absolute; inset: 0; width: 620px; height: 620px; visibility: hidden; }
+
+  /* Captions */
+  .cap { position: absolute; left: 0; right: 0; top: 150px; text-align: center; }
+  .cap .t { font-size: 108px; font-weight: 700; line-height: 1.05; }
+  .w { display: inline-block; white-space: nowrap; }
+  .c { display: inline-block; }
+  .caret { display: inline-block; width: 8px; height: 96px; background: #f472b6; margin-left: 6px; vertical-align: -12px; border-radius: 4px; }
+
+  canvas { position: absolute; inset: 0; }
+  #grain { width: 1080px; height: 1920px; mix-blend-mode: overlay; opacity: .14; }
+  #vignette { background: radial-gradient(ellipse at 50% 50%, transparent 55%, rgba(0,0,0,.55) 100%); }
+  #flash { background: #fff; opacity: 0; mix-blend-mode: screen; }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute"><filter id="mblur" x="-20%" y="0" width="140%" height="100%"><feGaussianBlur id="mblurStd" stdDeviation="0 0"/></filter></svg>
+
+<div id="bg" class="fill"></div>
+<div id="leak1" class="leak"></div><div id="leak2" class="leak"></div><div id="leak3" class="leak"></div>
+<canvas id="stars" width="1080" height="1920"></canvas>
+
+<div id="world">
+  <div id="hook" class="fill">
+    <div class="row"><span class="hw" data-t="0">TVOJI</span><span class="hw grad" data-t="0.5">KAMOŠI.</span></div>
+    <div class="row"><span class="hw" data-t="1.5">TVOJ</span><span class="hw" data-t="2.0"><span class="grad">SVET</span><span id="hdot"></span></span></div>
+  </div>
+  <div id="bigdot"></div>
+
+  <div id="hero">
+    <div id="ring3d"></div>
+    <div class="planet" id="pl1" style="width:90px;height:90px;background:radial-gradient(circle at 30% 30%,#fde68a,#f97316);"></div>
+    <div class="planet" id="pl2" style="width:60px;height:60px;background:radial-gradient(circle at 30% 30%,#a7f3d0,#10b981);"></div>
+    <div class="planet" id="pl3" style="width:70px;height:70px;background:radial-gradient(circle at 30% 30%,#f5d0fe,#a855f7);"></div>
+  </div>
+
+  <div class="rig" id="rig">
+    <div class="phone">
+      <div class="screen">
+        <div id="Lfeed"><img id="feedImg" src="shots/feed-full.png" style="width:390px"><div class="strip abs" style="top:0;width:390px"></div></div>
+        <div class="navstrip" id="feedNav"></div>
+        <div id="Lstory" style="height:844px">
+          <img src="shots/story.png" style="width:390px">
+          <!-- bez progress baru a krížika -->
+          <div class="abs" style="left:0;top:0;width:390px;height:66px;background:#000"></div>
+          <div class="abs" id="storyHole" style="left:0;top:227px;width:390px;height:390px;background:#000"></div>
+        </div>
+        <div id="Lchat" style="height:844px">
+          <img src="shots/messages.png" style="width:390px">
+          <div id="chatArea" class="abs" style="left:0;width:390px">
+            <div id="chatList">
+              <div class="bub in" data-t="16.55">Ahoj Tomi! Videl si ten gól? 😂</div>
+              <div class="bub out" data-t="17.0">Jasné! Najlepší zápas ever ⚽</div>
+              <div class="bub in" data-t="17.5">Zajtra ideme na zmrzku 🍦 Ideš?</div>
+              <div class="bub out" data-t="18.25">Idem! Beriem aj Jakuba 🙌</div>
+              <div class="bub in" data-t="19.0">Super, o 3 pred školou 😊</div>
+            </div>
+            <div id="typing"><i></i><i></i><i></i></div>
+          </div>
+        </div>
+      </div>
+      <div class="notch"></div>
+      <div class="glare" id="glare"></div>
+    </div>
+    <div class="chip" id="c1">😂 12</div>
+    <div class="chip" id="c2">🔥🔥🔥</div>
+    <div class="chip" id="c3">💜 24</div>
+    <div class="emo" id="e1">🍦</div>
+    <div class="emo" id="e2">🙌</div>
+  </div>
+
+  <div id="carousel">
+    <div class="rig" data-i="0"><div class="phone"><div class="screen"><img src="shots/games.png"></div><div class="notch"></div><div class="glare"></div></div></div>
+    <div class="rig" data-i="1"><div class="phone"><div class="screen"><img src="shots/hliadka.png"></div><div class="notch"></div><div class="glare"></div></div></div>
+    <div class="rig" data-i="2"><div class="phone"><div class="screen"><img src="shots/pevnost.png"></div><div class="notch"></div><div class="glare"></div></div></div>
+  </div>
+</div>
+
+<div id="safe" class="fill">
+  <div id="safeFlood" class="fill"></div>
+  <div class="pulse" id="pulse"><div></div><div></div><div></div></div>
+  <div class="glass" id="g1" style="top:1300px"><b>🔒</b>Len kamoši zo školy</div>
+  <div class="glass" id="g2" style="top:1480px"><b>🙅</b>Žiadni cudzí</div>
+  <div class="glass" id="g3" style="top:1660px"><b>🛡️</b>Bezpečné pre deti</div>
+</div>
+
+<div id="end" class="fill">
+  <div id="rays"></div>
+  <div id="callback">TVOJI KAMOŠI. <span class="grad">TVOJ SVET.</span></div>
+  <div id="logoWrap"><div id="logoRing"></div><div id="logo"></div></div>
+  <div id="endName"></div>
+  <div id="endTag">Detská sociálna sieť</div>
+  <div id="cta">Pridaj sa! 🚀</div>
+</div>
+
+<canvas id="fx" width="1080" height="1920"></canvas>
+<div id="guide">
+  <img data-pose="welcome" src="../src/assets/mascot-welcome.png">
+  <img data-pose="thumbsup" src="../src/assets/mascot-thumbsup.png">
+  <img data-pose="celebrate" src="../src/assets/mascot-celebrate.png">
+  <img data-pose="chat" src="../src/assets/mascot-chat.png">
+  <img data-pose="gaming" src="../src/assets/mascot-gaming.png">
+  <img data-pose="shield" src="../src/assets/kamosfera-mascot.png">
+</div>
+
+<div class="cap" id="capHero" style="top:1500px"><div class="t" data-fx="blur">Vitaj v <g>Kamosfére</g></div></div>
+<div class="cap" id="capFeed"><div class="t" data-fx="wipe">Zdieľaj, čo <g>ťa baví</g></div></div>
+<div class="cap" id="capStory"><div class="t" data-fx="drop">Zachyť <g>moment</g> 📸</div></div>
+<div class="cap" id="capChat"><div class="t" data-fx="type">Píš si <g>s kamošmi</g></div></div>
+<div class="cap" id="capGames"><div class="t" data-fx="spin">Hraj <g>s partiou</g> 🎮</div></div>
+<div class="cap" id="capSafe" style="top:210px"><div class="t" data-fx="track" style="font-size:150px"><g>Bezpečne.</g></div></div>
+
+<div id="vignette" class="fill"></div>
+<canvas id="grain" width="360" height="640"></canvas>
+<div id="flash" class="fill"></div>
+
+<script>
+  // ---------- helpers ----------
+  const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+  const prog = (t, a, b) => clamp((t - a) / (b - a));
+  const eOut = x => 1 - Math.pow(1 - x, 3);
+  const eIn = x => x * x * x;
+  const eIO = x => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+  const expoIO = x => x === 0 ? 0 : x === 1 ? 1 : x < .5 ? Math.pow(2, 20 * x - 10) / 2 : (2 - Math.pow(2, -20 * x + 10)) / 2;
+  const sineIO = x => -(Math.cos(Math.PI * x) - 1) / 2;
+  const back = (x, c = 1.7) => 1 + (c + 1) * Math.pow(x - 1, 3) + c * Math.pow(x - 1, 2);
+  const lerp = (a, b, x) => a + (b - a) * x;
+  const bump = (t, c, w) => Math.exp(-Math.pow((t - c) / w, 2));
+  const $ = s => document.querySelector(s);
+  const $$ = s => [...document.querySelectorAll(s)];
+  const vis = (t, a, b, fi = .25, fo = .25) => Math.min(prog(t, a, a + fi), 1 - prog(t, b - fo, b));
+  function css(el, o) { for (const k in o) el.style[k] = o[k]; }
+  function show(el, v) { el.style.opacity = v; el.style.visibility = v > 0.001 ? 'visible' : 'hidden'; }
+  const rng = s => () => (s = (s * 16807) % 2147483647) / 2147483647;
+  const GRAD = [[96, 165, 250], [192, 132, 252], [244, 114, 182]];
+  const gradAt = x => { const i = x < .5 ? 0 : 1, f = x < .5 ? x * 2 : x * 2 - 1; return `rgb(${GRAD[i].map((c, k) => Math.round(lerp(c, GRAD[i + 1][k], f))).join(',')})`; };
+
+  // Split captions into words (.w) and characters (.c); <g> marks gradient text, coloured per character.
+  function splitCaption(el) {
+    const parts = [];
+    el.childNodes.forEach(n => parts.push({ text: n.textContent, g: n.nodeName === 'G' }));
+    el.innerHTML = '';
+    const gChars = parts.filter(p => p.g).reduce((s, p) => s + p.text.replace(/\s/g, '').length, 0);
+    let gi = 0;
+    parts.forEach(p => p.text.split(/(\s+)/).forEach(word => {
+      if (!word) return;
+      if (/^\s+$/.test(word)) { el.append(' '); return; }
+      const w = document.createElement('span'); w.className = 'w';
+      [...word].forEach(ch => {
+        const c = document.createElement('span'); c.className = 'c'; c.textContent = ch;
+        if (p.g) c.style.color = gradAt(gChars > 1 ? gi++ / (gChars - 1) : 0);
+        w.append(c);
+      });
+      el.append(w);
+    }));
+    if (el.dataset.fx === 'type') { const k = document.createElement('span'); k.className = 'caret'; el.append(k); }
+  }
+  $$('.cap .t').forEach(splitCaption);
+  'Kamosféra'.split('').forEach((ch, i) => { const s = document.createElement('span'); s.textContent = ch; s.style.color = gradAt(i / 8); $('#endName').append(s); });
+
+  // Caption entrances — every scene gets its own (variety rule: no entrance twice).
+  function caption(el, t, a, b) {
+    const v = t >= a && t < b ? 1 - prog(t, b - 0.3, b) : 0;
+    show(el, v);
+    if (v <= 0) return;
+    const out = prog(t, b - 0.3, b);
+    el.style.transform = `translateY(${-out * 50}px) scale(${1 - out * 0.06})`;
+    const tx = el.querySelector('.t'), fx = tx.dataset.fx;
+    const words = [...tx.querySelectorAll('.w')], chars = [...tx.querySelectorAll('.c')];
+    if (fx === 'blur') chars.forEach((c, i) => {
+      const p = prog(t, a + i * 0.035, a + i * 0.035 + 0.5);
+      css(c, { opacity: p, filter: `blur(${(1 - p) * 26}px)`, transform: `scale(${lerp(1.5, 1, eOut(p))})` });
+    });
+    if (fx === 'wipe') {
+      const p = eIO(prog(t, a, a + 0.6));
+      css(tx, { clipPath: `inset(-20px ${(1 - p) * 100}% -20px 0)`, transform: `translateX(${(1 - p) * -40}px)` });
+    }
+    if (fx === 'drop') words.forEach((w, i) => {
+      const p = prog(t, a + i * 0.09, a + i * 0.09 + 0.5);
+      css(w, { opacity: clamp(p * 4), transform: `translateY(${(1 - back(p, 2.6)) * -240}px)` });
+    });
+    if (fx === 'type') {
+      const n = Math.floor((t - a) / 0.05);
+      chars.forEach((c, i) => c.style.visibility = i < n ? 'visible' : 'hidden');
+      const caret = tx.querySelector('.caret');
+      caret.style.opacity = (n < chars.length || Math.floor(t * 4) % 2 === 0) ? 1 : 0;
+      const last = chars[Math.min(n, chars.length) - 1];
+      if (last) last.after(caret);
+    }
+    if (fx === 'spin') words.forEach((w, i) => {
+      const p = prog(t, a + i * 0.12, a + i * 0.12 + 0.55);
+      css(w, { opacity: clamp(p * 3), transform: `rotate(${(1 - eOut(p)) * -220}deg) scale(${back(p, 2)})` });
+    });
+    if (fx === 'track') {
+      const p = expoIO(prog(t, a, a + 0.9));
+      css(tx, { letterSpacing: `${lerp(0.8, 0, p)}em`, opacity: clamp(p * 2), filter: `blur(${(1 - p) * 14}px)` });
+    }
+  }
+
+  // ---------- starfield ----------
+  const sr = rng(11);
+  const stars = Array.from({ length: 320 }, () => ({ a: sr() * 6.283, d: sr(), s: .6 + sr() * 2.6, tw: sr() * 6.28, hue: [210, 270, 320, 45][Math.floor(sr() * 4)] }));
+  const sctx = $('#stars').getContext('2d');
+  const speedAt = t => 0.05 + 0.15 * bump(t, 0.3, 0.6) + 0.3 * bump(t, 3.2, 0.35) + 0.25 * bump(t, 12.15, .25)
+    + 0.35 * bump(t, 20.1, .2) + 0.6 * bump(t, 26.8, 0.3) + 0.12 * bump(t, 27.3, 0.5);
+  function drawStars(t) {
+    let pos = 0; for (let x = 0; x < t; x += 1 / 60) pos += speedAt(x) / 60;
+    const sp = speedAt(t);
+    sctx.clearRect(0, 0, 1080, 1920); sctx.lineCap = 'round';
+    for (const st of stars) {
+      const d = (st.d + pos * 0.9 + t * 0.012) % 1;
+      const r = 30 + Math.pow(d, 1.7) * 1400;
+      const x = 540 + Math.cos(st.a) * r, y = 960 + Math.sin(st.a) * r;
+      const tail = sp * 520 * d;
+      sctx.strokeStyle = `hsla(${st.hue},90%,82%,${clamp(d * 2.5) * (0.55 + 0.45 * Math.sin(t * 3 + st.tw))})`;
+      sctx.lineWidth = st.s * (0.5 + d);
+      sctx.beginPath(); sctx.moveTo(x, y); sctx.lineTo(x - Math.cos(st.a) * tail, y - Math.sin(st.a) * tail); sctx.stroke();
+    }
+  }
+
+  // ---------- confetti ----------
+  const fctx = $('#fx').getContext('2d');
+  const COLORS = ['#60a5fa', '#c084fc', '#f472b6', '#fbbf24', '#34d399', '#ffffff'];
+  function burst(seed, n, x0, y0, power) {
+    const r = rng(seed);
+    return Array.from({ length: n }, () => {
+      const a = r() * 6.283, v = power * (0.35 + r() * 0.65);
+      return { x0, y0, vx: Math.cos(a) * v, vy: Math.sin(a) * v - power * 0.35, c: COLORS[Math.floor(r() * 6)], w: 10 + r() * 16, h: 6 + r() * 10, rs: (r() - .5) * 20, ph: r() * 6 };
+    });
+  }
+  const bursts = [{ t0: 13.5, parts: burst(5, 150, 540, 1010, 1500) }, { t0: 27.0, parts: burst(9, 220, 540, 800, 2100) }];
+  function drawFx(t) {
+    fctx.clearRect(0, 0, 1080, 1920);
+    for (const b of bursts) {
+      const dt = t - b.t0;
+      if (dt < 0 || dt > 3) continue;
+      for (const p of b.parts) {
+        const drag = (1 - Math.exp(-dt * 2.2)) / 2.2;
+        fctx.save();
+        fctx.translate(p.x0 + p.vx * drag + Math.sin(dt * 4 + p.ph) * 20, p.y0 + p.vy * drag + 350 * dt * dt);
+        fctx.rotate(p.rs * dt + p.ph); fctx.scale(1, Math.cos(dt * 9 + p.ph));
+        fctx.globalAlpha = clamp(1.4 - dt / 2.2); fctx.fillStyle = p.c; fctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+        fctx.restore();
+      }
+    }
+  }
+
+  // ---------- film grain ----------
+  const gctx = $('#grain').getContext('2d');
+  const gimg = gctx.createImageData(360, 640);
+  function drawGrain(frame) {
+    let s = (frame * 7919 + 1) % 2147483647; const d = gimg.data;
+    for (let i = 0; i < d.length; i += 4) { s = (s * 16807) % 2147483647; d[i] = d[i + 1] = d[i + 2] = s & 255; d[i + 3] = 255; }
+    gctx.putImageData(gimg, 0, 0);
+  }
+
+  // ---------- layout measured once (before anything moves) ----------
+  const dotRect = $('#hdot').getBoundingClientRect();
+  const DOT = { x: dotRect.left + dotRect.width / 2, y: dotRect.top + dotRect.height / 2 };
+  const lr = $('#logoWrap').getBoundingClientRect();
+  const LOGO = { x: lr.left + lr.width / 2, y: lr.top + lr.height / 2 };
+  const bubbles = $$('.bub');
+  const bubTops = bubbles.map(b => b.offsetTop);
+
+  // ---------- guide mascot: one character through the whole film ----------
+  // [time, x, y, scale, ease-into-this-key]
+  const KEYS = [
+    [3.4, 540, 900, 0.0], [4.2, 540, 900, 1.0, back], [6.1, 540, 880, 1.0],
+    [6.9, 230, 1560, 0.62, eIO], [11.3, 230, 1560, 0.62], [11.8, 460, 660, 0.06, eIn],
+    [13.35, 540, 1160, 1.0], [13.8, 540, 1010, 1.45, back], [15.2, 540, 1010, 1.45],
+    [15.8, 860, 1560, 0.55, eIO], [19.9, 860, 1560, 0.55], [20.4, 540, 1600, 0.68, eIO],
+    [23.4, 540, 1600, 0.68], [23.9, 540, 840, 1.0, expoIO], [26.4, 540, 840, 1.0], [27.0, 0, 0, 0.3, eIn],
+  ];
+  const POSES = [[3.4, 'welcome'], [6.45, 'thumbsup'], [13.35, 'celebrate'], [15.5, 'chat'], [20.15, 'gaming'], [23.65, 'shield']];
+  const HOPS = [7.0, 7.6, 8.8, 17.0, 18.25, 21.4, 22.8];
+  function guideAt(t) {
+    let i = KEYS.findIndex(k => k[0] > t);
+    if (i === -1) i = KEYS.length - 1;
+    const a = KEYS[Math.max(0, i - 1)], b = KEYS[i];
+    const bx = b[0] === 27.0 ? LOGO.x : b[1], by = b[0] === 27.0 ? LOGO.y : b[2];
+    const p = a === b ? 1 : prog(t, a[0], b[0]);
+    const e = (b[4] || (x => x))(p);
+    let x = lerp(a[1], bx, e), y = lerp(a[2], by, e), s = lerp(a[3], b[3], e);
+    if (b[0] === 11.8 || b[0] === 15.8) y -= Math.sin(p * Math.PI) * 260; // jump arc
+    return { x, y, s, p, seg: b[0] };
+  }
+
+  function drawGuide(t) {
+    const on = (t >= 3.4 && t < 11.8) || (t >= 13.35 && t < 27.0);
+    show($('#guide'), on ? 1 : 0);
+    if (!on) return;
+    const g = guideAt(t);
+    const pose = POSES.filter(p => p[0] <= t).pop()[1];
+    $$('#guide img').forEach(im => im.style.visibility = im.dataset.pose === pose ? 'inherit' : 'hidden');
+    const squash = POSES.reduce((m, p) => Math.max(m, bump(t, p[0], 0.07)), 0);
+    const hop = HOPS.reduce((m, h) => Math.max(m, Math.sin(Math.PI * prog(t, h, h + 0.35))), 0);
+    const bob = Math.sin(t * 2.6) * 10 * g.s;
+    const spin = g.seg === 27.0 ? g.p * 360 : 0;
+    const rot = (g.seg === 6.1 || g.seg === 4.2 ? Math.sin(t * 5) * 3 : Math.sin(t * 1.7) * 2) + spin;
+    const whip = bump(t, 20.1, 0.12);
+    $('#guide').style.transform = `translate(${g.x}px, ${g.y + bob - hop * 70 * g.s}px) rotate(${rot}deg) scale(${g.s * (1 + squash * 0.12)}, ${g.s * (1 - squash * 0.14)})`;
+    const glow = g.seg >= 13.8 && g.seg <= 15.2 ? `drop-shadow(0 0 ${30 + 20 * Math.sin(t * 8)}px rgba(192,132,252,.8))` : '';
+    $('#guide').style.filter = `drop-shadow(0 30px 40px rgba(0,0,0,.45)) ${glow} ${whip > .05 ? `blur(${whip * 6}px)` : ''}`;
+    $('#guide').style.opacity = g.seg === 11.8 ? 1 - prog(t, 11.7, 11.8) : 1;
+  }
+
+  // ---------- phone helpers ----------
+  const rigTransform = o => `translate3d(${o.x || 0}px,${o.y || 0}px,${o.z || 0}px) rotateX(${o.rx || 0}deg) rotateY(${o.ry || 0}deg) rotateZ(${o.rz || 0}deg) scale(${o.s || 1})`;
+  function chip(el, t, a, b, x, y, z) {
+    const v = vis(t, a, b, .01, .25);
+    show(el, v);
+    if (v <= 0) return;
+    const p = prog(t, a, a + 0.45);
+    el.style.transform = `translate3d(${x}px,${y + Math.sin(t * 2.4 + x) * 12}px,${lerp(0, z, back(p, 2.2))}px) scale(${lerp(.3, 1, back(p, 2.2))})`;
+  }
+
+  // Shield outline (unit size) used as the transition mask into “Bezpečne”.
+  const SHIELD = [[-.5, -.55], [0, -.64], [.5, -.55], [.5, .06], [.36, .36], [0, .62], [-.36, .36], [-.5, .06]];
+
+  // ---------- main render ----------
+  window.render = function (t, frame = Math.round(t * 30)) {
+    css($('#leak1'), { transform: `translate(${-300 + Math.sin(t * .35) * 250}px, ${-200 + Math.cos(t * .27) * 300 - eIO(prog(t, 6.1, 6.9)) * 300}px)` });
+    css($('#leak2'), { transform: `translate(${400 + Math.cos(t * .3) * 250}px, ${1100 + Math.sin(t * .4) * 250}px)` });
+    css($('#leak3'), { transform: `translate(${Math.sin(t * .22 + 1) * 400}px, ${500 + Math.cos(t * .33) * 400}px)`, opacity: .6 + .4 * Math.sin(t) });
+    drawStars(t);
+
+    const pulse = t >= 4 && t < 24 ? Math.exp(-((t - 4) % 0.5) * 12) : 0;
+    const whipBlur = 70 * bump(t, 20.1, 0.13);
+    $('#mblurStd').setAttribute('stdDeviation', `${whipBlur.toFixed(1)} 0`);
+    $('#world').style.transform = `scale(${1 + pulse * 0.012})`;
+    $('#world').style.filter = whipBlur > 0.5 ? 'url(#mblur)' : 'none';
+
+    // ===== 1. Hook 0–3.4: type slam; the dot of “SVET.” becomes the halo (shape match) =====
+    const hookV = 1 - prog(t, 2.9, 3.35);
+    show($('#hook'), hookV);
+    if (hookV > 0) {
+      $('#hook').style.filter = `blur(${prog(t, 2.9, 3.35) * 16}px)`;
+      $('#hook').style.transform = `scale(${1 - prog(t, 2.9, 3.35) * 0.08})`;
+      $$('#hook .hw').forEach(el => {
+        const t0 = +el.dataset.t, p = prog(t, t0, t0 + 0.22);
+        const hit = t >= t0 ? Math.exp(-(t - t0) * 7) : 0, split = 18 * hit;
+        el.style.opacity = t >= t0 ? 1 : 0;
+        el.style.transform = `scale(${lerp(1.9, 1, eOut(p))}) translate(${Math.sin(t * 90) * 8 * hit}px, ${Math.cos(t * 70) * 6 * hit}px)`;
+        el.style.textShadow = `${-split}px 0 rgba(255,40,120,.85), ${split}px 0 rgba(40,220,255,.85)`;
+      });
+      $('#hdot').style.visibility = t < 2.9 ? 'inherit' : 'hidden';
+    }
+    const dotOn = t >= 2.9 && t < 6.9;
+    show($('#bigdot'), dotOn ? 1 : 0);
+    if (dotOn) {
+      const m = expoIO(prog(t, 2.9, 3.6));
+      const size = lerp(0.3, 9.5, m) * (1 + 0.05 * Math.sin(t * 6));
+      const out = eIO(prog(t, 6.1, 6.9));
+      $('#bigdot').style.transform = `translate(${lerp(DOT.x, 540, m)}px, ${lerp(DOT.y, 900, m) - out * 1500}px) scale(${size})`;
+    }
+
+    // ===== 2. Hero 3.4–6.9: guide appears in the halo; parallax slide out =====
+    const heroV = t >= 3.5 && t < 6.9 ? 1 : 0;
+    show($('#hero'), heroV);
+    if (heroV) {
+      const inp = eOut(prog(t, 3.6, 4.4)), out = eIO(prog(t, 6.1, 6.9));
+      $('#hero').style.transform = `translateY(${-out * 1500}px)`;
+      $('#ring3d').style.transform = `rotateX(74deg) rotateZ(${t * 70}deg) scale(${lerp(.3, 1, inp)})`;
+      $('#ring3d').style.opacity = inp;
+      [['#pl1', 0, 520], ['#pl2', 2.1, 470], ['#pl3', 4.2, 560]].forEach(([id, ph, r]) => {
+        const a = t * 1.6 + ph, z = Math.sin(a) * r * 0.4;
+        $(id).style.transform = `translate3d(${Math.cos(a) * r - 40}px, ${Math.sin(a) * r * 0.27}px, ${z}px) scale(${inp})`;
+      });
+    }
+    caption($('#capHero'), t, 4.2, 6.3);
+
+    // ===== 3–5. Main phone 6.1–20.2 =====
+    const rigOn = t >= 6.1 && t < 20.2;
+    show($('#rig'), rigOn ? 1 : 0);
+    if (rigOn) {
+      const rise = eIO(prog(t, 6.1, 6.9));
+      const o = { x: 0, y: lerp(1700, 200, rise), ry: -16 + prog(t, 6.9, 11.2) * 30 - eIO(prog(t, 11.2, 11.7)) * 14, rx: 6, rz: lerp(-6, 0, rise), s: 1.6 };
+      // push-through into the story ring (screen point 145,108)
+      if (t > 11.75 && t < 12.8) {
+        const k = t < 12.15 ? eIn(prog(t, 11.75, 12.15)) : 1 - eOut(prog(t, 12.15, 12.8));
+        o.ry = lerp(o.ry, 0, t < 12.15 ? k : 1); o.rx = lerp(6, 0, k);
+        o.s = 1.6 * (1 + k * 5); o.x = 50 * o.s * k; o.y = lerp(200, 314 * o.s, k);
+      }
+      if (t >= 12.8) o.ry = -10 + prog(t, 12.8, 15.55) * 20;
+      // paper-fold flip to chat
+      if (t >= 15.55 && t < 16.3) o.ry = t < 15.85 ? lerp(o.ry, 90, eIn(prog(t, 15.55, 15.85))) : lerp(-90, 12, eOut(prog(t, 15.85, 16.3)));
+      if (t >= 16.3) o.ry = 12 - prog(t, 16.3, 19.8) * 22;
+      // whip pan out to the left
+      o.x += -1700 * eIn(prog(t, 19.8, 20.1));
+      $('#rig').style.transform = rigTransform(o);
+      $('#rig').querySelector('.phone').style.filter = t > 11.75 && t < 12.8 ? `blur(${bump(t, 12.15, 0.12) * 10}px)` : 'none';
+      $('#glare').style.backgroundPosition = `${lerp(100, -20, (o.ry + 90) / 180)}% 0`;
+
+      const feedOn = t < 12.15, storyOn = t >= 12.15 && t < 15.85, chatOn = t >= 15.85;
+      show($('#Lfeed'), feedOn ? 1 : 0); show($('#feedNav'), feedOn ? 1 : 0);
+      show($('#Lstory'), storyOn ? 1 : 0); show($('#Lchat'), chatOn ? 1 : 0);
+      const sc = 380 * eIO(prog(t, 6.9, 7.6)) + 520 * eIO(prog(t, 8.3, 9.0)) + 560 * eIO(prog(t, 9.6, 10.3)) - 1460 * eIO(prog(t, 10.9, 11.4));
+      $('#feedImg').style.transform = `translateY(${-sc}px)`;
+      // the story shows the guide until he jumps out of it
+      $('#storyHole').style.visibility = t >= 13.35 ? 'inherit' : 'hidden';
+      $('#Lstory img').src.endsWith('story.png');
+
+      // live chat
+      bubbles.forEach((b, i) => {
+        const ts = +b.dataset.t, p = prog(t, ts, ts + 0.35);
+        css(b, { opacity: clamp(p * 4), transform: `scale(${t >= ts ? lerp(.4, 1, back(p, 2.4)) : 0})` });
+      });
+      const typ = bubbles.map((b, i) => [+b.dataset.t, b.classList.contains('in'), bubTops[i]]).find(([ts, inc]) => inc && t >= ts - 0.45 && t < ts);
+      show($('#typing'), typ ? 1 : 0);
+      if (typ) {
+        $('#typing').style.top = (18 + typ[2]) + 'px';
+        $$('#typing i').forEach((d, i) => d.style.transform = `translateY(${-Math.max(0, Math.sin(t * 14 - i * 0.9)) * 6}px)`);
+      }
+      chip($('#c1'), t, 7.0, 11.75, -90, 330, 180);
+      chip($('#c2'), t, 7.6, 11.75, 170, 150, 260);
+      chip($('#c3'), t, 8.8, 11.75, 230, 560, 200);
+      chip($('#e1'), t, 17.5, 20.0, 300, 230, 240);
+      chip($('#e2'), t, 18.25, 20.0, -60, 330, 300);
+    }
+    caption($('#capFeed'), t, 6.7, 11.75);
+    caption($('#capStory'), t, 12.4, 15.5);
+    caption($('#capChat'), t, 16.1, 19.8);
+
+    // ===== 6. Games carousel 20.1–24.4 (whip in from the right) =====
+    const carOn = t >= 20.05 && t < 24.4;
+    show($('#carousel'), carOn ? 1 : 0);
+    if (carOn) {
+      const inx = 1700 * (1 - eOut(prog(t, 20.05, 20.45)));
+      const spin = sineIO(prog(t, 21.4, 21.9)) + sineIO(prog(t, 22.8, 23.3));
+      $('#carousel').style.transform = `translate3d(${inx}px, 220px, -560px) rotateX(-4deg) rotateY(${-spin * 120}deg)`;
+      $$('#carousel .rig').forEach(el => el.style.transform = `rotateY(${+el.dataset.i * 120}deg) translateZ(560px) scale(1.3)`);
+    }
+    caption($('#capGames'), t, 20.5, 23.7);
+
+    // ===== 7. Safety 23.75–27: opens through the guide's shield, pink floods, then calm =====
+    const safeOn = t >= 23.75 && t < 27.05;
+    show($('#safe'), safeOn ? 1 : 0);
+    if (!safeOn) { $('#world').style.visibility = 'visible'; $$('.leak, #stars').forEach(el => el.style.visibility = 'visible'); }
+    if (safeOn) {
+      const m = expoIO(prog(t, 23.75, 24.45));
+      const cx = lerp(683, 540, m), cy = lerp(914, 880, m), S = lerp(60, 4200, m);
+      // Keď štít prekryje celý obraz, schovaj to, čo je pod ním (inak 4K render pretečie GPU pamäť).
+      const covered = m > 0.93;
+      $('#world').style.visibility = covered ? 'hidden' : 'visible';
+      $$('.leak, #stars').forEach(el => el.style.visibility = covered ? 'hidden' : 'visible');
+      $('#safe').style.clipPath = !covered ? `polygon(${SHIELD.map(([x, y]) => `${(cx + x * S).toFixed(1)}px ${(cy + y * S).toFixed(1)}px`).join(',')})` : 'none';
+      $('#safeFlood').style.opacity = 1 - eOut(prog(t, 24.2, 25.0));
+      const zoom = eIn(prog(t, 26.3, 27.0));
+      $('#safe').style.transform = `scale(${1 + zoom * 1.6})`;
+      $('#safe').style.transformOrigin = '540px 840px';
+      $$('#pulse div').forEach((d, i) => {
+        const ph = ((t - 24 + i * 0.6) % 1.8) / 1.8, r = 220 + ph * 700;
+        css(d, { width: r * 2 + 'px', height: r * 2 + 'px', left: -r + 'px', top: -r + 'px', opacity: (1 - ph) * .7 * clamp((t - 24.3) * 3) });
+      });
+      ['#g1', '#g2', '#g3'].forEach((id, i) => {
+        const p = prog(t, 24.6 + i * 0.35, 25.1 + i * 0.35);
+        css($(id), { opacity: clamp(p * 2) * (1 - prog(t, 26.5, 26.9)), transform: `translateX(${(1 - eOut(p)) * (i % 2 ? 900 : -900)}px) rotate(${(1 - eOut(p)) * (i % 2 ? 8 : -8)}deg)` });
+      });
+    }
+    caption($('#capSafe'), t, 24.3, 26.7);
+
+    // ===== 8. End 27–30: the guide lands in the logo =====
+    const endOn = t >= 27.0;
+    show($('#end'), endOn ? 1 : 0);
+    if (endOn) {
+      const lp = prog(t, 27.0, 27.6);
+      $('#rays').style.transform = `rotate(${t * 18}deg) scale(${lerp(.3, 1, eOut(lp))})`;
+      $('#logoWrap').style.transform = `scale(${lerp(.55, 1, back(lp, 2.2))})`;
+      $('#logoRing').style.transform = `rotate(${t * 200}deg)`;
+      $$('#endName span').forEach((s, i) => {
+        const p = prog(t, 27.35 + i * 0.04, 27.8 + i * 0.04);
+        s.style.transform = `translateY(${(1 - eOut(p)) * 110}%)`;
+      });
+      const tg = eOut(prog(t, 27.9, 28.3));
+      css($('#endTag'), { opacity: tg, transform: `translateY(${(1 - tg) * 30}px)` });
+      const cp = prog(t, 28.2, 28.65);
+      css($('#cta'), { opacity: clamp(cp * 3), transform: `scale(${lerp(.4, 1, back(cp, 2.2)) * (1 + (t > 28.65 ? 0.05 * Math.max(0, Math.sin((t - 28.65) * 4 * Math.PI)) : 0))})` });
+      // callback to the hook: same slam, smaller
+      const t0 = 28.75, hit = t >= t0 ? Math.exp(-(t - t0) * 7) : 0, sp = 10 * hit;
+      css($('#callback'), { opacity: t >= t0 ? 1 : 0, transform: `scale(${lerp(1.7, 1, eOut(prog(t, t0, t0 + 0.2)))})`,
+        textShadow: `${-sp}px 0 rgba(255,40,120,.85), ${sp}px 0 rgba(40,220,255,.85)` });
+    }
+
+    drawGuide(t);
+    drawFx(t);
+    drawGrain(frame);
+    $('#flash').style.opacity = 0.9 * bump(t, 27.0, 0.08);
+  };
+
+  if (!location.search.includes('render')) {
+    const start = performance.now();
+    (function loop() { render(((performance.now() - start) / 1000) % 30); requestAnimationFrame(loop); })();
+  }
+</script>
+</body>
+</html>
