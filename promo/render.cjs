@@ -39,7 +39,7 @@ const out = (!stills && args[0]) || path.join(__dirname, cfg.out);
   const ff = spawn(process.env.FFMPEG || 'ffmpeg', [
     '-y', '-loglevel', 'error', '-f', 'image2pipe', '-framerate', String(FPS), '-c:v', 'mjpeg', '-i', '-',
     ...audio,
-    '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-preset', 'slow', '-crf', '19',
+    '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-preset', 'slow', '-b:v', '6M', '-maxrate', '8M', '-bufsize', '12M',
     '-af', 'loudnorm=I=-14:TP=-1.5', '-c:a', 'aac', '-b:a', '192k', '-ar', '44100', '-shortest', '-movflags', '+faststart', out,
   ], { stdio: ['pipe', 'inherit', 'inherit'] });
 
