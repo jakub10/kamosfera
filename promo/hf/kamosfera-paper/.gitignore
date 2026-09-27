@@ -1,0 +1,6 @@
+renders/
+snapshots/
+.hyperframes/
+# generuje audio/build_audio.py
+assets/audio/music.wav
+assets/audio/sfx.wav
