@@ -310,6 +310,15 @@
   .animate-spin-slow {
     animation: spinSlow 6s linear infinite;
   }
+
+  /* Maskot na úvodní stránce se jemně vznáší. */
+  @keyframes landingFloat {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-12px); }
+  }
+  .animate-landing-float {
+    animation: landingFloat 4s ease-in-out infinite;
+  }
   @keyframes gradientX {
     0%, 100% { background-position: 0% 50%; }
     50% { background-position: 100% 50%; }
