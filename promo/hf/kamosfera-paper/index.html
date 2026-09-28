@@ -186,17 +186,23 @@
       <!-- ===================== S8 · End (cream) ===================== -->
       <section id="s8" class="scene clip" data-start="21.5" data-duration="6.5" data-track-index="1">
         <div class="sheet" id="s8sheet" style="background-color: var(--cream)"></div>
-        <div class="it" id="logo8" style="left: 290px; top: 170px; width: 500px; height: 500px" data-t="21.95" data-r="5">
+        <div class="it" id="logo8" style="left: 350px; top: 150px; width: 380px; height: 380px" data-t="21.95" data-r="5">
           <div class="paper" style="position: absolute; inset: -40px; background-color: var(--pink); clip-path: polygon(50% 0, 61% 12%, 77% 6%, 80% 22%, 96% 26%, 90% 41%, 100% 54%, 88% 64%, 93% 80%, 77% 82%, 71% 97%, 57% 89%, 44% 100%, 36% 87%, 20% 93%, 18% 77%, 3% 71%, 11% 57%, 0 44%, 12% 34%, 6% 19%, 22% 17%, 27% 3%, 41% 11%); filter: var(--lift)"></div>
           <div class="dot logo" style="inset: 0; border: 12px solid #fff"></div>
         </div>
-        <div class="ransom" id="brand8a" style="top: 760px" data-text="KAMOS" data-size="165" data-t="22.1"></div>
-        <div class="ransom" id="brand8b" style="top: 975px" data-text="FÉRA" data-size="165" data-t="22.52"></div>
-        <div class="it hand" id="lblWorld" style="left: 250px; top: 1165px; font-size: 140px" data-t="23.0" data-write="7">Tvůj svět.</div>
-        <svg class="draw it" id="underline" width="620" height="60" viewBox="0 0 620 60" style="left: 230px; top: 1330px" data-t="23.4"><path d="M10 40 C 160 10, 330 55, 610 18" stroke="#ff5fa2" stroke-width="16" /></svg>
-        <div class="it paper" id="cta" style="left: 150px; top: 1400px; padding: 34px 70px; border-radius: 999px; background-color: var(--pink); color: #fff; font-size: 104px; white-space: nowrap; filter: var(--sticker)" data-t="24.1" data-r="-3">PŘIDEJ SE!</div>
-        <div class="it" id="endMascot" style="left: 720px; top: 1560px" data-t="24.45" data-dy="600" data-r="-10">
-          <img class="sticker" src="assets/img/mascot-celebrate.png" style="width: 360px" />
+        <div class="ransom" id="brand8a" style="top: 590px" data-text="KAMOS" data-size="140" data-t="22.1"></div>
+        <div class="ransom" id="brand8b" style="top: 775px" data-text="FÉRA" data-size="140" data-t="22.52"></div>
+        <div class="it hand" id="lblWorld" style="left: 290px; top: 940px; font-size: 120px" data-t="23.0" data-write="7">Tvůj svět.</div>
+        <svg class="draw it" id="underline" width="620" height="60" viewBox="0 0 620 60" style="left: 250px; top: 1075px" data-t="23.4"><path d="M10 40 C 160 10, 330 55, 610 18" stroke="#ff5fa2" stroke-width="16" /></svg>
+        <div class="it paper" id="cta" style="left: 175px; top: 1150px; padding: 30px 66px; border-radius: 999px; background-color: var(--pink); color: #fff; font-size: 96px; white-space: nowrap; filter: var(--sticker)" data-t="24.1" data-r="-3">PŘIDEJ SE!</div>
+        <div class="it paper" id="url" style="left: 190px; top: 1360px; padding: 18px 40px 14px; background-color: #fff; font-size: 84px; white-space: nowrap; filter: var(--lift); clip-path: polygon(1% 4%, 50% 0, 99% 5%, 100% 50%, 98% 96%, 50% 100%, 2% 95%, 0 50%)" data-t="24.4" data-r="2">kamosfera<span style="color: #c8175f">.online</span></div>
+        <div class="it print" id="qr" style="left: 120px; top: 1510px; width: 330px; padding: 16px; border-radius: 10px" data-t="24.75" data-dx="-600" data-r="-4">
+          <img src="assets/img/qr-kamosfera.png" style="width: 298px; height: 298px; border-radius: 0; image-rendering: pixelated" />
+          <div class="tape" style="left: 70px; top: -26px; transform: rotate(-5deg)"></div>
+        </div>
+        <div class="it hand" id="lblScan" style="left: 470px; top: 1575px; font-size: 84px" data-t="25.05" data-write="6">← naskenuj mě!</div>
+        <div class="it" id="endMascot" style="left: 760px; top: 1650px" data-t="24.45" data-dy="600" data-r="-10">
+          <img class="sticker" src="assets/img/mascot-celebrate.png" style="width: 300px" />
         </div>
         <div id="confetti" style="position: absolute; inset: 0; pointer-events: none"></div>
       </section>
@@ -237,7 +243,7 @@
         ["rip", 16.4], ["stamp", 16.85], ["slap", 17.05], ["ticks8", 17.3], ["slap", 18.75], ["scribble", 18.9],
         ["slap", 19.9], ["marker", 20.25], ["scribble", 20.25],
         ["rip", 21.5], ["stamp", 21.95], ["ticks5", 22.1], ["ticks4", 22.52], ["scribble", 23.0], ["marker", 23.4],
-        ["stamp", 24.1], ["confetti", 24.15], ["pop", 24.45]
+        ["stamp", 24.1], ["confetti", 24.15], ["stamp", 24.4], ["pop", 24.45], ["slap", 24.75], ["tape", 24.85], ["scribble", 25.05]
       ]
     </script>
 
@@ -337,7 +343,7 @@
           let x = 0, y = 0, s = 1, r = r0;
           if (d < n) { const u = easeOut((d + 1) / (n + 1)); x = dx * (1 - u); y = dy * (1 - u); r = r0 + (1 - u) * 18 * Math.sign(dx || dy || 1); }
           else { s = SQUASH[Math.min(d - n, SQUASH.length - 1)]; }
-          const b = boil(seed, ts);
+          const b = el.id === "qr" && d >= n + 3 ? { x: 0, y: 0, r: 0 } : boil(seed, ts);
           el.style.transform = `translate(${x + b.x}px, ${y + b.y}px) rotate(${r + b.r}deg) scale(${s})`;
         }
         function writeOn(el, ts) {
@@ -413,7 +419,7 @@
           confetti.forEach((c, i) => {
             if (dt < 0 || dt > 3.6) { c.el.style.visibility = "hidden"; return; }
             c.el.style.visibility = "visible";
-            const x = 540 + c.vx * dt * 0.55, y = 1490 + c.vy * dt * 0.55 + 900 * dt * dt;
+            const x = 540 + c.vx * dt * 0.55, y = 1250 + c.vy * dt * 0.55 + 900 * dt * dt;
             c.el.style.transform = `translate(${x}px, ${y}px) rotate(${c.rs * dt}deg)`;
           });
 
