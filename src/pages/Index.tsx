@@ -7,10 +7,9 @@ import { RightSidebar } from '@/components/social/RightSidebar';
 import { MobileNav } from '@/components/social/MobileNav';
 import { MobileHeader } from '@/components/social/MobileHeader';
 import { AuthModal } from '@/components/auth/AuthModal';
+import { Landing } from '@/components/landing/Landing';
 import { FloatingGameMenu } from '@/components/games/FloatingGameMenu';
-import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
-import logo from '@/assets/logo.jpg';
 
 interface Profile {
   username: string;
@@ -21,6 +20,7 @@ interface Profile {
 const Index = () => {
   const { user, loading } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authTab, setAuthTab] = useState<'login' | 'signup'>('login');
   const [currentProfile, setCurrentProfile] = useState<Profile | null>(null);
 
   useEffect(() => {
@@ -49,80 +49,16 @@ const Index = () => {
     );
   }
 
-  // Landing page for non-authenticated users
+  // Úvodní stránka pro nepřihlášené
   if (!user) {
     return (
-      <div className="min-h-screen bg-background">
-        {/* Hero Section */}
-        <div className="relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-background to-accent/10" />
-          <div className="relative container mx-auto px-4 py-20 lg:py-32">
-            <div className="max-w-3xl mx-auto text-center">
-              <img src={logo} alt="Kamosféra" className="w-40 h-40 mx-auto mb-6 rounded-3xl shadow-2xl" />
-              <h1 className="text-5xl lg:text-7xl font-bold mb-4">
-                <span className="gradient-text">Kamosféra</span>
-              </h1>
-              <p className="text-lg text-primary/80 mb-2">Dětská sociální síť</p>
-              <p className="text-xl lg:text-2xl text-muted-foreground mb-8">
-                Místo pro kamarády ze školy — příspěvky, zprávy, hry a robot,
-                který dává pozor, aby tu bylo bezpečno.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button
-                  size="lg"
-                  onClick={() => setShowAuthModal(true)}
-                  className="text-lg px-8"
-                >
-                  Začít zdarma
-                </Button>
-                <Button
-                  size="lg"
-                  variant="outline"
-                  onClick={() => setShowAuthModal(true)}
-                  className="text-lg px-8"
-                >
-                  Přihlásit se
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Features */}
-        <div className="container mx-auto px-4 py-20">
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="bg-card rounded-2xl p-8 border border-border text-center animate-fadeIn">
-              <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <span className="text-3xl">💬</span>
-              </div>
-              <h3 className="text-xl font-semibold mb-2">Sdílej své myšlenky</h3>
-              <p className="text-muted-foreground">
-                Publikuj příspěvky, fotky a videa. Sdílej, co máš na srdci.
-              </p>
-            </div>
-            <div className="bg-card rounded-2xl p-8 border border-border text-center animate-fadeIn" style={{ animationDelay: '0.1s' }}>
-              <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <span className="text-3xl">👥</span>
-              </div>
-              <h3 className="text-xl font-semibold mb-2">Najdi přátele</h3>
-              <p className="text-muted-foreground">
-                Tvoji kamarádi ze školy, nikdo cizí. Kdo ti chce psát a není kamarád, musí nejdřív počkat, jestli chceš ty.
-              </p>
-            </div>
-            <div className="bg-card rounded-2xl p-8 border border-border text-center animate-fadeIn" style={{ animationDelay: '0.2s' }}>
-              <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <span className="text-3xl">🚀</span>
-              </div>
-              <h3 className="text-xl font-semibold mb-2">Objevuj nové</h3>
-              <p className="text-muted-foreground">
-                Sleduj trendy, objevuj zajímavý obsah a inspiruj se.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <AuthModal open={showAuthModal} onOpenChange={setShowAuthModal} />
-      </div>
+      <>
+        <Landing
+          onJoin={() => { setAuthTab('signup'); setShowAuthModal(true); }}
+          onLogin={() => { setAuthTab('login'); setShowAuthModal(true); }}
+        />
+        <AuthModal open={showAuthModal} onOpenChange={setShowAuthModal} defaultTab={authTab} />
+      </>
     );
   }
 
