@@ -15,9 +15,11 @@ import { explainAuthError } from '@/lib/authErrors';
 interface AuthModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** Na kterou záložku se okno otevře — „Přidej se“ vede rovnou na registraci. */
+  defaultTab?: 'login' | 'signup';
 }
 
-export function AuthModal({ open, onOpenChange }: AuthModalProps) {
+export function AuthModal({ open, onOpenChange, defaultTab = 'login' }: AuthModalProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { signIn, signUp } = useAuth();
@@ -151,7 +153,7 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
           </div>
         </div>
 
-        <Tabs defaultValue="login">
+        <Tabs defaultValue={defaultTab}>
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="login">Přihlášení</TabsTrigger>
             <TabsTrigger value="signup">Registrace</TabsTrigger>
