@@ -30,6 +30,7 @@ psql -d kamosfera_test -v ON_ERROR_STOP=1 -f supabase/tests/03_world_seed.sql
 psql -d kamosfera_test -v ON_ERROR_STOP=1 -f supabase/tests/04_game_achievements.sql
 psql -d kamosfera_test -v ON_ERROR_STOP=1 -f supabase/tests/05_fortress.sql
 psql -d kamosfera_test -v ON_ERROR_STOP=1 -f supabase/tests/06_star_patrol.sql
+psql -d kamosfera_test -v ON_ERROR_STOP=1 -f supabase/tests/07_child_safety.sql
 ```
 
 Každý test, který projde, vypíše `OK`. Když něco selže, skript skončí chybou
@@ -77,3 +78,17 @@ v databázi, takže se testují přímo tady:
 - laser jednou za tah, štít se zapne sám, salva, oprava, vybavení, odměna a trest za vyřazení;
 - všechny tři konce hry (posádka, piráti, Zbloudilá AI) a časovač, který nenechá nikoho zdržovat;
 - 16 celých her od rozdání po vítěze (4–7 hráčů), ve kterých se neztratí ani jedna karta.
+
+## Bezpečnost dětí
+
+`07_child_safety.sql` hlídá bránu do Kamosféry a ochranné prvky:
+
+- nový účet bez souhlasu dospělého a schválení správcem nevidí nikoho a nikdo nevidí jeho — tabulky i funkce, které pravidla tabulek obcházejí;
+- každá taková funkce má bránu i po pozdějších migracích (test to kontroluje v katalogu);
+- souhlas rodiče jde jen přes dlouhý tajný odkaz, jen jednou; schvaluje jen správce a jen po souhlasu;
+- „Toto mi nie je príjemné" potichu zablokuje a pošle signál důvěrníkovi, který nevidí, kdo to byl;
+- kamarádi vznikají jen kódem naživo (platí 3 minuty, jednou, s limitem na hádání);
+- noc 22:00–6:30 v Praze: nedá se psát, ale tlačítko pomoci funguje i v noci.
+
+Testy 01–06 si na začátku označí testovací hráče jako schválené a vypnou noc,
+aby nezáležely na tom, v kolik hodin běží.

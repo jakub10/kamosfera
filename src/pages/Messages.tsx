@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { UncomfortableButton } from '@/components/safety/UncomfortableButton';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Sidebar } from '@/components/social/Sidebar';
@@ -610,6 +611,17 @@ const Messages = () => {
                       )}
                     </p>
                   </div>
+                  {selectedConversation.other_profile && (
+                    <UncomfortableButton
+                      userId={selectedConversation.other_profile.user_id}
+                      name={selectedConversation.other_profile.full_name}
+                      onDone={() => {
+                        setSelectedConversation(null);
+                        void fetchConversations();
+                      }}
+                      className="shrink-0"
+                    />
+                  )}
                 </div>
 
                 {/* Messages */}
