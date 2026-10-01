@@ -87,7 +87,7 @@ v databázi, takže se testují přímo tady:
 - každá taková funkce má bránu i po pozdějších migracích (test to kontroluje v katalogu);
 - souhlas rodiče jde jen přes dlouhý tajný odkaz, jen jednou; schvaluje jen správce a jen po souhlasu;
 - „Toto mi nie je príjemné" potichu zablokuje a pošle signál důvěrníkovi, který nevidí, kdo to byl;
-- kamarádi vznikají jen kódem naživo (platí 3 minuty, jednou, s limitem na hádání);
+- kamarádi vznikají kódem naživo (platí 3 minuty, jednou, s limitem na hádání) nebo pozvánkou na dálku (7 dní, jednou, nejvýš 5 najednou);
 - noc 22:00–6:30 v Praze: nedá se psát, ale tlačítko pomoci funguje i v noci.
 
 Testy 01–06 si na začátku označí testovací hráče jako schválené a vypnou noc,

@@ -1,10 +1,12 @@
 -- ============================================================================
 -- Bezpečnosť detí — vrstva 1 a 3 z „Kamosféra — Child Safety Concept".
 --
---   * Dnu len so súhlasom dospelého a schválením admina (rola creator).
---     Kým to nie je, dieťa nevidí nikoho a nikto nevidí jeho.
---   * Súčasné deti ostávajú schválené, ale po tejto zmene musí každé z nich
---     ešte raz prejsť súhlasom rodiča (sprievodca v appke).
+--   * Noví: dnu len so súhlasom dospelého a schválením admina (rola creator).
+--     Kým to nie je, nový účet nevidí nikoho a nikto nevidí jeho.
+--   * Súčasní členovia (deti aj rodičia, babky…) ostávajú, ako sú — žiadny
+--     súhlas ani zamknutie. V appke len raz uvidia, čo je nové.
+--   * Pozývací odkaz pre kamaráta na diaľku (iné mesto, ČR/SR): platí 7 dní
+--     a raz. Novému pomôže dostať sa dnu, správca vidí, kto ho pozval.
 --   * Dôverník: dospelý, ktorého si dieťa vyberie. Nevidí správy, kamarátov
 --     ani profily — len signál, že sa niečo deje.
 --   * „Toto mi nie je príjemné": jedno ťuknutie potichu zablokuje a dá
@@ -30,6 +32,7 @@ CREATE TABLE IF NOT EXISTS public.member_safety (
   consent_at timestamptz,
   consent_name text CHECK (consent_name IS NULL OR length(consent_name) <= 60),
   guardian_invite text UNIQUE,
+  invited_by uuid REFERENCES auth.users(id) ON DELETE SET NULL,
   onboarded_at timestamptz,
   created_at timestamptz NOT NULL DEFAULT now()
 );
@@ -61,6 +64,18 @@ CREATE TABLE IF NOT EXISTS public.friend_codes (
 );
 CREATE INDEX IF NOT EXISTS friend_codes_user_idx ON public.friend_codes (user_id);
 
+-- Pozývací odkaz na diaľku: dlhý, tajný, 7 dní, jedno použitie.
+CREATE TABLE IF NOT EXISTS public.friend_invites (
+  token text PRIMARY KEY
+    DEFAULT replace(gen_random_uuid()::text, '-', '') || replace(gen_random_uuid()::text, '-', ''),
+  inviter_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  expires_at timestamptz NOT NULL DEFAULT now() + interval '7 days',
+  used_by uuid REFERENCES auth.users(id) ON DELETE SET NULL,
+  used_at timestamptz
+);
+CREATE INDEX IF NOT EXISTS friend_invites_inviter_idx ON public.friend_invites (inviter_id, created_at DESC);
+
 CREATE TABLE IF NOT EXISTS public.friend_code_attempts (
   id bigserial PRIMARY KEY,
   user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -73,8 +88,9 @@ ALTER TABLE public.guardians ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.guardian_signals ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.friend_codes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.friend_code_attempts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.friend_invites ENABLE ROW LEVEL SECURITY;
 REVOKE ALL ON public.member_safety, public.guardians, public.guardian_signals,
-              public.friend_codes, public.friend_code_attempts FROM anon, authenticated;
+              public.friend_codes, public.friend_code_attempts, public.friend_invites FROM anon, authenticated;
 REVOKE ALL ON SEQUENCE public.guardian_signals_id_seq, public.friend_code_attempts_id_seq FROM anon, authenticated;
 
 -- Bezpečnostný denník (vidí len creator) dostane nové druhy udalostí.
@@ -82,12 +98,14 @@ ALTER TABLE public.safety_events DROP CONSTRAINT IF EXISTS safety_events_kind_ch
 ALTER TABLE public.safety_events ADD CONSTRAINT safety_events_kind_check CHECK (kind = ANY (ARRAY[
   'request_sent', 'request_accepted', 'request_ignored', 'user_blocked', 'user_unblocked',
   'request_rate_limited', 'uncomfortable', 'member_approved', 'member_rejected',
-  'parent_consent', 'guardian_added', 'friend_code_used'
+  'parent_consent', 'guardian_added', 'friend_code_used', 'friend_invite_used'
 ]));
 
--- Súčasné deti sú schválené (poznáme ich), súhlas rodiča ešte dajú.
-INSERT INTO public.member_safety (user_id, approved, approved_at)
-SELECT p.user_id, true, now() FROM public.profiles p
+-- Súčasní členovia ostávajú plnohodnotní. Sú medzi nimi aj rodičia a starí
+-- rodičia, takže súhlas „rodiča" by nemal kto podpísať — a ani netreba,
+-- všetkých poznáme. Sprievodca im ukáže len to, čo je nové.
+INSERT INTO public.member_safety (user_id, approved, approved_at, consent_at, consent_name)
+SELECT p.user_id, true, now(), now(), 'pôvodný člen' FROM public.profiles p
 ON CONFLICT (user_id) DO NOTHING;
 
 -- Každý nový účet začína ako „čaká".
@@ -175,7 +193,7 @@ BEGIN
       FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
      WHERE n.nspname = 'public' AND c.relkind = 'r' AND c.relrowsecurity
        AND c.relname NOT IN ('member_safety', 'guardians', 'guardian_signals', 'friend_codes',
-                             'friend_code_attempts', 'safety_events')
+                             'friend_code_attempts', 'friend_invites', 'safety_events')
   LOOP
     own := CASE WHEN t.relname IN ('profiles', 'user_roles') THEN ' OR user_id = auth.uid()' ELSE '' END;
     EXECUTE format('DROP POLICY IF EXISTS "Len plnohodnotní členovia" ON public.%I', t.relname);
@@ -428,6 +446,91 @@ BEGIN
 END
 $$;
 
+-- Pozývací odkaz na diaľku. Kamarát, ktorý býva ďaleko, sa cez neho stane
+-- kamarátom — a ak v Kamosfére ešte nie je, správca uvidí, kto ho pozval.
+CREATE OR REPLACE FUNCTION public.friend_invite_new()
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  me uuid := auth.uid();
+  inv public.friend_invites;
+BEGIN
+  PERFORM public.require_member();
+  IF (SELECT count(*) FROM public.friend_invites
+       WHERE inviter_id = me AND used_at IS NULL AND expires_at > now()) >= 5 THEN
+    RAISE EXCEPTION 'Máš 5 nepoužitých pozvánok. Počkaj, kým ich kamaráti použijú (alebo vyprší týždeň).';
+  END IF;
+  INSERT INTO public.friend_invites (inviter_id) VALUES (me) RETURNING * INTO inv;
+  RETURN jsonb_build_object('token', inv.token, 'expires_at', inv.expires_at);
+END
+$$;
+
+-- Čo ukáže odkaz, kým sa človek neprihlási: len prezývku toho, kto pozýva.
+CREATE OR REPLACE FUNCTION public.friend_invite_info(_token text)
+RETURNS jsonb
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT jsonb_build_object('inviter', p.username, 'valid', i.used_at IS NULL AND i.expires_at > now())
+    FROM public.friend_invites i JOIN public.profiles p ON p.user_id = i.inviter_id
+   WHERE i.token = _token AND length(_token) >= 32;
+$$;
+
+-- Použiť pozvánku. Smie aj nový účet, ktorý ešte čaká na vstup — preto bez
+-- brány; kamarátstvo vznikne hneď, ale uvidí ho až po schválení.
+CREATE OR REPLACE FUNCTION public.friend_invite_use(_token text)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  me uuid := auth.uid();
+  inv public.friend_invites;
+  name text;
+BEGIN
+  IF me IS NULL THEN
+    RAISE EXCEPTION 'Najprv sa prihlás.' USING ERRCODE = 'insufficient_privilege';
+  END IF;
+  SELECT * INTO inv FROM public.friend_invites
+   WHERE token = _token AND length(_token) >= 32 FOR UPDATE;
+  -- Ten istý človek otvorí odkaz znova (obnovená stránka): žiadna chyba.
+  IF FOUND AND inv.used_by = me THEN
+    SELECT username INTO name FROM public.profiles WHERE user_id = inv.inviter_id;
+    RETURN jsonb_build_object('username', name, 'pending', NOT public.member_ok());
+  END IF;
+  IF NOT FOUND OR inv.used_at IS NOT NULL OR inv.expires_at <= now()
+     OR public.is_blocked_between(me, inv.inviter_id) THEN
+    RETURN jsonb_build_object('error', 'Táto pozvánka už neplatí. Popros kamaráta o novú.');
+  END IF;
+  IF inv.inviter_id = me THEN
+    RETURN jsonb_build_object('error', 'To je tvoja vlastná pozvánka. 🙂 Pošli ju kamarátovi.');
+  END IF;
+
+  UPDATE public.friend_invites SET used_by = me, used_at = now() WHERE token = inv.token;
+  UPDATE public.friendships SET status = 'accepted'
+   WHERE (requester_id = me AND addressee_id = inv.inviter_id)
+      OR (requester_id = inv.inviter_id AND addressee_id = me);
+  IF NOT FOUND THEN
+    INSERT INTO public.friendships (requester_id, addressee_id, status) VALUES (inv.inviter_id, me, 'accepted');
+  END IF;
+  UPDATE public.member_safety SET invited_by = COALESCE(invited_by, inv.inviter_id)
+   WHERE user_id = me AND NOT approved;
+  IF public.member_ok() THEN
+    INSERT INTO public.notifications (user_id, type, from_user_id) VALUES (inv.inviter_id, 'friend_accepted', me);
+  END IF;
+  INSERT INTO public.safety_events (kind, actor_id, target_id) VALUES ('friend_invite_used', me, inv.inviter_id);
+
+  SELECT username INTO name FROM public.profiles WHERE user_id = inv.inviter_id;
+  RETURN jsonb_build_object('username', name, 'pending', NOT public.member_ok());
+END
+$$;
+
 -- --------------------------------------------------------------------------
 -- Dospelí bez účtu: súhlas rodiča a dôverník (tajný odkaz)
 -- --------------------------------------------------------------------------
@@ -581,7 +684,8 @@ BEGIN
       'approved', m.approved,
       'consent_at', m.consent_at,
       'consent_name', m.consent_name,
-      'guardian', EXISTS (SELECT 1 FROM public.guardians g WHERE g.child_id = m.user_id AND g.revoked_at IS NULL)
+      'guardian', EXISTS (SELECT 1 FROM public.guardians g WHERE g.child_id = m.user_id AND g.revoked_at IS NULL),
+      'invited_by', (SELECT ip.username FROM public.profiles ip WHERE ip.user_id = m.invited_by)
     ) ORDER BY (m.approved AND m.consent_at IS NOT NULL), m.approved, m.created_at DESC)
       FROM public.member_safety m JOIN public.profiles p ON p.user_id = m.user_id
   ), '[]'::jsonb);
@@ -630,19 +734,21 @@ GRANT EXECUTE ON FUNCTION public.require_awake(), public.is_night(timestamptz) T
 
 REVOKE ALL ON FUNCTION public.safety_status(), public.onboarding_done(), public.guardian_invite_new(),
   public.report_uncomfortable(uuid), public.friend_code_new(), public.friend_code_use(text),
+  public.friend_invite_new(), public.friend_invite_use(text),
   public.admin_members(), public.admin_set_approval(uuid, boolean)
   FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.safety_status(), public.onboarding_done(), public.guardian_invite_new(),
   public.report_uncomfortable(uuid), public.friend_code_new(), public.friend_code_use(text),
+  public.friend_invite_new(), public.friend_invite_use(text),
   public.admin_members(), public.admin_set_approval(uuid, boolean)
   TO authenticated;
 
 -- Stránky pre dospelých fungujú bez prihlásenia; chráni ich len dlhý tajný odkaz.
 REVOKE ALL ON FUNCTION public.consent_info(text), public.consent_confirm(text, text, boolean),
   public.guardian_invite_info(text), public.guardian_accept(text, text),
-  public.guardian_view(text), public.guardian_leave(text)
+  public.guardian_view(text), public.guardian_leave(text), public.friend_invite_info(text)
   FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.consent_info(text), public.consent_confirm(text, text, boolean),
   public.guardian_invite_info(text), public.guardian_accept(text, text),
-  public.guardian_view(text), public.guardian_leave(text)
+  public.guardian_view(text), public.guardian_leave(text), public.friend_invite_info(text)
   TO anon, authenticated;

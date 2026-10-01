@@ -103,12 +103,15 @@ online v rovnakom čase.
 
 Podľa konceptu „Kamosféra — Child Safety Concept" (vrstvy 1 a 3; AI strážca príde neskôr):
 
-- **Dnu len so súhlasom a schválením.** Nový účet nevidí nikoho a nikto nevidí jeho, kým
-  dospelý nepotvrdí súhlas (QR → `/suhlas/<odkaz>`, bez účtu) a správca (rola `creator`)
-  ho nepustí na stránke `/admin/clenovia`. Súčasné deti sú schválené, ale súhlasom rodiča
-  musia prejsť tiež — sprievodca ich prevedie.
-- **Kamaráti len naživo** (`/kamarati`): kód alebo QR, platí 3 minúty a raz. Hľadanie,
-  zoznam všetkých členov a žiadosti o priateľstvo na diaľku zmizli; profil vidia len kamaráti.
+- **Súčasní členovia ostávajú, ako sú** (deti aj rodičia a starí rodičia). Raz uvidia
+  obrazovku „Čo je nové" a idú ďalej.
+- **Noví sa dostanú dnu takto:** registrácia → dospelý potvrdí súhlas (QR → `/suhlas/<odkaz>`,
+  bez účtu) → správca (rola `creator`) ich pustí na stránke `/admin/clenovia`. Dovtedy
+  nový účet nevidí nikoho a nikto nevidí jeho.
+- **Kamaráti** (`/kamarati`): naživo kódom alebo QR (platí 3 minúty, raz), alebo
+  **pozývacím odkazom na diaľku** (`/pozvanka/<odkaz>`, platí 7 dní, raz; najviac 5 naraz).
+  Nového z diaľky odkaz rovno zaregistruje a správca vidí, kto ho pozval.
+  Hľadanie, zoznam všetkých členov a žiadosti o priateľstvo zmizli; profil vidia len kamaráti.
 - **„Toto mi nie je príjemné"** (profil, správy, príspevok): potichu zablokuje a dá signál
   dôverníkovi. Dôverník je dospelý bez účtu so stránkou `/dovernik/<odkaz>` — vidí len
   prezývku dieťaťa a čas signálu, nikdy správy, kamarátov ani to, kto to bol.

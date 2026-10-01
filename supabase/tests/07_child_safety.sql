@@ -5,7 +5,7 @@
 --   c2 Dorka  — plnohodnotná členka
 --   c3 Emo    — plnohodnotný člen
 --   c4 Sára   — správkyňa (creator)
---   c5 Peťo   — „starý" člen: schválený, ale súhlas rodiča ešte nedal
+--   c5 Peťo   — schválený, ale bez súhlasu (stav, ktorý by vznikol ručnou úpravou)
 -- Spúšťa sa po 01_messaging_security.sql — používa jeho `chk`.
 -- ============================================================================
 \set ON_ERROR_STOP on
@@ -151,11 +151,11 @@ BEGIN
     EXISTS (SELECT 1 FROM public.safety_events WHERE kind = 'member_approved' AND target_id = c(1)), true);
 END$$;
 
-\echo '--- B5. Súčasné deti: schválené, ale bez súhlasu rodiča sú zamknuté ---'
+\echo '--- B5. Schválený účet bez súhlasu dospelého je zamknutý ---'
 DO $$
 DECLARE tok text;
 BEGIN
-  PERFORM chk('starý člen bez súhlasu nevidí príspevky',
+  PERFORM chk('schválený bez súhlasu nevidí príspevky',
     (ako(c(5), 'SELECT to_jsonb(count(*)) FROM public.posts'))::int = 0, true);
   SELECT consent_token INTO tok FROM public.member_safety WHERE user_id = c(5);
   PERFORM ako(NULL, format('SELECT public.consent_confirm(%L, %L, false)', tok, 'Otec'));
@@ -249,6 +249,56 @@ BEGIN
     e := COALESCE(ako_chyba(c(5), 'SELECT public.friend_code_use(''ZZZZZZ'')'), 'bez výnimky');
   END LOOP;
   PERFORM chk('hádanie kódov zastaví limit', e LIKE '%Priveľa%', true);
+END$$;
+
+\echo '--- B10. Pozývací odkaz na diaľku ---'
+DO $$
+DECLARE inv jsonb; r jsonb; e text;
+BEGIN
+  INSERT INTO auth.users (id, email) VALUES ('c0000000-0000-0000-0000-000000000007', 'daleko@test.local');
+  PERFORM chk('nový bez vstupu pozvánku nevytvorí',
+    ako_chyba('c0000000-0000-0000-0000-000000000007', 'SELECT public.friend_invite_new()') IS NOT NULL, true);
+
+  inv := ako(c(3), 'SELECT public.friend_invite_new()');
+  PERFORM chk('pozvánka je dlhý tajný odkaz na 7 dní',
+    length(inv->>'token') >= 32 AND (inv->>'expires_at')::timestamptz > now() + interval '6 days', true);
+  r := ako(NULL, format('SELECT public.friend_invite_info(%L)', inv->>'token'));
+  PERFORM chk('bez prihlásenia ukáže len prezývku pozývajúceho',
+    (r->>'valid')::boolean AND (SELECT count(*) FROM jsonb_object_keys(r)) = 2, true);
+
+  r := ako('c0000000-0000-0000-0000-000000000007', format('SELECT public.friend_invite_use(%L)', inv->>'token'));
+  PERFORM chk('nový z diaľky použije pozvánku: kamarátstvo vznikne, ale stále čaká na vstup',
+    (r->>'pending')::boolean AND public.are_friends(c(3), 'c0000000-0000-0000-0000-000000000007')
+    AND (ako('c0000000-0000-0000-0000-000000000007', 'SELECT to_jsonb(count(*)) FROM public.posts'))::int = 0, true);
+  PERFORM chk('správca vidí, kto nového pozval',
+    (SELECT m->>'invited_by' FROM jsonb_array_elements(ako(c(4), 'SELECT public.admin_members()')) m
+      WHERE m->>'user_id' = 'c0000000-0000-0000-0000-000000000007')
+    = (SELECT username FROM public.profiles WHERE user_id = c(3)), true);
+
+  e := (ako(c(2), format('SELECT public.friend_invite_use(%L)', inv->>'token')))->>'error';
+  PERFORM chk('pozvánka sa dá použiť len raz', e LIKE '%neplatí%', true);
+  r := ako('c0000000-0000-0000-0000-000000000007', format('SELECT public.friend_invite_use(%L)', inv->>'token'));
+  PERFORM chk('ten istý človek môže odkaz otvoriť znova bez chyby', r ? 'username' AND NOT r ? 'error', true);
+
+  inv := ako(c(3), 'SELECT public.friend_invite_new()');
+  e := (ako(c(3), format('SELECT public.friend_invite_use(%L)', inv->>'token')))->>'error';
+  PERFORM chk('vlastnú pozvánku použiť nejde', e LIKE '%vlastná%', true);
+  e := (ako(c(1), format('SELECT public.friend_invite_use(%L)', inv->>'token')))->>'error';
+  PERFORM chk('zablokovaný sa cez pozvánku nevráti', e LIKE '%neplatí%' AND NOT public.are_friends(c(1), c(3)), true);
+
+  UPDATE public.friend_invites SET expires_at = now() - interval '1 second' WHERE token = inv->>'token';
+  e := (ako(c(5), format('SELECT public.friend_invite_use(%L)', inv->>'token')))->>'error';
+  PERFORM chk('stará pozvánka neplatí', e LIKE '%neplatí%', true);
+
+  r := ako(c(5), format('SELECT public.friend_invite_use(%L)', (ako(c(2), 'SELECT public.friend_invite_new()'))->>'token'));
+  PERFORM chk('člen z diaľky je hneď kamarát a pozývajúci dostane oznámenie',
+    NOT (r->>'pending')::boolean AND public.are_friends(c(2), c(5))
+    AND EXISTS (SELECT 1 FROM public.notifications WHERE user_id = c(2) AND from_user_id = c(5)), true);
+
+  FOR i IN 1..6 LOOP
+    e := ako_chyba(c(4), 'SELECT public.friend_invite_new()');
+  END LOOP;
+  PERFORM chk('najviac 5 nepoužitých pozvánok naraz', e LIKE '%5 nepoužitých%', true);
 END$$;
 
 \echo '--- B9. Noc 22:00–6:30 ---'

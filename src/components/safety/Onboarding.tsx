@@ -3,6 +3,7 @@ import { Check, Loader2, LogOut } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { appUrl, NIGHT_TEXT, onboardingDone, type SafetyStatus } from '@/lib/childSafety';
 import mascotLock from '@/assets/mascot-lock.png';
+import mascotWave from '@/assets/mascot-wave.png';
 import { QrCode } from './QrCode';
 import { CopyLink } from './CopyLink';
 import { GuardianInvite } from './GuardianInvite';
@@ -10,17 +11,27 @@ import { cn } from '@/lib/utils';
 
 type Step = 'intro' | 'consent' | 'guardian' | 'approval';
 
-const RULES: [string, string, string][] = [
-  ['🤝', 'Kamaráti len naživo', 'Kamaráta si pridáš, keď ste spolu: ukážeš mu svoj kód alebo QR.'],
-  ['🔍', 'Nikto ťa nenájde', 'V Kamosfére sa nedá nikoho vyhľadať. Profil vidia len tvoji kamaráti.'],
+/** Čo je v Kamosfére nové — pre všetkých, aj pre rodičov a starých rodičov. */
+const NEWS: [string, string, string][] = [
+  ['🤝', 'Kamaráti naživo', 'Kamaráta si pridáš, keď ste spolu: ukážeš mu svoj kód alebo QR (časť Kamaráti).'],
+  ['🔗', 'Kamarát ďaleko?', 'Pošli mu pozývací odkaz (Kamaráti → Na diaľku). Platí týždeň a len raz.'],
+  ['🔍', 'Nikto ťa nenájde', 'Hľadanie zmizlo. Profil vidia len tvoji kamaráti.'],
   ['🙋', '„Toto mi nie je príjemné"', 'Keď ti niekto ubližuje, jedno ťuknutie ho zablokuje a tvoj dôverník sa to dozvie. Ten druhý nič nevie.'],
+  ['💛', 'Dôverník', 'Dospelý, ktorému veríš. Nevidí tvoje správy — len signál, keď potrebuješ pomoc. Vyberieš si ho v Nastaveniach.'],
   ['🌙', 'V noci Kamosféra spí', `Každý večer ${NIGHT_TEXT}. Ráno je tu všetko, čo ti kamaráti napíšu.`],
-  ['👨‍👩‍👧', 'Súhlas rodiča', 'Rodič alebo iný dospelý raz potvrdí, že môžeš byť v Kamosfére.'],
+];
+
+/** Ako sa nový človek dostane dnu. */
+const JOIN: [string, string, string][] = [
+  ['1️⃣', 'Súhlas rodiča', 'Rodič alebo iný dospelý, ktorý sa o teba stará, naskenuje QR a potvrdí súhlas.'],
+  ['2️⃣', 'Dôverník', 'Vyberieš si dospelého, ktorému veríš. Môžeš to urobiť aj neskôr.'],
+  ['3️⃣', 'Správca ťa pustí dnu', 'Kamosféra je partia kamarátov. Správca pozná rodiny a pustí ťa, keď ťa niekto pozná.'],
 ];
 
 /**
- * Sprievodca pred vstupom. Prejde ním každé dieťa — nové aj tie, čo tu už
- * sú (tie len súhlas rodiča a dôverníka, schválenie už majú).
+ * Sprievodca.
+ *  * Súčasní členovia (deti aj rodičia) uvidia raz, čo je nové — nič viac.
+ *  * Noví prejdú súhlasom rodiča, dôverníkom a čakajú na správcu.
  */
 export function Onboarding({ status, refresh }: { status: SafetyStatus; refresh: () => Promise<void> }) {
   const { signOut } = useAuth();
@@ -28,6 +39,18 @@ export function Onboarding({ status, refresh }: { status: SafetyStatus; refresh:
   const [skipGuardian, setSkipGuardian] = useState(false);
   const [finishing, setFinishing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const isNew = !status.member;
+
+  const finish = () => {
+    if (finishing) return;
+    setFinishing(true);
+    onboardingDone()
+      .then(refresh)
+      .catch((e: Error) => {
+        setError(e.message);
+        setFinishing(false);
+      });
+  };
 
   // Kým sa čaká na dospelého alebo správcu, stav sa obnovuje sám.
   useEffect(() => {
@@ -36,28 +59,36 @@ export function Onboarding({ status, refresh }: { status: SafetyStatus; refresh:
     return () => window.clearInterval(t);
   }, [step, refresh]);
 
-  // Ďalší krok podľa toho, čo už je hotové.
+  // Noví: ďalší krok podľa toho, čo už je hotové.
   useEffect(() => {
     if (step === 'intro') return;
     if (!status.consent) setStep('consent');
     else if (!status.guardian && !skipGuardian) setStep('guardian');
     else if (!status.approved) setStep('approval');
-    else if (!finishing) {
-      setFinishing(true);
-      onboardingDone()
-        .then(refresh)
-        .catch((e: Error) => {
-          setError(e.message);
-          setFinishing(false);
-        });
-    }
-  }, [step, status, skipGuardian, finishing, refresh]);
+    else finish();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step, status, skipGuardian]);
 
   const steps: { id: Step; label: string; done: boolean }[] = [
     { id: 'consent', label: 'Súhlas rodiča', done: status.consent },
     { id: 'guardian', label: 'Dôverník', done: !!status.guardian || skipGuardian },
     { id: 'approval', label: 'Vstup', done: status.approved },
   ];
+
+  const List = ({ items }: { items: [string, string, string][] }) => (
+    <ul className="space-y-2">
+      {items.map(([icon, title, text]) => (
+        <li key={title} className="flex gap-3 rounded-2xl bg-muted/60 p-3">
+          <span className="text-2xl">{icon}</span>
+          <span>
+            <b>{title}</b>
+            <br />
+            <span className="text-sm text-muted-foreground">{text}</span>
+          </span>
+        </li>
+      ))}
+    </ul>
+  );
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-violet-50 to-sky-50 px-4 py-6 dark:from-slate-950 dark:to-slate-900">
@@ -73,7 +104,7 @@ export function Onboarding({ status, refresh }: { status: SafetyStatus; refresh:
           </button>
         </div>
 
-        {step !== 'intro' && (
+        {isNew && step !== 'intro' && (
           <ol className="mb-4 flex gap-2">
             {steps.map((s, i) => (
               <li
@@ -90,31 +121,45 @@ export function Onboarding({ status, refresh }: { status: SafetyStatus; refresh:
         )}
 
         <div className="rounded-3xl bg-card p-5 shadow-xl sm:p-7">
-          {step === 'intro' && (
+          {step === 'intro' && !isNew && (
             <div className="space-y-4">
               <div className="text-center">
                 <img src={mascotLock} alt="" className="mx-auto h-24 w-24 object-contain" />
-                <h1 className="mt-2 text-2xl font-black">Kamosféra je ešte bezpečnejšia</h1>
-                <p className="text-muted-foreground">Toto je nové. Prečítaj si to, prosím — je to krátke.</p>
+                <h1 className="mt-2 text-2xl font-black">Čo je v Kamosfére nové</h1>
+                <p className="text-muted-foreground">Kamosféra je ešte bezpečnejšia. Prečítaj si to — je to krátke.</p>
               </div>
-              <ul className="space-y-2">
-                {RULES.map(([icon, title, text]) => (
-                  <li key={title} className="flex gap-3 rounded-2xl bg-muted/60 p-3">
-                    <span className="text-2xl">{icon}</span>
-                    <span>
-                      <b>{title}</b>
-                      <br />
-                      <span className="text-sm text-muted-foreground">{text}</span>
-                    </span>
-                  </li>
-                ))}
-              </ul>
+              <List items={NEWS} />
+              <button
+                type="button"
+                onClick={finish}
+                disabled={finishing}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-violet-600 py-3 text-lg font-black text-white shadow hover:bg-violet-700"
+              >
+                {finishing && <Loader2 className="h-5 w-5 animate-spin" />} Rozumiem, ideme ďalej!
+              </button>
+            </div>
+          )}
+
+          {step === 'intro' && isNew && (
+            <div className="space-y-4">
+              <div className="text-center">
+                <img src={mascotWave} alt="" className="mx-auto h-24 w-24 object-contain" />
+                <h1 className="mt-2 text-2xl font-black">Vitaj! Takto sa dostaneš dnu</h1>
+                <p className="text-muted-foreground">Kamosféra je partia kamarátov, kam sa nedostane cudzí človek. Preto 3 kroky:</p>
+              </div>
+              <List items={JOIN} />
+              <details className="rounded-2xl border p-3 text-sm">
+                <summary className="cursor-pointer font-semibold">Aké pravidlá tu platia</summary>
+                <div className="mt-3">
+                  <List items={NEWS} />
+                </div>
+              </details>
               <button
                 type="button"
                 onClick={() => setStep('consent')}
                 className="w-full rounded-full bg-violet-600 py-3 text-lg font-black text-white shadow hover:bg-violet-700"
               >
-                Rozumiem, poďme na to!
+                Poďme na to!
               </button>
             </div>
           )}
@@ -157,8 +202,8 @@ export function Onboarding({ status, refresh }: { status: SafetyStatus; refresh:
               <span className="text-5xl">🚪</span>
               <h2 className="text-xl font-black">Už len posledný krok</h2>
               <p className="text-sm text-muted-foreground">
-                Súhlas máme, ďakujeme! Teraz ťa správca Kamosféry pustí dnu. Zvyčajne to netrvá dlho — keď sa to
-                stane, Kamosféra sa ti otvorí sama.
+                Súhlas máme, ďakujeme! Teraz ťa správca Kamosféry pustí dnu. Keď sa to stane, Kamosféra sa ti otvorí
+                sama. Pomôže, keď ťa do Kamosféry pozval kamarát, ktorého správca pozná.
               </p>
               <p className="flex items-center gap-2 text-sm font-semibold text-violet-700 dark:text-violet-300">
                 <Loader2 className="h-4 w-4 animate-spin" /> Čakám na správcu…

@@ -33,6 +33,7 @@ export interface AdminMember {
   consent_at: string | null;
   consent_name: string | null;
   guardian: boolean;
+  invited_by: string | null;
 }
 
 export const NIGHT_TEXT = '22:00 – 6:30';
@@ -59,6 +60,15 @@ export const reportUncomfortable = (other: string) =>
 export const friendCodeNew = () => call<{ code: string; expires_at: string }>('friend_code_new');
 export const friendCodeUse = (code: string) =>
   call<{ friend_id?: string; username?: string; error?: string }>('friend_code_use', { _code: code });
+
+export const friendInviteNew = () => call<{ token: string; expires_at: string }>('friend_invite_new');
+export const friendInviteInfo = (token: string) =>
+  call<{ inviter: string; valid: boolean } | null>('friend_invite_info', { _token: token });
+export const friendInviteUse = (token: string) =>
+  call<{ username?: string; pending?: boolean; error?: string }>('friend_invite_use', { _token: token });
+
+/** Pozvánka otvorená pred prihlásením — použije sa hneď po ňom. */
+export const INVITE_KEY = 'kamosfera-pozvanka';
 
 export const consentInfo = (token: string) =>
   call<{ username: string; done: boolean } | null>('consent_info', { _token: token });

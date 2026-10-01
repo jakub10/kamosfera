@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Loader2, QrCode as QrIcon, RefreshCw, UserPlus, Users } from 'lucide-react';
+import { Link2, Loader2, QrCode as QrIcon, RefreshCw, UserPlus, Users } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Sidebar } from '@/components/social/Sidebar';
 import { MobileNav } from '@/components/social/MobileNav';
 import { MobileHeader } from '@/components/social/MobileHeader';
 import { QrCode } from '@/components/safety/QrCode';
-import { appUrl, friendCodeNew, friendCodeUse } from '@/lib/childSafety';
+import { appUrl, friendCodeNew, friendCodeUse, friendInviteNew } from '@/lib/childSafety';
+import { CopyLink } from '@/components/safety/CopyLink';
 import { cn } from '@/lib/utils';
 
 interface Profile {
@@ -26,7 +27,8 @@ const Kamarati = () => {
   const [params, setParams] = useSearchParams();
   const [me, setMe] = useState<Profile | null>(null);
   const [friends, setFriends] = useState<Profile[] | null>(null);
-  const [mode, setMode] = useState<'show' | 'enter'>('show');
+  const [mode, setMode] = useState<'show' | 'enter' | 'remote'>('show');
+  const [invite, setInvite] = useState<{ token: string; expires_at: string } | null>(null);
   const [code, setCode] = useState<{ code: string; expires_at: string } | null>(null);
   const [left, setLeft] = useState(0);
   const [typed, setTyped] = useState('');
@@ -136,29 +138,66 @@ const Kamarati = () => {
             </div>
             <div>
               <h1 className="text-2xl font-black">Kamaráti</h1>
-              <p className="text-muted-foreground">Kamaráta si pridáš len naživo — keď ste spolu.</p>
+              <p className="text-muted-foreground">Kamaráta si pridáš naživo, keď ste spolu — alebo pozvánkou, keď býva ďaleko.</p>
             </div>
           </header>
 
           <section className="rounded-3xl border p-5">
-            <div className="mb-4 grid grid-cols-2 gap-1 rounded-2xl bg-muted p-1">
-              {(['show', 'enter'] as const).map((m) => (
+            <div className="mb-4 grid grid-cols-3 gap-1 rounded-2xl bg-muted p-1">
+              {(
+                [
+                  ['show', 'Môj kód', QrIcon],
+                  ['enter', 'Zadať kód', UserPlus],
+                  ['remote', 'Na diaľku', Link2],
+                ] as const
+              ).map(([m, label, Icon]) => (
                 <button
                   key={m}
                   type="button"
                   onClick={() => setMode(m)}
                   className={cn(
-                    'flex items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold',
+                    'flex items-center justify-center gap-1.5 rounded-xl px-2 py-2 text-xs font-semibold sm:text-sm',
                     mode === m ? 'bg-background shadow' : 'text-muted-foreground'
                   )}
                 >
-                  {m === 'show' ? <QrIcon className="h-4 w-4" /> : <UserPlus className="h-4 w-4" />}
-                  {m === 'show' ? 'Môj kód' : 'Zadať kód kamaráta'}
+                  <Icon className="h-4 w-4 shrink-0" />
+                  {label}
                 </button>
               ))}
             </div>
 
-            {mode === 'show' ? (
+            {mode === 'remote' ? (
+              <div className="flex flex-col items-center gap-3 text-center">
+                <p className="text-sm text-muted-foreground">
+                  Kamarát býva ďaleko (iné mesto, Česko, Slovensko)? Pošli mu pozývací odkaz. Keď ho otvorí, budete
+                  kamaráti — a ak v Kamosfére ešte nie je, môže sa zaregistrovať.
+                </p>
+                {invite ? (
+                  <>
+                    <p className="w-full break-all rounded-xl bg-muted px-3 py-2 font-mono text-xs">{appUrl(`/pozvanka/${invite.token}`)}</p>
+                    <CopyLink link={appUrl(`/pozvanka/${invite.token}`)} />
+                    <p className="text-xs text-muted-foreground">
+                      Platí 7 dní a dá sa použiť len raz. Pošli ho len kamarátovi, ktorého naozaj poznáš. 💛
+                    </p>
+                  </>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      setMsg(null);
+                      try {
+                        setInvite(await friendInviteNew());
+                      } catch (e) {
+                        setMsg({ ok: false, text: (e as Error).message });
+                      }
+                    }}
+                    className="inline-flex items-center gap-2 rounded-full bg-emerald-500 px-5 py-2 font-bold text-white"
+                  >
+                    <Link2 className="h-4 w-4" /> Vytvoriť pozývací odkaz
+                  </button>
+                )}
+              </div>
+            ) : mode === 'show' ? (
               <div className="flex flex-col items-center gap-3 text-center">
                 {code && left > 0 ? (
                   <>

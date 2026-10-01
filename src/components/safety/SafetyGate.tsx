@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useState, type React
 import { useLocation } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-import { isNightNow, safetyStatus, type SafetyStatus } from '@/lib/childSafety';
+import { friendInviteUse, INVITE_KEY, isNightNow, safetyStatus, type SafetyStatus } from '@/lib/childSafety';
 import { Onboarding } from './Onboarding';
 import { NightScreen } from './NightScreen';
 
@@ -17,7 +17,7 @@ const Ctx = createContext<SafetyCtx>({ status: null, refresh: async () => {} });
 export const useSafety = () => useContext(Ctx);
 
 /** Stránky pre dospelých bez účtu — tie brána nechá tak. */
-const PUBLIC_PREFIXES = ['/suhlas/', '/dovernik/'];
+const PUBLIC_PREFIXES = ['/suhlas/', '/dovernik/', '/pozvanka/'];
 
 /**
  * Brána pred celou appkou. Prihlásené dieťa ide ďalej, len keď:
@@ -45,7 +45,20 @@ export function SafetyGate({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     setStatus(null);
-    if (user) void refresh();
+    if (!user) return;
+    // Pozvánka otvorená pred registráciou (napr. potvrdenie e-mailu vrátilo
+    // dieťa na úvodnú stránku): použiť ju teraz.
+    // Na samotnej stránke pozvánky ju použije tá stránka.
+    let pending: string | null = null;
+    try {
+      if (!window.location.pathname.startsWith('/pozvanka/')) {
+        pending = localStorage.getItem(INVITE_KEY);
+        localStorage.removeItem(INVITE_KEY);
+      }
+    } catch {
+      /* bez úložiska nič */
+    }
+    (pending ? friendInviteUse(pending).catch(() => null) : Promise.resolve(null)).finally(() => void refresh());
   }, [user, refresh]);
 
   useEffect(() => {

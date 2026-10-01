@@ -56,6 +56,7 @@ const AdminClenovia = () => {
 
   const waiting = list?.filter((m) => !m.approved) ?? [];
   const noConsent = list?.filter((m) => m.approved && !m.consent_at) ?? [];
+  // Pôvodní členovia (aj rodičia) súhlas nedávali — ten sa pýta len od nových.
   const ok = list?.filter((m) => m.approved && m.consent_at) ?? [];
 
   const Row = ({ m }: { m: AdminMember }) => (
@@ -74,6 +75,7 @@ const AdminClenovia = () => {
             <span className="text-amber-600">čaká na súhlas dospelého</span>
           )}{' '}
           · {m.guardian ? 'dôverník ✓' : 'bez dôverníka'}
+          {m.invited_by && <span className="font-semibold text-violet-600"> · pozval(a) @{m.invited_by}</span>}
         </p>
       </div>
       {m.approved ? (

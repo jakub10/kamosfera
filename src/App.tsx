@@ -19,6 +19,7 @@ const Suhlas = lazy(() => import("./pages/Suhlas"));
 const Dovernik = lazy(() => import("./pages/Dovernik"));
 const DovernikPozvanka = lazy(() => import("./pages/Dovernik").then((m) => ({ default: m.DovernikPozvanka })));
 const AdminClenovia = lazy(() => import("./pages/AdminClenovia"));
+const Pozvanka = lazy(() => import("./pages/Pozvanka"));
 const Notifications = lazy(() => import("./pages/Notifications"));
 const Groups = lazy(() => import("./pages/Groups"));
 const Games = lazy(() => import("./pages/Games"));
@@ -74,6 +75,7 @@ const App = () => (
               <Route path="/suhlas/:token" element={<Suhlas />} />
               <Route path="/dovernik/pozvanka/:invite" element={<DovernikPozvanka />} />
               <Route path="/dovernik/:token" element={<Dovernik />} />
+              <Route path="/pozvanka/:token" element={<Pozvanka />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
