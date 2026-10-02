@@ -99,6 +99,28 @@ online v rovnakom čase.
 - Testy: `src/test/fortressEngine.test.ts` (každý mechanizmus, aj to, že
   štartovacia pevnosť sa dá prejsť) a `supabase/tests/05_fortress.sql`.
 
+## Bezpečnosť detí
+
+Podľa konceptu „Kamosféra — Child Safety Concept" (vrstvy 1 a 3; AI strážca príde neskôr):
+
+- **Súčasní členovia ostávajú, ako sú** (deti aj rodičia a starí rodičia). Raz uvidia
+  obrazovku „Čo je nové" a idú ďalej.
+- **Noví sa dostanú dnu takto:** registrácia → dospelý potvrdí súhlas (QR → `/suhlas/<odkaz>`,
+  bez účtu) → správca (rola `creator`) ich pustí na stránke `/admin/clenovia`. Dovtedy
+  nový účet nevidí nikoho a nikto nevidí jeho.
+- **Kamaráti** (`/kamarati`): naživo kódom alebo QR (platí 3 minúty, raz), alebo
+  **pozývacím odkazom na diaľku** (`/pozvanka/<odkaz>`, platí 7 dní, raz; najviac 5 naraz).
+  Nového z diaľky odkaz rovno zaregistruje a správca vidí, kto ho pozval.
+  Hľadanie, zoznam všetkých členov a žiadosti o priateľstvo zmizli; profil vidia len kamaráti.
+- **„Toto mi nie je príjemné"** (profil, správy, príspevok): potichu zablokuje a dá signál
+  dôverníkovi. Dôverník je dospelý bez účtu so stránkou `/dovernik/<odkaz>` — vidí len
+  prezývku dieťaťa a čas signálu, nikdy správy, kamarátov ani to, kto to bol.
+- **Noc 22:00 – 6:30** (Praha/Bratislava): appka spí, písať sa nedá ani cez databázu.
+  Tlačidlo pomoci funguje aj v noci.
+- Všetko stráži databáza (`supabase/migrations/20261001100000_child_safety.sql`):
+  reštriktívna politika na každej tabuľke a brána na funkciách, ktoré pravidlá tabuliek
+  obchádzajú. Testy: `supabase/tests/07_child_safety.sql`.
+
 ## Hviezdna Hliadka
 
 Kartová hra so skrytými rolami pre 4–7 kamarátov naživo, na stránke

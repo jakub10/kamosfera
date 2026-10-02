@@ -103,3 +103,6 @@ jobs:
 
       - name: Testy Hviezdnej Hliadky
         run: psql -v ON_ERROR_STOP=1 -f supabase/tests/06_star_patrol.sql
+
+      - name: Testy bezpečnosti detí
+        run: psql -v ON_ERROR_STOP=1 -f supabase/tests/07_child_safety.sql

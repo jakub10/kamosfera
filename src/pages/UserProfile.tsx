@@ -1,4 +1,6 @@
 import { FortressCard } from '@/components/fortress/FortressCard';
+import { UncomfortableButton } from '@/components/safety/UncomfortableButton';
+import { Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -11,7 +13,7 @@ import { PostCard } from '@/components/social/PostCard';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Loader2, MapPin, Link as LinkIcon, Calendar, MessageCircle, UserPlus, UserCheck, UserX, Check, X as XIcon, Ban, MoreHorizontal } from 'lucide-react';
+import { Loader2, MapPin, Link as LinkIcon, Calendar, MessageCircle, UserCheck, UserX, Check, X as XIcon, Ban, MoreHorizontal } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -78,11 +80,13 @@ const UserProfile = () => {
   const [currentProfile, setCurrentProfile] = useState<Profile | null>(null);
   const [friendshipStatus, setFriendshipStatus] = useState<'none' | 'pending_sent' | 'pending_received' | 'accepted'>('none');
   const [friendshipId, setFriendshipId] = useState<string | null>(null);
+  const [friendshipLoaded, setFriendshipLoaded] = useState(false);
   const [postsCount, setPostsCount] = useState(0);
   const [friendsCount, setFriendsCount] = useState(0);
 
   useEffect(() => {
     if (userId) {
+      setFriendshipLoaded(false);
       fetchProfile();
       fetchCurrentProfile();
       checkFriendship();
@@ -100,7 +104,11 @@ const UserProfile = () => {
   };
 
   const checkFriendship = async () => {
-    if (!user || !userId || user.id === userId) return;
+    if (!user || !userId) return;
+    if (user.id === userId) {
+      setFriendshipLoaded(true);
+      return;
+    }
     
     const { data } = await supabase
       .from('friendships')
@@ -124,6 +132,7 @@ const UserProfile = () => {
       setFriendshipStatus('none');
       setFriendshipId(null);
     }
+    setFriendshipLoaded(true);
   };
 
   const fetchProfile = async () => {
@@ -276,26 +285,6 @@ const UserProfile = () => {
     navigate('/');
   };
 
-  const sendFriendRequest = async () => {
-    if (!user || !profile) return;
-
-    const { error } = await supabase
-      .from('friendships')
-      .insert({
-        requester_id: user.id,
-        addressee_id: profile.user_id,
-        status: 'pending',
-      });
-
-    if (!error) {
-      setFriendshipStatus('pending_sent');
-      toast({
-        title: 'Žádost odeslána',
-        description: `Žádost o přátelství byla odeslána uživateli ${profile.full_name}.`,
-      });
-    }
-  };
-
   const acceptFriendRequest = async () => {
     if (!friendshipId) return;
 
@@ -331,7 +320,7 @@ const UserProfile = () => {
     }
   };
 
-  if (loading) {
+  if (loading || !friendshipLoaded) {
     return (
       <div className="min-h-screen bg-background">
         <MobileHeader currentProfile={currentProfile} />
@@ -366,6 +355,42 @@ const UserProfile = () => {
 
   const isOwnProfile = user?.id === profile.user_id;
 
+  // Profil vidia len kamaráti. Kamarátstvo vzniká naživo (stránka Kamaráti),
+  // nie na diaľku — preto tu nie je ani tlačidlo „Pridať kamaráta".
+  if (!isOwnProfile && friendshipStatus !== 'accepted') {
+    return (
+      <div className="min-h-screen bg-background">
+        <MobileHeader currentProfile={currentProfile} />
+        <Sidebar currentProfile={currentProfile} />
+        <main className="pt-16 pb-20 md:pt-6 md:pb-6 md:ml-64 lg:mr-80 px-4 md:px-8">
+          <div className="max-w-md mx-auto text-center py-12 flex flex-col items-center gap-4">
+            <span className="text-6xl">🔒</span>
+            <p className="text-xl font-bold">{profile.full_name}</p>
+            <p className="text-muted-foreground">
+              Profil vidia len kamaráti. Kamaráta si pridáš naživo, keď ste spolu — v časti{' '}
+              <Link to="/kamarati" className="font-semibold text-primary underline">Kamaráti</Link>.
+            </p>
+            {friendshipStatus === 'pending_received' && (
+              <div className="flex gap-2">
+                <Button size="sm" onClick={acceptFriendRequest}>
+                  <Check className="h-4 w-4 mr-2" />
+                  Prijať žiadosť
+                </Button>
+                <Button variant="outline" size="sm" onClick={declineFriendRequest}>
+                  <XIcon className="h-4 w-4 mr-2" />
+                  Odmietnuť
+                </Button>
+              </div>
+            )}
+            <UncomfortableButton userId={profile.user_id} name={profile.full_name} onDone={() => navigate('/')} />
+          </div>
+        </main>
+        <RightSidebar />
+        <MobileNav />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <MobileHeader currentProfile={currentProfile} />
@@ -393,12 +418,6 @@ const UserProfile = () => {
               <div className="relative z-10 flex min-h-[4.5rem] flex-wrap justify-end gap-2 pt-3 pl-36 sm:min-h-0 sm:pl-0">
                 {!isOwnProfile && user && (
                   <>
-                    {friendshipStatus === 'none' && (
-                      <Button variant="outline" size="sm" onClick={sendFriendRequest} className="shrink-0">
-                        <UserPlus className="h-4 w-4 mr-2" />
-                        Přidat přítele
-                      </Button>
-                    )}
                     {friendshipStatus === 'pending_sent' && (
                       <Button variant="outline" size="sm" disabled className="shrink-0">
                         <UserCheck className="h-4 w-4 mr-2" />
@@ -427,6 +446,12 @@ const UserProfile = () => {
                       <MessageCircle className="h-4 w-4 mr-2" />
                       Zpráva
                     </Button>
+                    <UncomfortableButton
+                      userId={profile.user_id}
+                      name={profile.full_name}
+                      onDone={() => navigate('/')}
+                      className="shrink-0"
+                    />
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="sm" className="shrink-0" aria-label="Další možnosti">

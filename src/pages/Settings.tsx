@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { GuardianCard } from '@/components/safety/GuardianCard';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Sidebar } from '@/components/social/Sidebar';
@@ -209,6 +210,8 @@ const Settings = () => {
       <main className="pt-16 pb-20 md:pt-6 md:pb-6 md:ml-64 lg:mr-80 px-4 md:px-8">
         <div className="max-w-2xl mx-auto space-y-6">
           <h1 className="text-3xl font-bold">Nastavení</h1>
+
+          <GuardianCard />
 
           <Card>
             <CardHeader>

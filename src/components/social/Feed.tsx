@@ -177,7 +177,7 @@ export function Feed({ currentProfile }: FeedProps) {
             <span className="text-gradient-flow font-semibold">Zatím je tu ticho.</span> Napiš něco jako první — nebo se podívej, kdo tu je.
           </p>
           <Button variant="outline" asChild>
-            <Link to="/search">Najít kamarády</Link>
+            <Link to="/kamarati">Pridať kamaráta</Link>
           </Button>
         </div>
       ) : (

@@ -12,6 +12,9 @@ INSERT INTO auth.users (id, email) VALUES
   ('88888888-8888-8888-8888-888888888888', 'fero@test.local'),
   ('99999999-9999-9999-9999-999999999999', 'gabo@test.local')
 ON CONFLICT DO NOTHING;
+-- Bezpečnostná brána (20261001100000_child_safety): testovací hráči sú plnohodnotní
+-- členovia — schválení a so súhlasom rodiča. Bránu samotnú testuje 07_child_safety.sql.
+UPDATE public.member_safety SET approved = true, consent_at = COALESCE(consent_at, now());
 INSERT INTO public.user_blocks (blocker_id, blocked_id)
 VALUES ('77777777-7777-7777-7777-777777777777', '99999999-9999-9999-9999-999999999999')
 ON CONFLICT DO NOTHING;

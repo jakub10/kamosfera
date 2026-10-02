@@ -13,6 +13,9 @@
 INSERT INTO auth.users (id, email) VALUES
   ('55555555-5555-5555-5555-555555555555', 'hrac@test.local')
 ON CONFLICT DO NOTHING;
+-- Bezpečnostná brána (20261001100000_child_safety): testovací hráči sú plnohodnotní
+-- členovia — schválení a so súhlasom rodiča. Bránu samotnú testuje 07_child_safety.sql.
+UPDATE public.member_safety SET approved = true, consent_at = COALESCE(consent_at, now());
 
 \echo ''
 \echo '--- H1. Každý odznak za hru vie, ktorej hry sa týka ---'
@@ -88,6 +91,8 @@ BEGIN
   INSERT INTO auth.users (id, email) VALUES
     ('66666666-6666-6666-6666-666666666666', 'ibahrac@test.local')
   ON CONFLICT DO NOTHING;
+  UPDATE public.member_safety SET approved = true, consent_at = now()
+   WHERE user_id = '66666666-6666-6666-6666-666666666666';
   DELETE FROM public.user_stats WHERE user_id = '66666666-6666-6666-6666-666666666666';
 
   PERFORM set_config('request.jwt.claim.sub', '66666666-6666-6666-6666-666666666666', false);

@@ -18,6 +18,13 @@ INSERT INTO auth.users (id, email) VALUES
   ('11111111-1111-1111-1111-111111111111', 'adam@test.local'),
   ('22222222-2222-2222-2222-222222222222', 'bob@test.local'),
   ('33333333-3333-3333-3333-333333333333', 'cudzi@test.local');
+-- Bezpečnostná brána (20261001100000_child_safety): testovací hráči sú plnohodnotní
+-- členovia — schválení a so súhlasom rodiča. Bránu samotnú testuje 07_child_safety.sql.
+UPDATE public.member_safety SET approved = true, consent_at = COALESCE(consent_at, now());
+-- Testy nesmú závisieť od hodiny, kedy bežia: nočný režim tu vypneme.
+-- Noc samotnú overuje 07_child_safety.sql.
+CREATE OR REPLACE FUNCTION public.is_night(_at timestamptz DEFAULT now())
+RETURNS boolean LANGUAGE sql STABLE AS $$ SELECT false $$;
 
 -- Profily vytvoril trigger handle_new_user. Prezývky si prepíšeme na čitateľné,
 -- ale najprv overíme, že sa NEODVODILI z e-mailu.

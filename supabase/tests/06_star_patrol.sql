@@ -14,6 +14,9 @@ INSERT INTO auth.users (id, email)
 SELECT ('a0000000-0000-0000-0000-00000000000' || g)::uuid, 'hh' || g || '@test.local'
   FROM generate_series(1, 9) g
 ON CONFLICT DO NOTHING;
+-- Bezpečnostná brána (20261001100000_child_safety): testovací hráči sú plnohodnotní
+-- členovia — schválení a so súhlasom rodiča. Bránu samotnú testuje 07_child_safety.sql.
+UPDATE public.member_safety SET approved = true, consent_at = COALESCE(consent_at, now());
 
 -- a9 zablokoval a1 — nesmú sedieť pri jednom stole.
 INSERT INTO public.user_blocks (blocker_id, blocked_id)

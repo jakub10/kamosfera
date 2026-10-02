@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { MessageCircle, Share2, Bookmark, MoreHorizontal, Send, Trash2, Crown, Languages } from 'lucide-react';
+import { MessageCircle, Share2, Bookmark, MoreHorizontal, Send, Trash2, Crown, Languages, HandHeart } from 'lucide-react';
 import { ReactionPicker } from '@/components/social/ReactionPicker';
 import { ReactionSummary, type Reactor } from '@/components/social/ReactionSummary';
 import type { ReactionKind } from '@/lib/reactions';
@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useUncomfortable } from '@/components/safety/UncomfortableButton';
 import { useToast } from '@/hooks/use-toast';
 import { useUserRole } from '@/hooks/useUserRole';
 import { formatDistanceToNow } from 'date-fns';
@@ -89,6 +90,8 @@ export function PostCard({ post, onLikeChange, onPostDeleted }: PostCardProps) {
   const [translatedContent, setTranslatedContent] = useState<string | null>(null);
   const [translating, setTranslating] = useState(false);
   const { user } = useAuth();
+  // Po zablokovaní príspevok z obrazovky zmizne (databáza ho už nepošle).
+  const uncomfortable = useUncomfortable(() => onPostDeleted?.());
   const { toast } = useToast();
   const { isCreator } = useUserRole();
   const { t, i18n } = useTranslation();
@@ -435,6 +438,15 @@ export function PostCard({ post, onLikeChange, onPostDeleted }: PostCardProps) {
                 <Bookmark className="h-4 w-4 mr-2" />
                 {isSaved ? t('post.removeFromSaved') : t('post.savePost')}
               </DropdownMenuItem>
+              {user && post.user_id !== user.id && (
+                <DropdownMenuItem
+                  onClick={() => void uncomfortable.report(post.user_id, post.profile?.full_name || 'Tento človek')}
+                  className="text-rose-600 focus:text-rose-600"
+                >
+                  <HandHeart className="h-4 w-4 mr-2" />
+                  Toto mi nie je príjemné
+                </DropdownMenuItem>
+              )}
               {canDelete && (
                 <DropdownMenuItem 
                   onClick={() => setShowDeleteDialog(true)}
@@ -447,6 +459,7 @@ export function PostCard({ post, onLikeChange, onPostDeleted }: PostCardProps) {
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
+        {uncomfortable.dialog}
 
         {/* Content */}
         <p className="text-foreground mb-2 whitespace-pre-wrap break-words">

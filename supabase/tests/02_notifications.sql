@@ -9,6 +9,9 @@
 
 -- Nový člověk bez historie, ať se testy nepletou s předchozími.
 INSERT INTO auth.users (id, email) VALUES ('44444444-4444-4444-4444-444444444444', 'dana@test.local');
+-- Bezpečnostná brána (20261001100000_child_safety): testovací hráči sú plnohodnotní
+-- členovia — schválení a so súhlasom rodiča. Bránu samotnú testuje 07_child_safety.sql.
+UPDATE public.member_safety SET approved = true, consent_at = COALESCE(consent_at, now());
 DELETE FROM public.notifications;
 
 \echo '--- N1. Žádost o přátelství se ukáže příjemci ---'
