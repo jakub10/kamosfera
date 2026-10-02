@@ -121,6 +121,33 @@ Podľa konceptu „Kamosféra — Child Safety Concept" (vrstvy 1 a 3; AI strá�
   reštriktívna politika na každej tabuľke a brána na funkciách, ktoré pravidlá tabuliek
   obchádzajú. Testy: `supabase/tests/07_child_safety.sql`.
 
+## AI strážca správ
+
+Každú súkromnú správu pred odoslaním posúdi **System One** od Liquid AI (model `d1:free`)
+— serverová funkcia `supabase/functions/message-guard`. Do Liquid AI ide len text (nová
+správa, 3 predošlé, či sú kamaráti), žiadne mená ani ID. Otázky a prahy sú z konceptu
+bezpečnosti:
+
+| Signál | Hodnota | Čo sa stane |
+|---|---|---|
+| závažnosť | pod 0.8 | správa ide |
+| závažnosť | 0.8 – 1.8 | „Naozaj to chceš poslať?" |
+| závažnosť | od 1.8 | nedoručí sa, dôverník príjemcu dostane signál |
+| osobné údaje | nad 0.7 | „Naozaj chceš zdieľať tieto údaje?" |
+| tlak na tajomstvo | nad 0.5 | vždy signál dôverníkovi príjemcu |
+
+Keď je strážca zapnutý, databáza pustí správu len s jeho „lístkom" (platí 5 minút a len
+na ten text). Keď Liquid AI neodpovie, správa prejde ako „bez kontroly" — správca to
+vidí v štatistike. Ukladá sa len odtlačok textu a čísla, nie správa.
+
+**Zapnutie (raz):**
+1. Supabase → **Edge Functions → Secrets**: `LIQUID_API_KEY` (kľúč z console.liquid.ai, začína `liquid_`).
+2. Supabase → **Edge Functions → Deploy a new function → Via Editor**, názov `message-guard`,
+   obsah súboru `supabase/functions/message-guard/index.ts`, **Deploy** (JWT overovanie nechať zapnuté).
+3. SQL editor: `supabase/migrations/20261002100000_message_guard.sql`.
+4. Kamosféra → **Členovia** → AI strážca správ → **Zapnúť**. Po prvej správe ukáže štatistika
+   „skontrolované 1". Ak ukazuje „bez kontroly", chýba kľúč alebo Liquid AI neodpovedá.
+
 ## Hviezdna Hliadka
 
 Kartová hra so skrytými rolami pre 4–7 kamarátov naživo, na stránke

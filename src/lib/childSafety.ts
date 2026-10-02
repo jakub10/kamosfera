@@ -21,7 +21,7 @@ export interface GuardianView {
   username: string;
   label: string;
   since: string;
-  signals: { kind: 'uncomfortable'; at: string }[];
+  signals: { kind: 'uncomfortable' | 'ai_harmful' | 'ai_secret'; at: string }[];
 }
 
 export interface AdminMember {
@@ -83,6 +83,16 @@ export const guardianView = (token: string) => call<GuardianView | null>('guardi
 export const guardianLeave = (token: string) => call<void>('guardian_leave', { _token: token });
 
 export const adminMembers = () => call<AdminMember[]>('admin_members');
+export interface GuardStatus {
+  enabled: boolean;
+  checked_24h: number;
+  confirm_24h: number;
+  hidden_24h: number;
+  unchecked_24h: number;
+  last_check: string | null;
+}
+export const adminGuardStatus = () => call<GuardStatus>('admin_guard_status');
+export const adminSetMessageGuard = (enabled: boolean) => call<void>('admin_set_message_guard', { _enabled: enabled });
 export const adminSetApproval = (user: string, approved: boolean) =>
   call<void>('admin_set_approval', { _user: user, _approved: approved });
 

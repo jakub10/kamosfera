@@ -12,6 +12,12 @@ const Shell = ({ children }: { children: React.ReactNode }) => (
   </div>
 );
 
+const SIGNAL_TEXT: Record<GuardianView['signals'][number]['kind'], (name: string) => string> = {
+  uncomfortable: (n) => `${n} stlačil(a) „Toto mi nie je príjemné".`,
+  ai_harmful: (n) => `${n} mal(a) dostať správu, ktorá by mohla ublížiť. Strážca ju nedoručil.`,
+  ai_secret: (n) => `Niekto sa snažil ${n} presvedčiť, aby niečo tajil(a) pred dospelými, prešiel/prešla do inej aplikácie, poslal(a) fotku alebo sa stretol(a).`,
+};
+
 const fmt = (iso: string) =>
   new Intl.DateTimeFormat('sk-SK', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Europe/Prague' }).format(new Date(iso));
 
@@ -136,13 +142,13 @@ const Dovernik = () => {
               <ul className="space-y-2">
                 {view.signals.map((s) => (
                   <li key={s.at} className="rounded-2xl border-l-4 border-rose-400 bg-rose-50 p-3 text-sm dark:bg-rose-950">
-                    <b>{fmt(s.at)}</b> — {view.username} stlačil(a) „Toto mi nie je príjemné".
+                    <b>{fmt(s.at)}</b> — {SIGNAL_TEXT[s.kind](view.username)}
                   </li>
                 ))}
               </ul>
               <div className="rounded-2xl bg-muted/60 p-3 text-sm text-muted-foreground">
-                <b>Čo teraz?</b> V pokoji sa dieťaťa opýtajte, čo sa stalo. Nekárajte ho — dobre urobilo, že to dalo
-                vedieť. Toho, kto ho trápil, už v Kamosfére zablokovalo.
+                <b>Čo teraz?</b> V pokoji sa dieťaťa opýtajte, ako sa má a či sa niečo nestalo. Nekárajte ho — dobre
+                urobilo, že to dalo vedieť. Keď stlačilo tlačidlo, toho druhého už v Kamosfére zablokovalo.
               </div>
             </div>
           )}

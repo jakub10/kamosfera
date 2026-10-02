@@ -1,4 +1,15 @@
 import { useState, useEffect, useRef } from 'react';
+import { checkMessage, REASON_TEXT, type GuardReason } from '@/lib/messageGuard';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { UncomfortableButton } from '@/components/safety/UncomfortableButton';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -329,14 +340,28 @@ const Messages = () => {
       return;
     }
 
+    // Len medzi kamarátmi — cudzích ľudí sa v Kamosfére nedá vyhľadať.
+    const { data: rows } = await supabase
+      .from('friendships')
+      .select('requester_id, addressee_id')
+      .eq('status', 'accepted')
+      .or(`requester_id.eq.${user.id},addressee_id.eq.${user.id}`);
+    const friendIds = (rows ?? []).map((f) => (f.requester_id === user.id ? f.addressee_id : f.requester_id));
+    if (!friendIds.length) {
+      setSearchResults([]);
+      return;
+    }
+    const q = query.toLowerCase();
     const { data } = await supabase
       .from('profiles')
       .select('user_id, username, full_name, avatar_url')
-      .neq('user_id', user.id)
-      .or(`username.ilike.%${query}%,full_name.ilike.%${query}%`)
-      .limit(5);
+      .in('user_id', friendIds);
 
-    setSearchResults(data || []);
+    setSearchResults(
+      (data || [])
+        .filter((p) => p.username.toLowerCase().includes(q) || p.full_name.toLowerCase().includes(q))
+        .slice(0, 5)
+    );
   };
 
   const deleteMessage = async (messageId: string) => {
@@ -447,28 +472,46 @@ const Messages = () => {
     setNewMessage(prev => prev + emoji.native);
   };
 
-  const sendMessage = async () => {
-    if (!newMessage.trim() || !selectedConversation || !user) return;
+  // Strážca správ: pred odoslaním sa pozrie na text. Ak je niečo zlé,
+  // opýta sa („Naozaj to chceš poslať?") alebo správu nedoručí.
+  const [guardAsk, setGuardAsk] = useState<{ reasons: GuardReason[]; text: string } | null>(null);
+  const [guardHidden, setGuardHidden] = useState(false);
 
-    setSendingMessage(true);
-    updateTypingStatus(null);
-    
+  const insertMessage = async (text: string) => {
+    if (!selectedConversation || !user) return;
     const { error } = await supabase
       .from('messages')
       .insert({
         conversation_id: selectedConversation.id,
         sender_id: user.id,
-        content: newMessage.trim(),
+        content: text,
       });
 
     if (error) {
       toast({
         title: 'Chyba',
-        description: 'Nepodařilo se odeslat zprávu.',
+        description: /spí/.test(error.message) ? error.message : 'Nepodařilo se odeslat zprávu.',
         variant: 'destructive',
       });
     } else {
       setNewMessage('');
+    }
+  };
+
+  const sendMessage = async () => {
+    if (!newMessage.trim() || !selectedConversation || !user) return;
+
+    setSendingMessage(true);
+    updateTypingStatus(null);
+    const text = newMessage.trim();
+
+    const guard = await checkMessage(selectedConversation.id, text);
+    if (guard?.verdict === 'hide') {
+      setGuardHidden(true);
+    } else if (guard?.verdict === 'confirm') {
+      setGuardAsk({ reasons: guard.reasons, text });
+    } else {
+      await insertMessage(text);
     }
     setSendingMessage(false);
   };
@@ -487,7 +530,7 @@ const Messages = () => {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Hledat uživatele..."
+                  placeholder="Hľadať medzi kamarátmi…"
                   value={searchQuery}
                   onChange={(e) => {
                     setSearchQuery(e.target.value);
@@ -783,6 +826,47 @@ const Messages = () => {
           </div>
         </div>
       </main>
+      {/* Kurzor ostane v políčku: inak by ten istý Enter, ktorým dieťa správu
+          odoslalo, hneď stlačil tlačidlo v okne a otázka by zmizla. */}
+      <AlertDialog open={!!guardAsk} onOpenChange={(o) => !o && setGuardAsk(null)}>
+        <AlertDialogContent onOpenAutoFocus={(e) => e.preventDefault()}>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Naozaj to chceš poslať? 🤔</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2">
+                {guardAsk?.reasons.map((r) => <p key={r}>{REASON_TEXT[r]}</p>)}
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Upravím to</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                const t = guardAsk?.text;
+                setGuardAsk(null);
+                if (t) void insertMessage(t);
+              }}
+            >
+              Áno, poslať
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={guardHidden} onOpenChange={setGuardHidden}>
+        <AlertDialogContent onOpenAutoFocus={(e) => e.preventDefault()}>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Táto správa sa nedoručí 💛</AlertDialogTitle>
+            <AlertDialogDescription>
+              Mohla by niekomu ublížiť. Skús to napísať inak — tak, ako by si chcel(a), aby písali tebe.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction>Rozumiem</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <MobileNav />
 
       {requestTarget && (

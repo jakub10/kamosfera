@@ -106,3 +106,6 @@ jobs:
 
       - name: Testy bezpečnosti detí
         run: psql -v ON_ERROR_STOP=1 -f supabase/tests/07_child_safety.sql
+
+      - name: Testy strážcu správ
+        run: psql -v ON_ERROR_STOP=1 -f supabase/tests/08_message_guard.sql

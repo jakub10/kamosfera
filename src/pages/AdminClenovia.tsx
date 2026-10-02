@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Check, Loader2, ShieldCheck, X } from 'lucide-react';
-import { adminMembers, adminSetApproval, type AdminMember } from '@/lib/childSafety';
+import { adminGuardStatus, adminMembers, adminSetApproval, adminSetMessageGuard, type AdminMember, type GuardStatus } from '@/lib/childSafety';
 import { useSafety } from '@/components/safety/SafetyGate';
 import { cn } from '@/lib/utils';
 
@@ -18,8 +18,11 @@ const AdminClenovia = () => {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
 
+  const [guard, setGuard] = useState<GuardStatus | null>(null);
+
   const load = useCallback(async () => {
     try {
+      adminGuardStatus().then(setGuard).catch(() => setGuard(null));
       setList(await adminMembers());
       setError(null);
     } catch (e) {
@@ -115,6 +118,43 @@ const AdminClenovia = () => {
           </Link>
         </header>
         {error && <p className="rounded-xl bg-red-50 px-4 py-2 text-sm font-semibold text-red-700">{error}</p>}
+        {guard && (
+          <section className="rounded-2xl border p-4">
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="min-w-0 flex-1">
+                <h2 className="font-bold">🤖 AI strážca správ {guard.enabled ? '— zapnutý' : '— vypnutý'}</h2>
+                <p className="text-xs text-muted-foreground">
+                  Zapni ho, až keď je v Supabase nahraná funkcia <code>message-guard</code> a v Secrets je{' '}
+                  <code>LIQUID_API_KEY</code>. Zapnutý strážca nepustí správu, ktorú nevidel.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={async () => {
+                  if (!window.confirm(guard.enabled ? 'Vypnúť strážcu správ?' : 'Zapnúť strážcu správ? Funkcia message-guard musí byť nahraná.')) return;
+                  try {
+                    await adminSetMessageGuard(!guard.enabled);
+                    await load();
+                  } catch (e) {
+                    setError((e as Error).message);
+                  }
+                }}
+                className={cn(
+                  'rounded-full px-4 py-1.5 text-sm font-bold',
+                  guard.enabled ? 'border text-red-600' : 'bg-emerald-500 text-white'
+                )}
+              >
+                {guard.enabled ? 'Vypnúť' : 'Zapnúť'}
+              </button>
+            </div>
+            <p className="mt-2 text-xs text-muted-foreground">
+              Za 24 hodín: skontrolované {guard.checked_24h} · opýtal sa {guard.confirm_24h} · nedoručil {guard.hidden_24h}
+              {guard.unchecked_24h > 0 && (
+                <span className="font-semibold text-amber-600"> · bez kontroly {guard.unchecked_24h} (Liquid AI neodpovedalo alebo chýba kľúč)</span>
+              )}
+            </p>
+          </section>
+        )}
         {list === null ? (
           <Loader2 className="mx-auto h-6 w-6 animate-spin text-muted-foreground" />
         ) : (
