@@ -31,6 +31,7 @@ psql -d kamosfera_test -v ON_ERROR_STOP=1 -f supabase/tests/04_game_achievements
 psql -d kamosfera_test -v ON_ERROR_STOP=1 -f supabase/tests/05_fortress.sql
 psql -d kamosfera_test -v ON_ERROR_STOP=1 -f supabase/tests/06_star_patrol.sql
 psql -d kamosfera_test -v ON_ERROR_STOP=1 -f supabase/tests/07_child_safety.sql
+psql -d kamosfera_test -v ON_ERROR_STOP=1 -f supabase/tests/08_message_guard.sql
 ```
 
 Každý test, který projde, vypíše `OK`. Když něco selže, skript skončí chybou
@@ -92,3 +93,11 @@ v databázi, takže se testují přímo tady:
 
 Testy 01–06 si na začátku označí testovací hráče jako schválené a vypnou noc,
 aby nezáležely na tom, v kolik hodin běží.
+
+## Strážca správ
+
+`08_message_guard.sql` hlídá AI strážce (System One od Liquid AI): když je zapnutý,
+zpráva bez „lístku" od strážce neprojde; lístek platí jen na ten text, toho odesílatele
+a 5 minut; skrytá zpráva projít nejde; signál dostane důvěrník **příjemce**, bez textu
+a bez jména odesílatele; děti se k nastavení ani lístkům nedostanou. Samotné volání
+Liquid AI (otázky, prahy, výpadek) testuje `src/test/messageGuard.test.ts`.
