@@ -14,26 +14,26 @@ export function GuardianCard() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <HandHeart className="h-5 w-5" />
-          Môj dôverník
+          Můj důvěrník
         </CardTitle>
         <CardDescription>
-          Dospelý, ktorému veríš. Nevidí tvoje správy ani kamarátov — dozvie sa len to, keď stlačíš „Toto mi nie je
-          príjemné".
+          Dospělý, kterému věříš. Nevidí tvoje zprávy ani kamarády — dozví se jen to, když zmáčkneš „Tohle mi není
+          příjemné".
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
         {status.guardian ? (
           <p>
-            Tvoj dôverník: <b>{status.guardian.label}</b> 💛
+            Tvůj důvěrník: <b>{status.guardian.label}</b> 💛
           </p>
         ) : (
-          <p className="text-muted-foreground">Zatiaľ nemáš dôverníka.</p>
+          <p className="text-muted-foreground">Zatím nemáš důvěrníka.</p>
         )}
         {change || !status.guardian ? (
           <GuardianInvite existing={status.guardian_invite} />
         ) : (
           <button type="button" onClick={() => setChange(true)} className="text-sm font-semibold text-primary underline">
-            Vybrať iného dôverníka
+            Vybrat jiného důvěrníka
           </button>
         )}
       </CardContent>

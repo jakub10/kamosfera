@@ -27,7 +27,7 @@ export async function checkMessage(conversationId: string, content: string): Pro
 }
 
 export const REASON_TEXT: Record<GuardReason, string> = {
-  mean: 'Táto správa by mohla kamaráta zamrzieť. Skús si ju ešte raz prečítať jeho očami.',
+  mean: 'Tahle zpráva by mohla kamaráda zamrzet. Zkus si ji přečíst ještě jednou jeho očima.',
   personal:
-    'Vyzerá to, že posielaš osobné údaje (adresu, telefón, školu alebo kde práve si). Posielaj ich len tomu, komu naozaj veríš.',
+    'Vypadá to, že posíláš osobní údaje (adresu, telefon, školu nebo kde zrovna jsi). Posílej je jen tomu, komu opravdu věříš.',
 };

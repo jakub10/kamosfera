@@ -241,23 +241,30 @@ export function CreatorPanel() {
         }
       );
 
-      const result = await response.json();
+      const result = await response.json().catch(() => ({}));
 
+      if (response.status === 404) {
+        throw new Error('Funkce ai-moderation není v Supabase nahraná (Edge Functions → Deploy).');
+      }
       if (!response.ok) {
-        throw new Error(result.error || 'Moderation failed');
+        throw new Error(result.error || 'Kontrola obsahu selhala.');
       }
 
       toast({
-        title: '🤖 AI Moderace dokončena',
-        description: `Analyzováno ${result.analyzed_count} příspěvků, nalezeno ${result.flagged?.length || 0} problémových.`,
+        title: '🤖 AI kontrola dokončena',
+        description: `Zkontrolováno ${result.analyzed_count ?? 0} příspěvků, problémových ${result.flagged?.length || 0}.${result.failed ? ` (${result.failed} se nepodařilo zkontrolovat)` : ''}`,
       });
 
       // Refresh flagged posts
       await fetchFlaggedPosts();
     } catch (error: unknown) {
+      // „Failed to fetch" = funkce v Supabase není, nebo ji nejde zavolat.
+      const offline = error instanceof TypeError;
       toast({
         title: 'Chyba',
-        description: errorMessage(error) || 'Nepodařilo se spustit moderaci.',
+        description: offline
+          ? 'Funkci ai-moderation se nepodařilo zavolat. Nejspíš ještě není v Supabase nahraná (Edge Functions → Deploy).'
+          : errorMessage(error) || 'Nepodařilo se spustit kontrolu.',
         variant: 'destructive',
       });
     } finally {

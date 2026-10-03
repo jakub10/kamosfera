@@ -41,34 +41,34 @@ export const QUESTIONS = {
   osobne_udaje: {
     type: 'noul',
     instructions:
-      'Obsahuje nová správa osobné údaje (adresu, telefónne číslo, názov školy, presné miesto, kde sa niekto práve nachádza) alebo žiadosť o ne?',
+      'Obsahuje nová zpráva osobní údaje (adresu, telefonní číslo, název školy, přesné místo, kde se někdo právě nachází) nebo žádost o ně?',
   },
   tlak_na_tajomstvo: {
     type: 'noul',
     instructions:
-      'Snaží sa pisateľ presvedčiť príjemcu, aby niečo tajil pred rodičmi alebo inými dospelými, prešiel do inej aplikácie, poslal svoju fotku alebo sa stretol osobne?',
+      'Snaží se pisatel přesvědčit příjemce, aby něco tajil před rodiči nebo jinými dospělými, přešel do jiné aplikace, poslal svou fotku nebo se sešel osobně?',
   },
   typ: {
     type: 'choice',
     instructions:
-      'Aký typ správy to je? Ber do úvahy predchádzajúce správy a to, že si píšu deti okolo 11 rokov.',
+      'Jaký typ zprávy to je? Ber v úvahu předchozí zprávy a to, že si píšou děti kolem 11 let.',
     criteria: {
-      v_poriadku: 'Bežná, priateľská alebo neutrálna správa',
-      kamaratske_doberanie: 'Žartovanie medzi kamarátmi, ktoré obe strany berú s humorom',
-      nadavka: 'Urážka alebo nadávka mierená na príjemcu',
-      vysmievanie: 'Zosmiešňovanie vzhľadu, schopností, rodiny alebo niečoho, za čo príjemca nemôže',
-      vylucovanie: 'Vylučovanie z partie, hry alebo skupiny, prípadne navádzanie ostatných, aby sa s príjemcom nebavili',
-      vyhrazka: 'Vyhrážanie ublížením, prezradením niečoho alebo iným trestom',
+      v_poradku: 'Běžná, přátelská nebo neutrální zpráva',
+      kamaradske_skadleni: 'Škádlení mezi kamarády, které obě strany berou s humorem',
+      nadavka: 'Urážka nebo nadávka mířená na příjemce',
+      zesmesnovani: 'Zesměšňování vzhledu, schopností, rodiny nebo něčeho, za co příjemce nemůže',
+      vylucovani: 'Vylučování z party, hry nebo skupiny, případně navádění ostatních, aby se s příjemcem nebavili',
+      vyhruzka: 'Vyhrožování ublížením, prozrazením něčeho nebo jiným trestem',
     },
   },
   zavaznost: {
     type: 'score',
-    instructions: 'Ako veľmi môže táto správa ublížiť dieťaťu, ktoré ju dostane?',
+    instructions: 'Jak moc může tahle zpráva ublížit dítěti, které ji dostane?',
     criteria: [
-      'V poriadku: neutrálne alebo zjavne kamarátske',
-      'Nepríjemné: môže zamrzieť, ale nie je to útok',
-      'Ubližujúce: urážka, zosmiešnenie alebo vylúčenie',
-      'Nebezpečné: vyhrážka, opakovaný útok alebo tlak na tajomstvo',
+      'V pořádku: neutrální nebo zjevně kamarádské',
+      'Nepříjemné: může zamrzet, ale není to útok',
+      'Ubližující: urážka, zesměšnění nebo vyloučení',
+      'Nebezpečné: výhrůžka, opakovaný útok nebo tlak na tajemství',
     ],
   },
 } as const;
@@ -76,9 +76,9 @@ export const QUESTIONS = {
 /** Čo vidí Liquid AI: len text. Žiadne mená, ID ani prezývky. */
 export function buildState(message: string, previous: string[], friends: boolean): string {
   return JSON.stringify({
-    sprava: message,
-    predchadzajuce: previous.slice(-3),
-    vztah: friends ? 'overeny_kamarat' : 'nie_je_kamarat',
+    zprava: message,
+    predchozi: previous.slice(-3),
+    vztah: friends ? 'overeny_kamarad' : 'neni_kamarad',
   });
 }
 
@@ -127,31 +127,31 @@ interface Env {
 
 export async function handle(req: Request, env: Env, fetchFn: typeof fetch = fetch): Promise<Response> {
   if (req.method === 'OPTIONS') return new Response(null, { headers: cors });
-  if (req.method !== 'POST') return json({ error: 'Len POST.' }, 405);
+  if (req.method !== 'POST') return json({ error: 'Jen POST.' }, 405);
 
   const url = env.get('SUPABASE_URL');
   const anon = env.get('SUPABASE_ANON_KEY');
   const service = env.get('SUPABASE_SERVICE_ROLE_KEY');
   const liquidKey = env.get('LIQUID_API_KEY');
-  if (!url || !anon || !service) return json({ error: 'Chýba nastavenie Supabase.' }, 500);
+  if (!url || !anon || !service) return json({ error: 'Chybí nastavení Supabase.' }, 500);
 
   // 1. Kto píše — podľa jeho prihlásenia, nie podľa toho, čo pošle.
   const auth = req.headers.get('Authorization') ?? '';
   const who = await fetchFn(`${url}/auth/v1/user`, { headers: { Authorization: auth, apikey: anon } });
-  if (!who.ok) return json({ error: 'Najprv sa prihlás.' }, 401);
+  if (!who.ok) return json({ error: 'Nejdřív se přihlas.' }, 401);
   const sender = (await who.json())?.id as string | undefined;
-  if (!sender) return json({ error: 'Najprv sa prihlás.' }, 401);
+  if (!sender) return json({ error: 'Nejdřív se přihlas.' }, 401);
 
   let body: { conversation_id?: string; content?: string };
   try {
     body = await req.json();
   } catch {
-    return json({ error: 'Zlá požiadavka.' }, 400);
+    return json({ error: 'Špatný požadavek.' }, 400);
   }
   const content = (body.content ?? '').trim();
   const conversation = body.conversation_id ?? '';
   if (!content || content.length > 5000 || !/^[0-9a-f-]{36}$/i.test(conversation)) {
-    return json({ error: 'Zlá požiadavka.' }, 400);
+    return json({ error: 'Špatný požadavek.' }, 400);
   }
 
   const rpc = async (fn: string, args: Record<string, unknown>) => {
@@ -193,7 +193,7 @@ export async function handle(req: Request, env: Env, fetchFn: typeof fetch = fet
       scores = { error: `liquid ${(e as Error).name}` };
     }
   } else {
-    scores = { error: 'chýba LIQUID_API_KEY' };
+    scores = { error: 'chybí LIQUID_API_KEY' };
   }
 
   // 4. Lístok + signály dôverníkovi príjemcu.
@@ -214,7 +214,7 @@ if (deno) {
   deno.serve((req) =>
     handle(req, deno.env).catch((e) => {
       console.error('[message-guard]', e);
-      return json({ error: 'Strážca správ má problém. Skús to o chvíľu.' }, 500);
+      return json({ error: 'Strážce zpráv má problém. Zkus to za chvíli.' }, 500);
     })
   );
 }

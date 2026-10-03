@@ -44,8 +44,8 @@ export interface GameItem {
 }
 
 export const GAME_ITEMS: GameItem[] = [
-  { id: 'hliadka',  icon: Rocket,        labelKey: 'Hviezdna Hliadka', blurb: 'Kartová hra so skrytými rolami. Kto je pirát? 4–7 kamarátov naživo.', color: 'from-indigo-600 to-violet-900', kind: 'game', fresh: true, href: '/hliadka' },
-  { id: 'pevnost',  icon: Castle,        labelKey: 'Pevnosť & Nájazd', blurb: 'Postav pevnosť, schovaj poklad. Kamaráti majú 60 sekúnd.', color: 'from-slate-600 to-slate-800', kind: 'game', fresh: true, href: '/pevnost' },
+  { id: 'hliadka',  icon: Rocket,        labelKey: 'Hvězdná hlídka', blurb: 'Karetní hra se skrytými rolemi. Kdo je pirát? 4–7 kamarádů naživo.', color: 'from-indigo-600 to-violet-900', kind: 'game', fresh: true, href: '/hliadka' },
+  { id: 'pevnost',  icon: Castle,        labelKey: 'Pevnost a nájezd', blurb: 'Postav pevnost, schovej poklad. Kamarádi mají 60 sekund.', color: 'from-slate-600 to-slate-800', kind: 'game', fresh: true, href: '/pevnost' },
   { id: 'kamostavba', icon: Blocks,     labelKey: 'Kamostavba',    blurb: 'Postav Kamosféru až k vlajce. Blok po bloku.', color: 'from-rose-500 to-amber-500',    kind: 'game' },
   { id: 'brawl',   icon: Star,          labelKey: 'Brawlosféra',   blurb: 'Aréna. Kdo vydrží nejdýl?',                   color: 'from-amber-400 to-yellow-600', kind: 'game' },
   { id: 'snake',   icon: Gamepad2,      labelKey: 'fab.snake',     blurb: 'Klasika. Nesněz sám sebe.',                   color: 'from-green-500 to-emerald-600', kind: 'game' },

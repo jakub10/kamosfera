@@ -73,7 +73,7 @@ export function ActionButton({ onAct }: { onAct: (down: boolean) => void }) {
       onPointerUp={() => onAct(false)}
       onPointerCancel={() => onAct(false)}
       onContextMenu={(e) => e.preventDefault()}
-      aria-label="Rozbiť stenu"
+      aria-label="Rozbít zeď"
     >
       💥
     </button>

@@ -1,9 +1,9 @@
 /**
- * Hviezdna Hliadka — rozhovor s databázou.
+ * Hvězdná hlídka — rozhovor s databází.
  *
- * Pravidlá bežia v databáze (funkcie `hh_*`). Prehliadač nič nepočíta, len
- * pošle akciu a vykreslí, čo mu server ukáže. Cudzie karty a roly sem vôbec
- * nedorazia, takže sa nedajú ani vyšpehovať cez vývojárske nástroje.
+ * Pravidla běží v databázi (funkce `hh_*`). Prohlížeč nic nepočítá, jen
+ * pošle akci a vykreslí, co mu server ukáže. Cizí karty a role sem vůbec
+ * nedorazí, takže se nedají ani vyšpehovat přes vývojářské nástroje.
  */
 import { supabase } from '@/integrations/supabase/client';
 import type { Json } from '@/integrations/supabase/types';
@@ -29,7 +29,7 @@ export interface Player {
   role: Role | null;
   hand: number;
   eq: Card[];
-  /** Vzdialenosť odo mňa (len počas hry, len k živým). */
+  /** Vzdálenost ode mě (jen během hry, jen k živým). */
   dist: number | null;
 }
 
@@ -80,9 +80,9 @@ export type Action =
 export const MIN_PLAYERS = 4;
 export const MAX_PLAYERS = 7;
 
-/** Chybu z databázy ukázať po slovensky, nie ako technický kód. */
+/** Chybu z databáze ukázat česky, ne jako technický kód. */
 function fail(error: { message?: string } | null): never {
-  throw new Error(error?.message || 'Niečo sa pokazilo. Skús to znova.');
+  throw new Error(error?.message || 'Něco se pokazilo. Zkus to znovu.');
 }
 
 export async function createRoom(): Promise<{ id: string; code: string }> {
@@ -172,77 +172,77 @@ export async function loadFriends(uid: string): Promise<Friend[]> {
 // ---------------------------------------------------------------------------
 
 export const CARD_INFO: Record<CardKind, { name: string; icon: string; text: string; color: string; target?: boolean; equip?: boolean }> = {
-  laser: { name: 'Laser', icon: '⚡', text: 'Zasiahni hráča na dosah: −1 energia. Raz za ťah.', color: 'from-rose-500 to-red-700', target: true },
-  shield: { name: 'Štít', icon: '🛡️', text: 'Zapne sa sám, keď ťa niekto zasiahne.', color: 'from-sky-400 to-blue-700' },
-  repair: { name: 'Oprava', icon: '🔧', text: '+1 energia (najviac do plnej).', color: 'from-emerald-400 to-green-700' },
-  salva: { name: 'Salva', icon: '💥', text: 'Všetci ostatní: štít, alebo −1 energia.', color: 'from-orange-400 to-red-600' },
-  tractor: { name: 'Traktorový lúč', icon: '🧲', text: 'Ukradni kartu hráčovi na dosah.', color: 'from-fuchsia-500 to-purple-700', target: true },
-  hyper: { name: 'Hyperpohon', icon: '🚀', text: 'Vybavenie: tvoj dosah +1.', color: 'from-amber-400 to-orange-600', equip: true },
-  cloak: { name: 'Maskovanie', icon: '👻', text: 'Vybavenie: na teba treba dosah +1.', color: 'from-slate-400 to-slate-700', equip: true },
+  laser: { name: 'Laser', icon: '⚡', text: 'Zasáhni hráče na dosah: −1 energie. Jednou za tah.', color: 'from-rose-500 to-red-700', target: true },
+  shield: { name: 'Štít', icon: '🛡️', text: 'Zapne se sám, když tě někdo zasáhne.', color: 'from-sky-400 to-blue-700' },
+  repair: { name: 'Oprava', icon: '🔧', text: '+1 energie (nejvýš do plna).', color: 'from-emerald-400 to-green-700' },
+  salva: { name: 'Salva', icon: '💥', text: 'Všichni ostatní: štít, nebo −1 energie.', color: 'from-orange-400 to-red-600' },
+  tractor: { name: 'Vlečný paprsek', icon: '🧲', text: 'Ukradni kartu hráči na dosah.', color: 'from-fuchsia-500 to-purple-700', target: true },
+  hyper: { name: 'Hyperpohon', icon: '🚀', text: 'Vybavení: tvůj dosah +1.', color: 'from-amber-400 to-orange-600', equip: true },
+  cloak: { name: 'Maskování', icon: '👻', text: 'Vybavení: na tebe je potřeba dosah +1.', color: 'from-slate-400 to-slate-700', equip: true },
 };
 
 export const ROLE_INFO: Record<Role, { name: string; icon: string; goal: string; color: string }> = {
-  captain: { name: 'Kapitán', icon: '👨‍✈️', goal: 'Znič všetkých pirátov aj Zblúdilú AI. Všetci vedia, že si Kapitán.', color: 'from-amber-300 to-yellow-600' },
-  crew: { name: 'Posádka', icon: '🧑‍🚀', goal: 'Chráň Kapitána. Keď vyhrá on, vyhráš aj ty.', color: 'from-sky-400 to-blue-700' },
-  pirate: { name: 'Pirát', icon: '🏴‍☠️', goal: 'Zostreľ Kapitána!', color: 'from-rose-500 to-red-800' },
-  ai: { name: 'Zblúdilá AI', icon: '🤖', goal: 'Ostaň posledná pri stole. Najprv pirátov, potom Kapitána.', color: 'from-lime-400 to-emerald-700' },
+  captain: { name: 'Kapitán', icon: '👨‍✈️', goal: 'Znič všechny piráty i Zbloudilou AI. Všichni vědí, že jsi Kapitán.', color: 'from-amber-300 to-yellow-600' },
+  crew: { name: 'Posádka', icon: '🧑‍🚀', goal: 'Chraň Kapitána. Když vyhraje on, vyhraješ i ty.', color: 'from-sky-400 to-blue-700' },
+  pirate: { name: 'Pirát', icon: '🏴‍☠️', goal: 'Sestřel Kapitána!', color: 'from-rose-500 to-red-800' },
+  ai: { name: 'Zbloudilá AI', icon: '🤖', goal: 'Zůstaň poslední u stolu. Nejdřív piráty, pak Kapitána.', color: 'from-lime-400 to-emerald-700' },
 };
 
 export const WINNER_TEXT: Record<Winner, string> = {
   crew: 'Kapitán a posádka ubránili loď! 👨‍✈️🧑‍🚀',
-  pirates: 'Piráti zostrelili Kapitána! 🏴‍☠️',
-  ai: 'Zblúdilá AI ostala sama. Ovládla loď! 🤖',
+  pirates: 'Piráti sestřelili Kapitána! 🏴‍☠️',
+  ai: 'Zbloudilá AI zůstala sama. Ovládla loď! 🤖',
 };
 
 export function winnerRoles(w: Winner): Role[] {
   return w === 'crew' ? ['captain', 'crew'] : w === 'pirates' ? ['pirate'] : ['ai'];
 }
 
-/** Záznam z denníka ako veta. Rod neriešime — šípky sú pre všetkých. */
+/** Záznam z deníku jako věta. Rod neřešíme — šipky jsou pro všechny. */
 export function describe(l: LogEntry, name: (seat: number | null) => string): string {
   const A = name(l.a);
   const B = name(l.b);
   const card = (k: unknown) => CARD_INFO[k as CardKind]?.name ?? 'kartu';
   switch (l.kind) {
     case 'start':
-      return `🚀 Štart! ${l.info.players} hráčov, Kapitán ťahá prvý.`;
+      return `🚀 Start! ${l.info.players} hráčů, Kapitán táhne první.`;
     case 'turn':
-      return `▶ Na ťahu: ${A}`;
+      return `▶ Na tahu: ${A}`;
     case 'laser_hit':
-      return `⚡ ${A} → ${B}: zásah laserom, −1 energia`;
+      return `⚡ ${A} → ${B}: zásah laserem, −1 energie`;
     case 'laser_blocked':
       return `🛡️ ${A} → ${B}: laser zastavil štít`;
     case 'salva':
-      return `💥 ${A} púšťa salvu na všetkých!`;
+      return `💥 ${A} pouští salvu na všechny!`;
     case 'salva_hit':
-      return `💥 ${B}: zásah salvou, −1 energia`;
+      return `💥 ${B}: zásah salvou, −1 energie`;
     case 'salva_blocked':
       return `🛡️ ${B}: salvu zastavil štít`;
     case 'repair':
-      return `🔧 ${A}: oprava, +1 energia`;
+      return `🔧 ${A}: oprava, +1 energie`;
     case 'steal':
       return l.info.from === 'eq'
-        ? `🧲 ${A} → ${B}: ukradnuté vybavenie ${card(l.info.kind)}`
-        : `🧲 ${A} → ${B}: ukradnutá karta z ruky${l.secret?.kind ? ` (${card(l.secret.kind)})` : ''}`;
+        ? `🧲 ${A} → ${B}: ukradené vybavení ${card(l.info.kind)}`
+        : `🧲 ${A} → ${B}: ukradená karta z ruky${l.secret?.kind ? ` (${card(l.secret.kind)})` : ''}`;
     case 'equip':
-      return `🔩 ${A}: nové vybavenie ${card(l.info.kind)}`;
+      return `🔩 ${A}: nové vybavení ${card(l.info.kind)}`;
     case 'discard':
-      return `🗑️ ${A}: zahodené karty (${l.info.n})`;
+      return `🗑️ ${A}: zahozené karty (${l.info.n})`;
     case 'out': {
       const role = ROLE_INFO[l.info.role as Role];
-      const why = l.info.why === 'left' ? 'odchádza z hry' : l.info.why === 'asleep' ? 'zaspal(a) a vypadáva' : 'vypadáva';
-      return `💀 ${A} ${why}! Bol(a) to ${role?.icon ?? ''} ${role?.name ?? '?'}`;
+      const why = l.info.why === 'left' ? 'odchází ze hry' : l.info.why === 'asleep' ? 'usnul(a) a vypadává' : 'vypadává';
+      return `💀 ${A} ${why}! Byl(a) to ${role?.icon ?? ''} ${role?.name ?? '?'}`;
     }
     case 'bounty':
-      return `🎁 ${A}: odmena za piráta, ${l.info.n} karty`;
+      return `🎁 ${A}: odměna za piráta, ${l.info.n} karty`;
     case 'oops':
-      return `😱 Kapitán zostrelil vlastnú posádku a prišiel o všetky karty!`;
+      return `😱 Kapitán sestřelil vlastní posádku a přišel o všechny karty!`;
     case 'timeout':
-      return `⏰ ${A} nestihol(-la) ťah (${l.info.n}/3)`;
+      return `⏰ ${A} nestihl(a) tah (${l.info.n}/3)`;
     case 'reshuffle':
-      return '🔀 Balíček došiel — odhodené karty sa zamiešali';
+      return '🔀 Balíček došel — odhozené karty se zamíchaly';
     case 'win':
-      return `🏆 ${WINNER_TEXT[l.info.winner as Winner] ?? 'Koniec hry'}`;
+      return `🏆 ${WINNER_TEXT[l.info.winner as Winner] ?? 'Konec hry'}`;
     default:
       return l.kind;
   }

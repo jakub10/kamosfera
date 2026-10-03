@@ -136,7 +136,7 @@ BEGIN
   INSERT INTO public.message_checks (sender_id, conversation_id, content_md5, verdict)
   SELECT g(1), konv(), md5(i::text), 'send' FROM generate_series(1, 30) i;
   r := ako_server(format('SELECT public.guard_prepare(%L, %L)', g(1), konv()));
-  PERFORM chk('priveľa správ za minútu zastaví limit', r->>'error' LIKE '%rýchlo%', true);
+  PERFORM chk('priveľa správ za minútu zastaví limit', r->>'error' LIKE '%rychle%', true);
 END$$;
 
 -- Ďalšie testy nech bežia s vypnutým strážcom.

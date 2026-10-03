@@ -1,0 +1,19 @@
+# Kamosféra
+
+> Malá česko-slovenská sociální síť pro děti kolem 11 let a jejich kamarády. Vznikla jako rodinný projekt (tatínek a syn Jakub) a je postavená tak, aby se k dětem nedostal cizí člověk.
+
+## Co v ní děti dělají
+- Příspěvky, stories, zprávy a skupiny (třída, kroužek, parta).
+- Hry s kamarády: Hvězdná hlídka (karetní hra se skrytými rolemi pro 4–7 hráčů), Pevnost a nájezd (postav pevnost, kamarádi ji vykrádají), Kamostavba a další.
+- AI kamarád Kamoš na povídání.
+
+## Jak chrání děti
+- Kamarády si přidávají jen naživo (kód nebo QR kód platný 3 minuty) nebo jednorázovou pozvánkou pro kamaráda z daleka.
+- Nikoho nejde vyhledat; profil vidí jen kamarádi.
+- Nový člen se dostane dovnitř až se souhlasem dospělého (QR kód, bez účtu) a po schválení správcem.
+- Tlačítko „Tohle mi není příjemné“: potichu zablokuje a pošle signál důvěrníkovi — dospělému, kterého si dítě vybralo. Důvěrník nevidí zprávy ani kamarády.
+- AI strážce zpráv (System One od Liquid AI) se před odesláním zeptá „Opravdu to chceš poslat?“, ubližující zprávu nedoručí a při tlaku na tajemství upozorní důvěrníka.
+- Od 22:00 do 6:30 síť spí.
+
+## Odkazy
+- Web: https://kamosfera.online/

@@ -25,9 +25,9 @@ describe('mapa', () => {
   });
   it('bez vchodu, s dvoma pokladmi a s osamelým teleportom nie', () => {
     expect(gridProblems(map(['$..$', 'T']))).toEqual([
-      'Chýba vchod.',
-      'Poklad môže byť len jeden.',
-      'Teleport potrebuje pár — polož ešte jeden.',
+      'Chybí vchod.',
+      'Poklad může být jen jeden.',
+      'Teleport potřebuje pár — polož ještě jeden.',
     ]);
   });
   it('stráži rozpočet', () => {
@@ -36,7 +36,7 @@ describe('mapa', () => {
     for (let i = 16; i < 16 + walls; i++) cells[i] = '#';
     const c = cells.join('');
     expect(gridCost(c)).toBeGreaterThan(BUDGET);
-    expect(gridProblems(c).some((p) => p.startsWith('Prekročený rozpočet'))).toBe(true);
+    expect(gridProblems(c).some((p) => p.startsWith('Překročený rozpočet'))).toBe(true);
   });
 });
 

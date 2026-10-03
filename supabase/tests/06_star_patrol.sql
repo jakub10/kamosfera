@@ -263,7 +263,7 @@ BEGIN
   other := (cap + 1) % 4;
   c := hh_t_give(rid, other, 'repair');
   e := hh_t_act_err(hh_t_uid(rid, other), rid, jsonb_build_object('t', 'play', 'card', c));
-  PERFORM chk('hráč mimo ťahu nemôže hrať', e LIKE '%Nie si na ťahu%', true);
+  PERFORM chk('hráč mimo ťahu nemôže hrať', e LIKE '%Nejsi na tahu%', true);
 
   e := hh_t_act_err(hh_t_uid(rid, cap), rid, jsonb_build_object('t', 'play', 'card', c));
   PERFORM chk('kartu z cudzej ruky zahrať nejde', e LIKE '%nemáš%', true);
@@ -273,7 +273,7 @@ BEGIN
   PERFORM chk('štít sa nedá zahrať sám od seba', e LIKE '%Štít%', true);
 
   e := hh_t_act_err(hh_t_uid(rid, cap), rid, '{"t":"hack"}');
-  PERFORM chk('neznáma akcia neprejde', e LIKE '%Neznáma%', true);
+  PERFORM chk('neznáma akcia neprejde', e LIKE '%Neznámá%', true);
 END$$;
 
 \echo '--- H6. Laser: dosah, raz za ťah, štít ---'
@@ -287,7 +287,7 @@ BEGIN
 
   c := hh_t_give(rid, a, 'laser');
   e := hh_t_act_err(hh_t_uid(rid, a), rid, jsonb_build_object('t', 'play', 'card', c, 'target', far));
-  PERFORM chk('na hráča mimo dosahu laser nedostrelí', e LIKE '%priďaleko%', true);
+  PERFORM chk('na hráča mimo dosahu laser nedostrelí', e LIKE '%moc daleko%', true);
   e := hh_t_act_err(hh_t_uid(rid, a), rid, jsonb_build_object('t', 'play', 'card', c, 'target', a));
   PERFORM chk('na seba strieľať nejde', e IS NOT NULL, true);
 
@@ -297,7 +297,7 @@ BEGIN
 
   c2 := hh_t_give(rid, a, 'laser');
   e := hh_t_act_err(hh_t_uid(rid, a), rid, jsonb_build_object('t', 'play', 'card', c2, 'target', near));
-  PERFORM chk('druhý laser v tom istom ťahu neprejde', e LIKE '%raz za ťah%', true);
+  PERFORM chk('druhý laser v tom istom ťahu neprejde', e LIKE '%jednou za tah%', true);
 
   -- ďalší ťah: cieľ má štít
   PERFORM hh_t_turn(rid, a);
@@ -330,7 +330,7 @@ BEGIN
   PERFORM hh_t_equip(rid, 2, 'cloak');
   c := hh_t_give(rid, 0, 'laser');
   e := hh_t_act_err(hh_t_uid(rid, 0), rid, jsonb_build_object('t', 'play', 'card', c, 'target', 2));
-  PERFORM chk('maskovanie cieľa pridá +1 k vzdialenosti', e LIKE '%vzdialenosť 3, tvoj dosah 2%', true);
+  PERFORM chk('maskovanie cieľa pridá +1 k vzdialenosti', e LIKE '%vzdálenost 3, tvůj dosah 2%', true);
   e := hh_t_act_err(hh_t_uid(rid, 0), rid, jsonb_build_object('t', 'play', 'card', c, 'target', 1));
   PERFORM chk('maskovaný sused je stále na dosah hyperpohonu', e IS NULL, true);
 END$$;
@@ -344,7 +344,7 @@ BEGIN
   PERFORM hh_t_set_energy(rid, 0, (SELECT max_energy FROM public.hh_players WHERE room_id = rid AND seat = 0));
   c := hh_t_give(rid, 0, 'repair');
   e := hh_t_act_err(hh_t_uid(rid, 0), rid, jsonb_build_object('t', 'play', 'card', c));
-  PERFORM chk('opraviť plnú energiu nejde', e LIKE '%plnú%', true);
+  PERFORM chk('opraviť plnú energiu nejde', e LIKE '%plnou%', true);
   PERFORM hh_t_set_energy(rid, 0, 2);
   PERFORM hh_t_act(hh_t_uid(rid, 0), rid, jsonb_build_object('t', 'play', 'card', c));
   PERFORM chk('oprava pridá 1 energiu', hh_t_energy(rid, 0) = 3, true);
@@ -374,7 +374,7 @@ BEGIN
   PERFORM hh_t_empty(rid, 0); PERFORM hh_t_empty(rid, 1);
   c := hh_t_give(rid, 0, 'tractor');
   e := hh_t_act_err(hh_t_uid(rid, 0), rid, jsonb_build_object('t', 'play', 'card', c, 'target', 1));
-  PERFORM chk('z prázdnej ruky ukradnúť nejde', e LIKE '%žiadnu kartu%', true);
+  PERFORM chk('z prázdnej ruky ukradnúť nejde', e LIKE '%žádnou kartu%', true);
 
   loot := hh_t_give(rid, 1, 'repair');
   v := hh_t_act(hh_t_uid(rid, 0), rid, jsonb_build_object('t', 'play', 'card', c, 'target', 1));
@@ -407,12 +407,12 @@ BEGIN
   nxt := (cap + 1) % 4;
   h := hh_t_hand(rid, cap);                     -- 7 kariet, energia 5 → zahodiť 2
   e := hh_t_act_err(hh_t_uid(rid, cap), rid, '{"t":"end","discard":[]}');
-  PERFORM chk('bez zahodenia nadbytočných kariet ťah neskončí', e LIKE '%presne 2%', true);
+  PERFORM chk('bez zahodenia nadbytočných kariet ťah neskončí', e LIKE '%přesně 2%', true);
 
   SELECT array_agg(id) INTO ids FROM (SELECT id FROM public.hh_cards
     WHERE room_id = rid AND zone = 'hand' AND owner_seat = nxt LIMIT 2) t;
   e := hh_t_act_err(hh_t_uid(rid, cap), rid, jsonb_build_object('t', 'end', 'discard', to_jsonb(ids)));
-  PERFORM chk('zahodiť cudzie karty nejde', e LIKE '%vlastnej ruky%', true);
+  PERFORM chk('zahodiť cudzie karty nejde', e LIKE '%vlastní ruky%', true);
 
   hand_nxt := hh_t_hand(rid, nxt);
   SELECT array_agg(id) INTO ids FROM (SELECT id FROM public.hh_cards
@@ -478,7 +478,7 @@ BEGIN
   PERFORM chk('po konci hry vidí každý všetky roly',
     NOT EXISTS (SELECT 1 FROM jsonb_array_elements(v->'players') p WHERE p->>'role' IS NULL), true);
   PERFORM chk('po konci hry sa už ťahať nedá',
-    hh_t_act_err(hh_t_uid(rid, pir), rid, '{"t":"end"}') LIKE '%nebeží%', true);
+    hh_t_act_err(hh_t_uid(rid, pir), rid, '{"t":"end"}') LIKE '%neběží%', true);
 
   -- AI: posledná v súboji s Kapitánom
   rid := hh_t_game(4, 1213);
@@ -556,7 +556,7 @@ BEGIN
 
   SELECT (hh_t_as(u(1), 'SELECT public.hh_create()'))->>'id' INTO r2;
   e := hh_t_err(u(1), format('SELECT to_jsonb(true) FROM public.hh_invite(%L::uuid, %L::uuid)', r2, u(3)));
-  PERFORM chk('pozvať sa dá len kamaráta', e LIKE '%kamarátov%', true);
+  PERFORM chk('pozvať sa dá len kamaráta', e LIKE '%kamarády%', true);
   PERFORM hh_t_as(u(1), format('SELECT to_jsonb(true) FROM public.hh_invite(%L::uuid, %L::uuid)', r2, u(2)));
   PERFORM hh_t_as(u(1), format('SELECT to_jsonb(true) FROM public.hh_invite(%L::uuid, %L::uuid)', r2, u(2)));
   PERFORM chk('kamarát dostane jednu pozvánku s kódom (nie záplavu)',

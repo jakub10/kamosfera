@@ -23,9 +23,9 @@ interface Props {
 const TURN_SECONDS = 45;
 
 /**
- * Kde pri oválnom stole sedí hráč. Ja vždy dole, ostatní v smere ťahov.
- * Počíta sa z naozajstnej veľkosti stola, aby sa dlaždice nezrezali ani na
- * nízkej obrazovke starého notebooku.
+ * Kde u oválného stolu sedí hráč. Já vždy dole, ostatní ve směru tahů.
+ * Počítá se ze skutečné velikosti stolu, aby se dlaždice neořízly ani na
+ * nízké obrazovce starého notebooku.
  */
 function seatPos(i: number, n: number, box: { w: number; h: number }) {
   const a = Math.PI / 2 + (i * 2 * Math.PI) / n;
@@ -38,7 +38,7 @@ function seatPos(i: number, n: number, box: { w: number; h: number }) {
 
 function Energy({ p }: { p: Player }) {
   return (
-    <span className="flex justify-center gap-0.5" aria-label={`energia ${p.energy} z ${p.max}`}>
+    <span className="flex justify-center gap-0.5" aria-label={`energie ${p.energy} z ${p.max}`}>
       {Array.from({ length: p.max }, (_, i) => (
         <span
           key={i}
@@ -78,8 +78,8 @@ export function StarTable({ view, busy, error, offset, onAct, onClearError, onLe
     return () => ro.disconnect();
   }, []);
 
-  // Nová hra → ukáž tajnú rolu raz veľkou kartou. Každá hra (aj odveta pri
-  // tom istom stole) má vlastný záznam „štart" v denníku.
+  // Nová hra → ukaž tajnou roli jednou velkou kartou. Každá hra (i odveta u
+  // téhož stolu) má vlastní záznam „start" v deníku.
   const startId = view.log.find((l) => l.kind === 'start')?.id;
   useEffect(() => {
     if (room.status !== 'playing' || !me.role || !startId) return;
@@ -90,11 +90,11 @@ export function StarTable({ view, busy, error, offset, onAct, onClearError, onLe
         setRoleIntro(true);
       }
     } catch {
-      /* bez úložiska jednoducho bez úvodu */
+      /* bez úložiště prostě bez úvodu */
     }
   }, [room.status, me.role, startId]);
 
-  // Zmena ťahu zruší rozrobený výber.
+  // Změna tahu zruší rozdělaný výběr.
   useEffect(() => {
     setSelected(null);
     setTarget(null);
@@ -102,7 +102,7 @@ export function StarTable({ view, busy, error, offset, onAct, onClearError, onLe
     setMarked([]);
   }, [room.turn_no, room.status]);
 
-  // Vybraná karta mohla medzitým zmiznúť (ukradli ju).
+  // Vybraná karta mohla mezitím zmizet (ukradli ji).
   useEffect(() => {
     if (selected && !hand.some((c) => c.id === selected.id)) setSelected(null);
   }, [hand, selected]);
@@ -173,24 +173,24 @@ export function StarTable({ view, busy, error, offset, onAct, onClearError, onLe
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col overflow-hidden bg-[#070b1f] text-white">
-      {/* hviezdne pozadie */}
+      {/* hvězdné pozadí */}
       <div className="pointer-events-none absolute inset-0 opacity-60 [background-image:radial-gradient(1px_1px_at_20px_30px,white,transparent),radial-gradient(1px_1px_at_140px_80px,#c7d2fe,transparent),radial-gradient(1.5px_1.5px_at_90px_150px,white,transparent),radial-gradient(1px_1px_at_200px_190px,#fde68a,transparent)] [background-size:240px_220px]" />
       <div className="pointer-events-none absolute -left-40 -top-40 h-96 w-96 rounded-full bg-indigo-600/20 blur-3xl" />
       <div className="pointer-events-none absolute -bottom-40 -right-40 h-96 w-96 rounded-full bg-fuchsia-600/20 blur-3xl" />
 
-      {/* horná lišta */}
+      {/* horní lišta */}
       <header className="relative flex items-center gap-2 px-3 py-2 sm:px-4">
         <span className="text-lg">🌌</span>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-black sm:text-base">Hviezdna Hliadka</p>
+          <p className="truncate text-sm font-black sm:text-base">Hvězdná hlídka</p>
           <p className="truncate text-[11px] text-white/60">
-            Stôl {room.code} · balíček {view.deck}
+            Stůl {room.code} · balíček {view.deck}
           </p>
         </div>
         {room.status === 'playing' && current && (
           <div className="min-w-[7.5rem] text-right">
             <p className="truncate text-xs font-bold sm:text-sm">
-              {myTurn ? 'Si na ťahu!' : `Ťahá: ${current.name}`}
+              {myTurn ? 'Jsi na tahu!' : `Táhne: ${current.name}`}
             </p>
             <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-white/15">
               <div
@@ -204,7 +204,7 @@ export function StarTable({ view, busy, error, offset, onAct, onClearError, onLe
           type="button"
           onClick={() => setLogOpen((o) => !o)}
           className="rounded-lg p-2 hover:bg-white/10 lg:hidden"
-          aria-label="Denník hry"
+          aria-label="Deník hry"
         >
           <ScrollText className="h-5 w-5" />
         </button>
@@ -212,26 +212,26 @@ export function StarTable({ view, busy, error, offset, onAct, onClearError, onLe
           <button
             type="button"
             onClick={() => {
-              if (window.confirm('Naozaj sa vzdáš? Vypadneš z hry a ostatní budú hrať ďalej.')) onLeave();
+              if (window.confirm('Opravdu se vzdáš? Vypadneš ze hry a ostatní budou hrát dál.')) onLeave();
             }}
             className="rounded-lg p-2 hover:bg-white/10"
-            aria-label="Vzdať sa"
-            title="Vzdať sa"
+            aria-label="Vzdát se"
+            title="Vzdát se"
           >
             <Flag className="h-5 w-5" />
           </button>
         ) : (
-          <button type="button" onClick={onBack} className="rounded-lg p-2 hover:bg-white/10" aria-label="Zavrieť">
+          <button type="button" onClick={onBack} className="rounded-lg p-2 hover:bg-white/10" aria-label="Zavřít">
             <X className="h-5 w-5" />
           </button>
         )}
       </header>
 
       <div className="relative flex min-h-0 flex-1">
-        {/* stôl */}
+        {/* stůl */}
         <section ref={tableRef} className="relative min-h-0 flex-1">
           <div className="absolute inset-2 rounded-[50%] border border-indigo-300/20 bg-indigo-500/5 shadow-[inset_0_0_60px_rgba(99,102,241,0.25)] sm:inset-6" />
-          {/* stred stola: balíček a posledná akcia */}
+          {/* střed stolu: balíček a poslední akce */}
           <div className="absolute left-1/2 top-1/2 flex w-[46%] max-w-xs -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-1 text-center">
             <div className="flex items-end gap-2">
               <div className="grid h-14 w-10 place-items-center rounded-lg border-2 border-white/30 bg-gradient-to-br from-indigo-500 to-violet-800 text-lg shadow-lg sm:h-16 sm:w-12">
@@ -290,14 +290,14 @@ export function StarTable({ view, busy, error, offset, onAct, onClearError, onLe
                 <div className="mt-1 flex items-center justify-center gap-1 text-[10px] text-white/70">
                   {p.alive ? (
                     <>
-                      <span title="karty v ruke">🂠{p.hand}</span>
+                      <span title="karty v ruce">🂠{p.hand}</span>
                       {p.eq.map((c) => (
                         <span key={c.id} title={CARD_INFO[c.kind].name}>
                           {CARD_INFO[c.kind].icon}
                         </span>
                       ))}
                       {p.dist != null && (
-                        <span title="vzdialenosť" className="rounded bg-white/10 px-1">
+                        <span title="vzdálenost" className="rounded bg-white/10 px-1">
                           ↔{p.dist}
                         </span>
                       )}
@@ -311,7 +311,7 @@ export function StarTable({ view, busy, error, offset, onAct, onClearError, onLe
           })}
         </section>
 
-        {/* denník */}
+        {/* deník */}
         <aside
           className={cn(
             'absolute inset-y-0 right-0 z-10 w-72 flex-col border-l border-white/10 bg-slate-950/95 p-3 lg:static lg:flex lg:bg-slate-950/60',
@@ -319,7 +319,7 @@ export function StarTable({ view, busy, error, offset, onAct, onClearError, onLe
           )}
         >
           <p className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-white/60">
-            <ScrollText className="h-4 w-4" /> Denník
+            <ScrollText className="h-4 w-4" /> Deník
           </p>
           <div ref={logRef} className="min-h-0 flex-1 space-y-1 overflow-y-auto pr-1 text-xs">
             {view.log.map((l) => (
@@ -331,7 +331,7 @@ export function StarTable({ view, busy, error, offset, onAct, onClearError, onLe
         </aside>
       </div>
 
-      {/* moja časť: rola, ruka, tlačidlá */}
+      {/* moje část: role, ruka, tlačítka */}
       <footer className="relative border-t border-white/10 bg-slate-950/70 px-2 pb-2 pt-1 backdrop-blur sm:px-4">
         {error && (
           <button
@@ -352,7 +352,7 @@ export function StarTable({ view, busy, error, offset, onAct, onClearError, onLe
                 'flex items-center gap-1.5 rounded-full border border-white/20 px-3 py-1 text-xs font-bold',
                 showRole ? `bg-gradient-to-r ${ROLE_INFO[me.role].color}` : 'bg-white/10'
               )}
-              title="Tvoja tajná rola — klikni na zobrazenie/skrytie"
+              title="Tvoje tajná role — klikni pro zobrazení/skrytí"
             >
               {showRole ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
               {showRole ? `${ROLE_INFO[me.role].icon} ${ROLE_INFO[me.role].name}` : 'Moja rola'}
@@ -369,17 +369,17 @@ export function StarTable({ view, busy, error, offset, onAct, onClearError, onLe
                 disabled={busy}
                 className="rounded-full bg-yellow-300 px-4 py-1.5 text-sm font-black text-slate-900 shadow hover:bg-yellow-200"
               >
-                Zahrať: {info.name}
+                Zahrát: {info.name}
               </button>
             )}
             {myTurn && selected && info?.target && target == null && (
               <span className="rounded-full bg-yellow-300/20 px-3 py-1 text-xs font-bold text-yellow-200">
-                Klikni na hráča so žltým rámikom
+                Klikni na hráče se žlutým rámečkem
               </span>
             )}
             {myTurn && discarding && (
               <span className="text-xs font-bold text-red-200">
-                Zahoď {needDiscard} {needDiscard === 1 ? 'kartu' : needDiscard < 5 ? 'karty' : 'kariet'} ({marked.length}/{needDiscard})
+                Zahoď {needDiscard} {needDiscard === 1 ? 'kartu' : needDiscard < 5 ? 'karty' : 'karet'} ({marked.length}/{needDiscard})
               </span>
             )}
             {myTurn && (
@@ -389,22 +389,22 @@ export function StarTable({ view, busy, error, offset, onAct, onClearError, onLe
                 disabled={busy || (discarding && marked.length !== needDiscard)}
                 className="rounded-full bg-emerald-400 px-4 py-1.5 text-sm font-black text-slate-900 shadow hover:bg-emerald-300 disabled:opacity-50"
               >
-                {discarding ? 'Zahodiť a ukončiť' : 'Ukončiť ťah'}
+                {discarding ? 'Zahodit a ukončit' : 'Ukončit tah'}
               </button>
             )}
           </div>
         </div>
 
-        {/* traktor: čo ukradnúť */}
+        {/* paprsek: co ukrást */}
         {selected?.kind === 'tractor' && target != null && (
           <div className="mb-1 flex flex-wrap items-center justify-center gap-2 text-xs">
-            <span className="font-bold">Čo ukradneš ({name(target)})?</span>
+            <span className="font-bold">Co ukradneš ({name(target)})?</span>
             <button
               type="button"
               onClick={() => void play(selected, target, 'hand')}
               className="rounded-full bg-fuchsia-500 px-3 py-1 font-bold"
             >
-              🂠 Náhodnú kartu z ruky
+              🂠 Náhodnou kartu z ruky
             </button>
             {byseat.get(target)?.eq.map((c) => (
               <button
@@ -417,14 +417,14 @@ export function StarTable({ view, busy, error, offset, onAct, onClearError, onLe
               </button>
             ))}
             <button type="button" onClick={() => setTarget(null)} className="rounded-full bg-white/10 px-3 py-1">
-              Späť
+              Zpět
             </button>
           </div>
         )}
 
         <div className="flex gap-2 overflow-x-auto px-1 pb-1 pt-3 sm:justify-center [@media(max-height:640px)]:pt-2">
           {hand.length === 0 && room.status === 'playing' && (
-            <p className="py-6 text-center text-xs text-white/50">{me.alive ? 'Nemáš žiadne karty.' : 'Si mimo hry — sleduj, ako to dopadne.'}</p>
+            <p className="py-6 text-center text-xs text-white/50">{me.alive ? 'Nemáš žádné karty.' : 'Jsi mimo hru — sleduj, jak to dopadne.'}</p>
           )}
           {hand.map((c) => (
             <CardFace
@@ -439,15 +439,15 @@ export function StarTable({ view, busy, error, offset, onAct, onClearError, onLe
         </div>
       </footer>
 
-      {/* úvod: tajná rola */}
+      {/* úvod: tajná role */}
       {roleIntro && me.role && (
         <div className="absolute inset-0 z-20 grid place-items-center bg-black/70 p-4">
           <div className={cn('w-full max-w-xs rounded-3xl bg-gradient-to-br p-6 text-center shadow-2xl', ROLE_INFO[me.role].color)}>
-            <p className="text-xs font-bold uppercase tracking-widest text-white/80">Tvoja tajná rola</p>
+            <p className="text-xs font-bold uppercase tracking-widest text-white/80">Tvoje tajná role</p>
             <p className="my-3 text-7xl">{ROLE_INFO[me.role].icon}</p>
             <p className="text-2xl font-black">{ROLE_INFO[me.role].name}</p>
             <p className="mt-2 text-sm">{ROLE_INFO[me.role].goal}</p>
-            {me.role !== 'captain' && <p className="mt-2 text-xs text-white/80">Nikomu ju neprezraď! 🤫</p>}
+            {me.role !== 'captain' && <p className="mt-2 text-xs text-white/80">Nikomu ji neprozraď! 🤫</p>}
             <button
               type="button"
               onClick={() => setRoleIntro(false)}
@@ -459,12 +459,12 @@ export function StarTable({ view, busy, error, offset, onAct, onClearError, onLe
         </div>
       )}
 
-      {/* koniec hry */}
+      {/* konec hry */}
       {room.status === 'finished' && room.winner && (
         <div className="absolute inset-0 z-30 grid place-items-center overflow-y-auto bg-black/75 p-4">
           <div className="w-full max-w-md rounded-3xl border border-white/20 bg-slate-900 p-5 text-center shadow-2xl">
             <p className="text-5xl">{iWon ? '🏆' : '🌠'}</p>
-            <p className="mt-2 text-xl font-black">{iWon ? 'Vyhrali ste!' : 'Tentoraz nie…'}</p>
+            <p className="mt-2 text-xl font-black">{iWon ? 'Vyhráli jste!' : 'Tentokrát ne…'}</p>
             <p className="mt-1 text-sm text-white/80">{WINNER_TEXT[room.winner]}</p>
             <ul className="mt-4 grid grid-cols-2 gap-2 text-left text-xs">
               {players.map((p) => (
@@ -491,13 +491,13 @@ export function StarTable({ view, busy, error, offset, onAct, onClearError, onLe
                   disabled={busy}
                   className="rounded-full bg-emerald-400 px-5 py-2 font-black text-slate-900"
                 >
-                  Hrať znova s touto partiou
+                  Hrát znovu s touhle partou
                 </button>
               ) : (
-                <p className="w-full text-xs text-white/60">Novú hru môže spustiť ten, kto stôl založil.</p>
+                <p className="w-full text-xs text-white/60">Novou hru může spustit ten, kdo stůl založil.</p>
               )}
               <button type="button" onClick={onBack} className="rounded-full bg-white/10 px-5 py-2 font-bold">
-                Späť do menu
+                Zpět do menu
               </button>
             </div>
           </div>

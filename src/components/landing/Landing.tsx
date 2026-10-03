@@ -29,7 +29,7 @@ const FEATURES = [
   { img: mascotCamera, title: 'Příspěvky a stories', text: 'Sdílej fotky, videa a všechno, co tě zrovna baví.' },
   { img: mascotChat, title: 'Zprávy', text: 'Piš si s kámoši, posílej emoji a vtípky.' },
   { img: mascotFriends, title: 'Skupiny', text: 'Třída, kroužek, parta z fotbalu — každá má svůj koutek.' },
-  { img: mascotGaming, title: 'Hry s partou', text: 'Hviezdna Hliadka, Pevnosť & Nájazd, Kamostavba a další.' },
+  { img: mascotGaming, title: 'Hry s partou', text: 'Hvězdná hlídka, Pevnost a nájezd, Kamostavba a další.' },
   { img: mascotThinking, title: 'AI kamarád Kamoš', text: 'Zeptej se na cokoliv nebo si s ním povídej nahlas.' },
   { img: mascotCelebrate, title: 'Odznaky a avatar', text: 'Poskládej si vlastního avatara a sbírej odznaky.' },
 ];
@@ -37,18 +37,18 @@ const FEATURES = [
 const SAFETY = [
   {
     icon: Lock,
-    title: 'Jen kámoši ze školy',
-    text: 'Kdo není tvůj kamarád, nemůže ti jen tak psát. Jeho první zpráva počká, až ji přijmeš — a nesmí v ní být žádný odkaz.',
+    title: 'Jen opravdoví kámoši',
+    text: 'Kamaráda si přidáš naživo nebo pozvánkou. Nikoho nejde vyhledat a nové členy pouští správce se souhlasem rodiče.',
   },
   {
     icon: ShieldCheck,
     title: 'Robot dává pozor',
-    text: 'Umělá inteligence prochází příspěvky a na ty podezřelé upozorní správce.',
+    text: 'Než zprávu odešleš, AI strážce se zeptá „Opravdu to chceš poslat?" — a zprávu, která by ublížila, nedoručí.',
   },
   {
     icon: Ban,
-    title: 'Otravu zablokuješ',
-    text: 'Kdo tě otravuje, toho jedním klikem zablokuješ.',
+    title: 'Tohle mi není příjemné',
+    text: 'Jedním ťuknutím otravu zablokuješ a tvůj důvěrník se to dozví. V noci Kamosféra spí.',
   },
 ];
 

@@ -530,7 +530,7 @@ const Messages = () => {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Hľadať medzi kamarátmi…"
+                  placeholder="Hledat mezi kamarády…"
                   value={searchQuery}
                   onChange={(e) => {
                     setSearchQuery(e.target.value);
@@ -826,12 +826,12 @@ const Messages = () => {
           </div>
         </div>
       </main>
-      {/* Kurzor ostane v políčku: inak by ten istý Enter, ktorým dieťa správu
+      {/* Kurzor zůstane v políčku: jinak by tentýž Enter, kterým dítě zprávu
           odoslalo, hneď stlačil tlačidlo v okne a otázka by zmizla. */}
       <AlertDialog open={!!guardAsk} onOpenChange={(o) => !o && setGuardAsk(null)}>
         <AlertDialogContent onOpenAutoFocus={(e) => e.preventDefault()}>
           <AlertDialogHeader>
-            <AlertDialogTitle>Naozaj to chceš poslať? 🤔</AlertDialogTitle>
+            <AlertDialogTitle>Opravdu to chceš poslat? 🤔</AlertDialogTitle>
             <AlertDialogDescription asChild>
               <div className="space-y-2">
                 {guardAsk?.reasons.map((r) => <p key={r}>{REASON_TEXT[r]}</p>)}
@@ -847,7 +847,7 @@ const Messages = () => {
                 if (t) void insertMessage(t);
               }}
             >
-              Áno, poslať
+              Ano, poslat
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -856,13 +856,13 @@ const Messages = () => {
       <AlertDialog open={guardHidden} onOpenChange={setGuardHidden}>
         <AlertDialogContent onOpenAutoFocus={(e) => e.preventDefault()}>
           <AlertDialogHeader>
-            <AlertDialogTitle>Táto správa sa nedoručí 💛</AlertDialogTitle>
+            <AlertDialogTitle>Tahle zpráva se nedoručí 💛</AlertDialogTitle>
             <AlertDialogDescription>
-              Mohla by niekomu ublížiť. Skús to napísať inak — tak, ako by si chcel(a), aby písali tebe.
+              Mohla by někomu ublížit. Zkus to napsat jinak — tak, jak bys chtěl(a), aby psali tobě.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogAction>Rozumiem</AlertDialogAction>
+            <AlertDialogAction>Rozumím</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

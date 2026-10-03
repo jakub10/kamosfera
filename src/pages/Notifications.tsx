@@ -195,10 +195,10 @@ const Notifications = () => {
       case 'fortress_raid': {
         const ms = Number(notification.message);
         const time = Number.isFinite(ms) ? ` za ${Math.round(ms / 1000)} s` : '';
-        return `${name} vykradol/a tvoju pevnosť${time}!`;
+        return `${name} vykradl/a tvou pevnost${time}!`;
       }
       case 'hh_invite':
-        return `${name} ťa volá do Hviezdnej Hliadky! Kód stola: ${notification.message ?? ''}`;
+        return `${name} tě zve do Hvězdné hlídky! Kód stolu: ${notification.message ?? ''}`;
       default:
         return notification.message || 'Nové oznámení';
     }

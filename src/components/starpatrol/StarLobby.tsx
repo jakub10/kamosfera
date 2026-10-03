@@ -12,7 +12,7 @@ interface Props {
   onLeave: () => void;
 }
 
-/** Predsieň: kód stola, kto už sedí, pozvánky pre kamarátov, štart. */
+/** Předsíň: kód stolu, kdo už sedí, pozvánky pro kamarády, start. */
 export function StarLobby({ view, uid, busy, error, onStart, onLeave }: Props) {
   const { room, players } = view;
   const isHost = room.host_id === uid;
@@ -34,7 +34,7 @@ export function StarLobby({ view, uid, busy, error, onStart, onLeave }: Props) {
       setCopied(true);
       window.setTimeout(() => setCopied(false), 2000);
     } catch {
-      window.prompt('Skopíruj si odkaz:', link);
+      window.prompt('Zkopíruj si odkaz:', link);
     }
   };
 
@@ -55,7 +55,7 @@ export function StarLobby({ view, uid, busy, error, onStart, onLeave }: Props) {
     <div className="grid gap-4 md:grid-cols-2">
       <section className="space-y-4 rounded-3xl bg-gradient-to-br from-indigo-950 via-slate-900 to-violet-950 p-5 text-white shadow-xl">
         <div className="text-center">
-          <p className="text-xs font-bold uppercase tracking-widest text-white/60">Kód stola</p>
+          <p className="text-xs font-bold uppercase tracking-widest text-white/60">Kód stolu</p>
           <p className="my-1 font-mono text-5xl font-black tracking-[0.25em] text-yellow-300 drop-shadow">{room.code}</p>
           <button
             type="button"
@@ -63,7 +63,7 @@ export function StarLobby({ view, uid, busy, error, onStart, onLeave }: Props) {
             className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-4 py-1.5 text-sm font-semibold hover:bg-white/20"
           >
             {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-            {copied ? 'Skopírované!' : 'Kopírovať odkaz'}
+            {copied ? 'Zkopírováno!' : 'Kopírovat odkaz'}
           </button>
         </div>
 
@@ -80,12 +80,12 @@ export function StarLobby({ view, uid, busy, error, onStart, onLeave }: Props) {
                   <span className="grid h-7 w-7 place-items-center rounded-full bg-white/10">🧑</span>
                 )}
                 <span className="min-w-0 flex-1 truncate text-sm font-semibold">{p.user_id === uid ? 'Ty' : p.name}</span>
-                {p.user_id === room.host_id && <Crown className="h-4 w-4 shrink-0 text-yellow-300" aria-label="hostiteľ" />}
+                {p.user_id === room.host_id && <Crown className="h-4 w-4 shrink-0 text-yellow-300" aria-label="hostitel" />}
               </li>
             ))}
             {Array.from({ length: missing }, (_, i) => (
               <li key={`e${i}`} className="grid place-items-center rounded-xl border border-dashed border-white/20 py-2 text-xs text-white/40">
-                voľné miesto
+                volné místo
               </li>
             ))}
           </ul>
@@ -102,30 +102,30 @@ export function StarLobby({ view, uid, busy, error, onStart, onLeave }: Props) {
               className="inline-flex items-center gap-2 rounded-full bg-emerald-400 px-6 py-2.5 font-black text-slate-900 shadow-lg transition hover:bg-emerald-300 disabled:opacity-50"
             >
               {busy ? <Loader2 className="h-5 w-5 animate-spin" /> : <Rocket className="h-5 w-5" />}
-              {n < MIN_PLAYERS ? `Ešte ${missing} ${missing === 1 ? 'hráč' : 'hráči'}` : 'Štart!'}
+              {n < MIN_PLAYERS ? `Ještě ${missing} ${missing === 1 ? 'hráč' : 'hráči'}` : 'Start!'}
             </button>
           ) : (
-            <p className="text-sm text-white/70">Čakáme, kým hostiteľ spustí hru… 🚀</p>
+            <p className="text-sm text-white/70">Čekáme, až hostitel spustí hru… 🚀</p>
           )}
           <button
             type="button"
             onClick={onLeave}
             className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-4 py-2 text-sm font-semibold hover:bg-white/20"
           >
-            <LogOut className="h-4 w-4" /> Odísť
+            <LogOut className="h-4 w-4" /> Odejít
           </button>
         </div>
       </section>
 
       <section className="rounded-3xl border p-5">
         <p className="mb-3 flex items-center gap-2 font-bold">
-          <UserPlus className="h-5 w-5" /> Pozvi kamarátov
+          <UserPlus className="h-5 w-5" /> Pozvi kamarády
         </p>
         {friends === null ? (
           <Loader2 className="mx-auto h-5 w-5 animate-spin text-muted-foreground" />
         ) : friends.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            Zatiaľ nemáš kamarátov v Kamosfére. Pošli im kód <b>{room.code}</b> alebo odkaz.
+            Zatím nemáš kamarády v Kamosféře. Pošli jim kód <b>{room.code}</b> nebo odkaz.
           </p>
         ) : (
           <ul className="max-h-72 space-y-1.5 overflow-y-auto pr-1">
@@ -141,9 +141,9 @@ export function StarLobby({ view, uid, busy, error, onStart, onLeave }: Props) {
                   )}
                   <span className="min-w-0 flex-1 truncate text-sm font-semibold">{f.username}</span>
                   {here ? (
-                    <span className="text-xs font-semibold text-emerald-600">pri stole ✓</span>
+                    <span className="text-xs font-semibold text-emerald-600">u stolu ✓</span>
                   ) : st === 'sent' ? (
-                    <span className="text-xs font-semibold text-emerald-600">pozvaný ✓</span>
+                    <span className="text-xs font-semibold text-emerald-600">pozván ✓</span>
                   ) : (
                     <button
                       type="button"
@@ -154,7 +154,7 @@ export function StarLobby({ view, uid, busy, error, onStart, onLeave }: Props) {
                         st === 'sending' && 'opacity-60'
                       )}
                     >
-                      Pozvať
+                      Pozvat
                     </button>
                   )}
                   {st && st !== 'sent' && st !== 'sending' && <span className="text-[10px] text-red-600">{st}</span>}

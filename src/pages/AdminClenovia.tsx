@@ -6,7 +6,7 @@ import { useSafety } from '@/components/safety/SafetyGate';
 import { cn } from '@/lib/utils';
 
 const fmt = (iso: string) =>
-  new Intl.DateTimeFormat('sk-SK', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Europe/Prague' }).format(new Date(iso));
+  new Intl.DateTimeFormat('cs-CZ', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Europe/Prague' }).format(new Date(iso));
 
 /**
  * Správca (rola creator) púšťa nové deti dnu. Kým je Kamosféra malý okruh
@@ -35,7 +35,7 @@ const AdminClenovia = () => {
   }, [status?.is_admin, load]);
 
   const set = async (m: AdminMember, approved: boolean) => {
-    if (!approved && !window.confirm(`Naozaj zamknúť ${m.username}? Neuvidí nič, kým ho znova nepustíš.`)) return;
+    if (!approved && !window.confirm(`Opravdu zamknout ${m.username}? Neuvidí nic, dokud ho znovu nepustíš.`)) return;
     setBusy(m.user_id);
     try {
       await adminSetApproval(m.user_id, approved);
@@ -51,7 +51,7 @@ const AdminClenovia = () => {
     return (
       <div className="grid min-h-screen place-items-center p-6 text-center">
         <p>
-          Táto stránka je len pre správcu. <Link to="/" className="font-semibold text-primary underline">Domov</Link>
+          Tahle stránka je jen pro správce. <Link to="/" className="font-semibold text-primary underline">Domov</Link>
         </p>
       </div>
     );
@@ -72,12 +72,12 @@ const AdminClenovia = () => {
           účet od {fmt(m.created_at)} ·{' '}
           {m.consent_at ? (
             <span className="text-emerald-600">
-              súhlas ✓ {m.consent_name ? `(${m.consent_name})` : ''} {fmt(m.consent_at)}
+              souhlas ✓ {m.consent_name ? `(${m.consent_name})` : ''} {fmt(m.consent_at)}
             </span>
           ) : (
-            <span className="text-amber-600">čaká na súhlas dospelého</span>
+            <span className="text-amber-600">čeká na souhlas dospělého</span>
           )}{' '}
-          · {m.guardian ? 'dôverník ✓' : 'bez dôverníka'}
+          · {m.guardian ? 'důvěrník ✓' : 'bez důvěrníka'}
           {m.invited_by && <span className="font-semibold text-violet-600"> · pozval(a) @{m.invited_by}</span>}
         </p>
       </div>
@@ -88,17 +88,17 @@ const AdminClenovia = () => {
           disabled={busy === m.user_id}
           className="inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-semibold text-red-600"
         >
-          <X className="h-3.5 w-3.5" /> Zamknúť
+          <X className="h-3.5 w-3.5" /> Zamknout
         </button>
       ) : (
         <button
           type="button"
           onClick={() => void set(m, true)}
           disabled={!m.consent_at || busy === m.user_id}
-          title={m.consent_at ? '' : 'Najprv musí dospelý potvrdiť súhlas'}
+          title={m.consent_at ? '' : 'Nejdřív musí dospělý potvrdit souhlas'}
           className="inline-flex items-center gap-1 rounded-full bg-emerald-500 px-4 py-1.5 text-sm font-bold text-white disabled:opacity-40"
         >
-          {busy === m.user_id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />} Pustiť dnu
+          {busy === m.user_id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />} Pustit dovnitř
         </button>
       )}
     </li>
@@ -110,11 +110,11 @@ const AdminClenovia = () => {
         <header className="flex items-center gap-3">
           <ShieldCheck className="h-8 w-8 text-emerald-600" />
           <div className="flex-1">
-            <h1 className="text-2xl font-black">Členovia</h1>
-            <p className="text-sm text-muted-foreground">Nových pusti dnu, až keď poznáš rodinu a dospelý dal súhlas.</p>
+            <h1 className="text-2xl font-black">Členové</h1>
+            <p className="text-sm text-muted-foreground">Nové pusť dovnitř, až když znáš rodinu a dospělý dal souhlas.</p>
           </div>
           <Link to="/" className="text-sm font-semibold text-primary underline">
-            Späť
+            Zpět
           </Link>
         </header>
         {error && <p className="rounded-xl bg-red-50 px-4 py-2 text-sm font-semibold text-red-700">{error}</p>}
@@ -122,16 +122,16 @@ const AdminClenovia = () => {
           <section className="rounded-2xl border p-4">
             <div className="flex flex-wrap items-center gap-3">
               <div className="min-w-0 flex-1">
-                <h2 className="font-bold">🤖 AI strážca správ {guard.enabled ? '— zapnutý' : '— vypnutý'}</h2>
+                <h2 className="font-bold">🤖 AI strážce zpráv {guard.enabled ? '— zapnutý' : '— vypnutý'}</h2>
                 <p className="text-xs text-muted-foreground">
-                  Zapni ho, až keď je v Supabase nahraná funkcia <code>message-guard</code> a v Secrets je{' '}
-                  <code>LIQUID_API_KEY</code>. Zapnutý strážca nepustí správu, ktorú nevidel.
+                  Zapni ho, až když je v Supabase nahraná funkce <code>message-guard</code> a v Secrets je{' '}
+                  <code>LIQUID_API_KEY</code>. Zapnutý strážce nepustí zprávu, kterou neviděl.
                 </p>
               </div>
               <button
                 type="button"
                 onClick={async () => {
-                  if (!window.confirm(guard.enabled ? 'Vypnúť strážcu správ?' : 'Zapnúť strážcu správ? Funkcia message-guard musí byť nahraná.')) return;
+                  if (!window.confirm(guard.enabled ? 'Vypnout strážce zpráv?' : 'Zapnout strážce zpráv? Funkce message-guard musí být nahraná.')) return;
                   try {
                     await adminSetMessageGuard(!guard.enabled);
                     await load();
@@ -144,13 +144,13 @@ const AdminClenovia = () => {
                   guard.enabled ? 'border text-red-600' : 'bg-emerald-500 text-white'
                 )}
               >
-                {guard.enabled ? 'Vypnúť' : 'Zapnúť'}
+                {guard.enabled ? 'Vypnout' : 'Zapnout'}
               </button>
             </div>
             <p className="mt-2 text-xs text-muted-foreground">
-              Za 24 hodín: skontrolované {guard.checked_24h} · opýtal sa {guard.confirm_24h} · nedoručil {guard.hidden_24h}
+              Za 24 hodin: zkontrolováno {guard.checked_24h} · zeptal se {guard.confirm_24h}× · nedoručil {guard.hidden_24h}
               {guard.unchecked_24h > 0 && (
-                <span className="font-semibold text-amber-600"> · bez kontroly {guard.unchecked_24h} (Liquid AI neodpovedalo alebo chýba kľúč)</span>
+                <span className="font-semibold text-amber-600"> · bez kontroly {guard.unchecked_24h} (Liquid AI neodpovědělo nebo chybí klíč)</span>
               )}
             </p>
           </section>
@@ -160,15 +160,15 @@ const AdminClenovia = () => {
         ) : (
           <>
             <section>
-              <h2 className="mb-2 font-bold">Čakajú na vstup ({waiting.length})</h2>
-              {waiting.length ? <ul className="space-y-2">{waiting.map((m) => <Row key={m.user_id} m={m} />)}</ul> : <p className="text-sm text-muted-foreground">Nikto nečaká.</p>}
+              <h2 className="mb-2 font-bold">Čekají na vstup ({waiting.length})</h2>
+              {waiting.length ? <ul className="space-y-2">{waiting.map((m) => <Row key={m.user_id} m={m} />)}</ul> : <p className="text-sm text-muted-foreground">Nikdo nečeká.</p>}
             </section>
             <section>
-              <h2 className="mb-2 font-bold">Schválení, ale ešte bez súhlasu rodiča ({noConsent.length})</h2>
-              {noConsent.length ? <ul className="space-y-2">{noConsent.map((m) => <Row key={m.user_id} m={m} />)}</ul> : <p className="text-sm text-muted-foreground">Všetci majú súhlas. 🎉</p>}
+              <h2 className="mb-2 font-bold">Schválení, ale ještě bez souhlasu rodiče ({noConsent.length})</h2>
+              {noConsent.length ? <ul className="space-y-2">{noConsent.map((m) => <Row key={m.user_id} m={m} />)}</ul> : <p className="text-sm text-muted-foreground">Všichni mají souhlas. 🎉</p>}
             </section>
             <section className={cn(!ok.length && 'hidden')}>
-              <h2 className="mb-2 font-bold">V Kamosfére ({ok.length})</h2>
+              <h2 className="mb-2 font-bold">V Kamosféře ({ok.length})</h2>
               <ul className="space-y-2">{ok.map((m) => <Row key={m.user_id} m={m} />)}</ul>
             </section>
           </>

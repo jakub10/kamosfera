@@ -80,10 +80,10 @@ export function SafetyGate({ children }: { children: ReactNode }) {
   if (!status) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-background p-6 text-center">
-        <p className="font-semibold">Nepodarilo sa načítať Kamosféru.</p>
+        <p className="font-semibold">Kamosféru se nepodařilo načíst.</p>
         <p className="text-sm text-muted-foreground">{failed}</p>
         <button type="button" onClick={() => void refresh()} className="rounded-full bg-primary px-5 py-2 font-bold text-primary-foreground">
-          Skúsiť znova
+          Zkusit znovu
         </button>
       </div>
     );
