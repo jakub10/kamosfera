@@ -15,11 +15,11 @@ import {
 import { useStarRoom } from '@/games/starpatrol/useStarRoom';
 
 /**
- * Hviezdna Hliadka — kartová hra so skrytými rolami pre 4–7 kamarátov.
+ * Hvězdná hlídka — karetní hra se skrytými rolemi pro 4–7 kamarádů.
  *
- * Stôl sa volá kódom z URL (`/hliadka?kod=ABCDE`), takže odkaz sa dá poslať
- * kamarátovi a po výpadku internetu stačí stránku obnoviť — hráč sa vráti
- * na svoje miesto.
+ * Stůl se volá kódem z URL (`/hliadka?kod=ABCDE`), takže odkaz se dá poslat
+ * kamarádovi a po výpadku internetu stačí stránku obnovit — hráč se vrátí
+ * na své místo.
  */
 
 interface Profile {
@@ -57,7 +57,7 @@ const Hliadka = () => {
     setParams(params, { replace: true });
   }, [params, setParams]);
 
-  // Kód v URL → sadnúť si k stolu (alebo sa k nemu vrátiť).
+  // Kód v URL → sednout si ke stolu (nebo se k němu vrátit).
   useEffect(() => {
     if (!user || !code) {
       setRoomId(null);
@@ -79,7 +79,7 @@ const Hliadka = () => {
     };
   }, [user, code]);
 
-  // Stôl zmizol (všetci z predsiene odišli) → späť na úvod.
+  // Stůl zmizel (všichni z předsíně odešli) → zpět na úvod.
   useEffect(() => {
     if (roomId && error && /neexistuje|nesedíš/.test(error)) {
       setJoinError(error);
@@ -113,7 +113,7 @@ const Hliadka = () => {
     e.preventDefault();
     const c = typed.trim().toUpperCase();
     if (c.length === 5) open(c);
-    else setJoinError('Kód má 5 znakov.');
+    else setJoinError('Kód má 5 znaků.');
   };
 
   const run = async (fn: () => Promise<unknown>) => {
@@ -139,15 +139,15 @@ const Hliadka = () => {
               🌌
             </div>
             <div className="min-w-0 flex-1">
-              <h1 className="text-2xl font-black">Hviezdna Hliadka</h1>
-              <p className="text-muted-foreground">Kartová hra so skrytými rolami pre 4–7 kamarátov.</p>
+              <h1 className="text-2xl font-black">Hvězdná hlídka</h1>
+              <p className="text-muted-foreground">Karetní hra se skrytými rolemi pro 4–7 kamarádů.</p>
             </div>
             <button
               type="button"
               onClick={() => setShowRules((s) => !s)}
               className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-semibold hover:bg-muted"
             >
-              <BookOpen className="h-4 w-4" /> Pravidlá
+              <BookOpen className="h-4 w-4" /> Pravidla
             </button>
           </header>
 
@@ -163,9 +163,9 @@ const Hliadka = () => {
             </div>
           ) : !user ? (
             <div className="rounded-2xl border p-8 text-center">
-              <p className="mb-3">Na hranie sa treba prihlásiť.</p>
+              <p className="mb-3">Na hraní se musíš přihlásit.</p>
               <Link to="/" className="font-semibold text-primary underline">
-                Prihlásiť sa
+                Přihlásit se
               </Link>
             </div>
           ) : code && (joining || (roomId && !view)) ? (
@@ -191,34 +191,34 @@ const Hliadka = () => {
               <div className="grid gap-4 md:grid-cols-2">
                 <section className="flex flex-col items-center justify-center gap-3 rounded-3xl bg-gradient-to-br from-indigo-950 via-slate-900 to-violet-950 p-6 text-center text-white shadow-xl">
                   <p className="text-5xl">🚀</p>
-                  <p className="text-lg font-black">Založ novú loď</p>
-                  <p className="text-sm text-white/70">Dostaneš kód, pošleš ho kamarátom a keď vás je 4 až 7, štart!</p>
+                  <p className="text-lg font-black">Založ novou loď</p>
+                  <p className="text-sm text-white/70">Dostaneš kód, pošleš ho kamarádům a až vás bude 4 až 7, start!</p>
                   <button
                     type="button"
                     onClick={() => void create()}
                     disabled={joining}
                     className="inline-flex items-center gap-2 rounded-full bg-yellow-300 px-6 py-2.5 font-black text-slate-900 shadow-lg hover:bg-yellow-200 disabled:opacity-60"
                   >
-                    <Plus className="h-5 w-5" /> Založiť stôl
+                    <Plus className="h-5 w-5" /> Založit stůl
                   </button>
                 </section>
 
                 <section className="space-y-4 rounded-3xl border p-6">
                   <form onSubmit={submitCode} className="space-y-2">
-                    <p className="font-bold">Mám kód od kamaráta</p>
+                    <p className="font-bold">Mám kód od kamaráda</p>
                     <div className="flex gap-2">
                       <input
                         value={typed}
                         onChange={(e) => setTyped(e.target.value.toUpperCase().slice(0, 5))}
                         placeholder="ABCDE"
-                        aria-label="Kód stola"
+                        aria-label="Kód stolu"
                         className="min-w-0 flex-1 rounded-xl border bg-background px-3 py-2 text-center font-mono text-xl font-black tracking-[0.3em] uppercase"
                       />
                       <button
                         type="submit"
                         className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 font-bold text-primary-foreground"
                       >
-                        <LogIn className="h-4 w-4" /> Pridať sa
+                        <LogIn className="h-4 w-4" /> Přidat se
                       </button>
                     </div>
                   </form>
@@ -237,11 +237,11 @@ const Hliadka = () => {
                               <Rocket className="h-4 w-4 text-indigo-500" />
                               <span className="font-mono font-bold">{r.code}</span>
                               <span className="text-muted-foreground">
-                                {r.status === 'lobby' ? 'čaká sa' : 'hrá sa'} · {r.players} hráčov
+                                {r.status === 'lobby' ? 'čeká se' : 'hraje se'} · {r.players} hráčů
                               </span>
                               {r.my_turn && (
                                 <span className="ml-auto rounded-full bg-emerald-500 px-2 py-0.5 text-xs font-bold text-white">
-                                  si na ťahu!
+                                  jsi na tahu!
                                 </span>
                               )}
                             </button>

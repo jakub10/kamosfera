@@ -18,18 +18,18 @@ interface ToolDef {
 }
 
 const TOOLS: ToolDef[] = [
-  { tile: '#', name: 'Stena', hint: 'Nedá sa prejsť ani rozbiť.' },
-  { tile: 'b', name: 'Krehká stena', hint: 'Padne na dva údery.' },
-  { tile: 'D', name: 'Dvere', hint: 'Otvorí ich kľúč.' },
-  { tile: 'k', name: 'Kľúč', hint: 'Jeden kľúč = jedny dvere.' },
-  { tile: '^', name: 'Bodce', hint: 'Uberú 3 sekundy.' },
-  { tile: 'S', name: 'Píla ↔', hint: 'Hliadkuje vľavo-vpravo, uberie 5 s.' },
-  { tile: 'V', name: 'Píla ↕', hint: 'Hliadkuje hore-dole, uberie 5 s.' },
-  { tile: 'o', name: 'Falošná podlaha', hint: 'Nájazdník ju nevidí. Spadne späť k vchodu.' },
-  { tile: 'T', name: 'Teleport', hint: 'Vždy dva — prenesie z jedného na druhý.' },
-  { tile: 'E', name: 'Vchod', hint: 'Tu nájazd začína aj končí.' },
-  { tile: '$', name: 'Poklad', hint: 'To, o čo ide.' },
-  { tile: '.', name: 'Guma', hint: 'Vráti podlahu.' },
+  { tile: '#', name: 'Zeď', hint: 'Nedá se projít ani rozbít.' },
+  { tile: 'b', name: 'Křehká zeď', hint: 'Padne na dva údery.' },
+  { tile: 'D', name: 'Dveře', hint: 'Otevře je klíč.' },
+  { tile: 'k', name: 'Klíč', hint: 'Jeden klíč = jedny dveře.' },
+  { tile: '^', name: 'Bodce', hint: 'Uberou 3 sekundy.' },
+  { tile: 'S', name: 'Pila ↔', hint: 'Hlídkuje vlevo-vpravo, ubere 5 s.' },
+  { tile: 'V', name: 'Pila ↕', hint: 'Hlídkuje nahoru-dolů, ubere 5 s.' },
+  { tile: 'o', name: 'Falešná podlaha', hint: 'Nájezdník ji nevidí. Spadne zpět ke vchodu.' },
+  { tile: 'T', name: 'Teleport', hint: 'Vždy dva — přenese z jednoho na druhý.' },
+  { tile: 'E', name: 'Vchod', hint: 'Tady nájezd začíná i končí.' },
+  { tile: '$', name: 'Poklad', hint: 'To, o co jde.' },
+  { tile: '.', name: 'Guma', hint: 'Vrátí podlahu.' },
 ];
 
 const draftKey = (uid: string) => `pevnost-rozpracovana-${uid}`;
@@ -139,7 +139,7 @@ export function FortressEditor({ uid }: { uid: string }) {
         const arr = prev.split('');
         // Vchod a poklad sa len presúvajú — vždy musia existovať.
         if ((cur === 'E' || cur === '$') && tool !== 'E' && tool !== '$') {
-          if (first) toast({ title: cur === 'E' ? 'Vchod sa dá len presunúť' : 'Poklad sa dá len presunúť' });
+          if (first) toast({ title: cur === 'E' ? 'Vchod se dá jen přesunout' : 'Poklad se dá jen přesunout' });
           return prev;
         }
         if (tool === 'E' || tool === '$') {
@@ -150,13 +150,13 @@ export function FortressEditor({ uid }: { uid: string }) {
           return arr.join('');
         }
         if (tool === 'T' && cur !== 'T' && prev.split('T').length - 1 >= 2) {
-          if (first) toast({ title: 'Teleporty môžu byť len dva' });
+          if (first) toast({ title: 'Teleporty můžou být jen dva' });
           return prev;
         }
         arr[i] = tool;
         const next = arr.join('');
         if (gridCost(next) > BUDGET) {
-          if (first) toast({ title: 'Došiel rozpočet', description: `Na stavbu je ${BUDGET} bodov. Niečo zbúraj.` });
+          if (first) toast({ title: 'Došel rozpočet', description: `Na stavbu je ${BUDGET} bodů. Něco zbourej.` });
           return prev;
         }
         return next;
@@ -171,10 +171,10 @@ export function FortressEditor({ uid }: { uid: string }) {
     try {
       await saveFortress(uid, cells, tested.replay);
       await reload();
-      toast({ title: 'Pevnosť je zverejnená! 🏰', description: 'Kamaráti ju teraz môžu vykrádať.' });
+      toast({ title: 'Pevnost je zveřejněná! 🏰', description: 'Kamarádi ji teď můžou vykrádat.' });
     } catch (e) {
       console.error('[pevnosť] zverejnenie zlyhalo:', e);
-      toast({ title: 'Nepodarilo sa zverejniť', description: String((e as Error).message ?? e), variant: 'destructive' });
+      toast({ title: 'Nepodařilo se zveřejnit', description: String((e as Error).message ?? e), variant: 'destructive' });
     } finally {
       setBusy(false);
     }
@@ -185,10 +185,10 @@ export function FortressEditor({ uid }: { uid: string }) {
     try {
       await saveFortress(uid, cells, null);
       await reload();
-      toast({ title: 'Uložené', description: 'Kým ju neotestuješ a nezverejníš, kamaráti ju nevidia.' });
+      toast({ title: 'Uloženo', description: 'Dokud ji neotestuješ a nezveřejníš, kamarádi ji nevidí.' });
     } catch (e) {
       console.error('[pevnosť] uloženie zlyhalo:', e);
-      toast({ title: 'Nepodarilo sa uložiť', description: String((e as Error).message ?? e), variant: 'destructive' });
+      toast({ title: 'Nepodařilo se uložit', description: String((e as Error).message ?? e), variant: 'destructive' });
     } finally {
       setBusy(false);
     }
@@ -287,7 +287,7 @@ export function FortressEditor({ uid }: { uid: string }) {
               onClick={() => setTesting(true)}
               className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 font-semibold text-white shadow hover:bg-blue-500 disabled:opacity-40"
             >
-              <FlaskConical className="h-4 w-4" /> Otestovať
+              <FlaskConical className="h-4 w-4" /> Otestovat
             </button>
             <button
               type="button"
@@ -295,7 +295,7 @@ export function FortressEditor({ uid }: { uid: string }) {
               onClick={publish}
               className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2 font-semibold text-white shadow hover:bg-emerald-500 disabled:opacity-40"
             >
-              {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Castle className="h-4 w-4" />} Zverejniť
+              {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Castle className="h-4 w-4" />} Zveřejnit
             </button>
             <button
               type="button"
@@ -303,7 +303,7 @@ export function FortressEditor({ uid }: { uid: string }) {
               onClick={saveDraft}
               className="inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-semibold hover:bg-muted disabled:opacity-40"
             >
-              <Save className="h-4 w-4" /> Uložiť rozpracovanú
+              <Save className="h-4 w-4" /> Uložit rozpracovanou
             </button>
           </div>
 
@@ -313,14 +313,14 @@ export function FortressEditor({ uid }: { uid: string }) {
               onClick={() => setCells(STARTER_CELLS)}
               className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-muted-foreground hover:bg-muted hover:text-foreground"
             >
-              <Sparkles className="h-4 w-4" /> Štartovacia pevnosť
+              <Sparkles className="h-4 w-4" /> Startovní pevnost
             </button>
             <button
               type="button"
               onClick={() => setCells(emptyCells())}
               className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-muted-foreground hover:bg-muted hover:text-foreground"
             >
-              <Trash2 className="h-4 w-4" /> Začať odznova
+              <Trash2 className="h-4 w-4" /> Začít znovu
             </button>
           </div>
         </div>
@@ -345,7 +345,7 @@ export function FortressEditor({ uid }: { uid: string }) {
                 }}
                 className="inline-flex items-center gap-1 rounded-xl bg-emerald-600 px-4 py-2 font-semibold text-white hover:bg-emerald-500"
               >
-                <Castle className="h-4 w-4" /> Zverejniť
+                <Castle className="h-4 w-4" /> Zveřejnit
               </button>
             ) : null
           }
@@ -359,19 +359,19 @@ function StatusBanner({
   live, dirty, saved, testedNow, published,
 }: { live: boolean; dirty: boolean; saved: boolean; testedNow: boolean; published: boolean }) {
   let tone = 'bg-muted text-foreground';
-  let text = 'Postav pevnosť a schovaj poklad. Pred zverejnením ju treba raz prejsť vlastnými silami — aby sa nedala postaviť nemožná.';
+  let text = 'Postav pevnost a schovej poklad. Před zveřejněním ji musíš jednou projít vlastními silami — aby se nedala postavit nemožná.';
   if (live) {
     tone = 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300';
-    text = 'Pevnosť je zverejnená ✓ Kamaráti ju môžu vykrádať.';
+    text = 'Pevnost je zveřejněná ✓ Kamarádi ji můžou vykrádat.';
   } else if (testedNow) {
     tone = 'bg-blue-500/10 text-blue-700 dark:text-blue-300';
-    text = 'Otestovaná ✓ Môžeš ju zverejniť.';
+    text = 'Otestovaná ✓ Můžeš ji zveřejnit.';
   } else if (published && dirty) {
     tone = 'bg-orange-500/10 text-orange-700 dark:text-orange-300';
-    text = 'Zverejnená pevnosť sa zmenila. Otestuj ju a zverejni znova — uloženie zmien ju dovtedy stiahne.';
+    text = 'Zveřejněná pevnost se změnila. Otestuj ji a zveřejni znovu — uložení změn ji do té doby stáhne.';
   } else if (saved && !published) {
     tone = 'bg-muted text-foreground';
-    text = 'Rozpracovaná — kamaráti ju zatiaľ nevidia. Otestuj ju a zverejni.';
+    text = 'Rozpracovaná — kamarádi ji zatím nevidí. Otestuj ji a zveřejni.';
   }
   return <div className={cn('rounded-xl px-4 py-3 text-sm font-medium', tone)}>{text}</div>;
 }

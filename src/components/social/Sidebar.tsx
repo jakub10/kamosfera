@@ -25,7 +25,7 @@ export function Sidebar({ currentProfile }: SidebarProps) {
 
   const navItems = [
     { icon: Home, label: t('nav.home'), path: '/', badge: 0 },
-    { icon: Handshake, label: 'Kamaráti', path: '/kamarati', badge: 0 },
+    { icon: Handshake, label: 'Kamarádi', path: '/kamarati', badge: 0 },
     { icon: Bell, label: t('nav.notifications'), path: '/notifications', badge: unreadNotifications },
     { icon: MessageCircle, label: t('nav.messages'), path: '/messages', badge: unreadMessages },
     { icon: Users, label: t('nav.groups'), path: '/groups', badge: 0 },
@@ -34,7 +34,7 @@ export function Sidebar({ currentProfile }: SidebarProps) {
     { icon: Bookmark, label: t('nav.saved'), path: '/saved', badge: 0 },
     { icon: User, label: t('nav.profile'), path: '/profile', badge: 0 },
     { icon: Settings, label: t('nav.settings'), path: '/settings', badge: 0 },
-    ...(safety?.is_admin ? [{ icon: ShieldCheck, label: 'Členovia', path: '/admin/clenovia', badge: 0 }] : []),
+    ...(safety?.is_admin ? [{ icon: ShieldCheck, label: 'Členové', path: '/admin/clenovia', badge: 0 }] : []),
   ];
 
   return (

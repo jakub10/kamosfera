@@ -24,7 +24,7 @@ export function QrCode({ value, size = 220, className }: { value: string; size?:
       {src ? (
         <img src={src} alt="QR kód" width={size} height={size} className="[image-rendering:pixelated]" />
       ) : (
-        <span className="text-xs text-slate-400">QR kód sa načítava…</span>
+        <span className="text-xs text-slate-400">QR kód se načítá…</span>
       )}
     </div>
   );

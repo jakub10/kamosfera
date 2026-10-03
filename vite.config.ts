@@ -4,7 +4,7 @@ import path from "path";
 import { componentTagger } from "lovable-tagger";
 
 // https://vitejs.dev/config/
-export default defineConfig(({ mode }) => ({
+export default defineConfig(({ mode, isSsrBuild }) => ({
   server: {
     host: "::",
     port: 8080,
@@ -21,7 +21,8 @@ export default defineConfig(({ mode }) => ({
   build: {
     target: "es2020",
     cssCodeSplit: true,
-    rollupOptions: {
+    // Předrenderování úvodní stránky (vite build --ssr) dělení na části nepotřebuje.
+    rollupOptions: isSsrBuild ? {} : {
       output: {
         manualChunks: {
           react: ["react", "react-dom", "react-router-dom"],

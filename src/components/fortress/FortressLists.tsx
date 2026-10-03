@@ -58,7 +58,7 @@ export function FortressBrowse({ onRaid }: { onRaid: (t: RaidTarget) => void }) 
 
   if (!rows) return <Loading />;
   if (!rows.length)
-    return <Empty>Zatiaľ tu nie je žiadna zverejnená pevnosť. Postav svoju a pošli kamarátom!</Empty>;
+    return <Empty>Zatím tu není žádná zveřejněná pevnost. Postav svou a pošli ji kamarádům!</Empty>;
 
   return (
     <div className="grid gap-3 sm:grid-cols-2">
@@ -73,12 +73,12 @@ export function FortressBrowse({ onRaid }: { onRaid: (t: RaidTarget) => void }) 
                 <span className="truncate font-semibold">{f.full_name}</span>
                 {f.is_friend && (
                   <span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary">
-                    <Users className="mr-0.5 inline h-3 w-3" />kamarát
+                    <Users className="mr-0.5 inline h-3 w-3" />kamarád
                   </span>
                 )}
               </div>
               <p className="mt-1 text-xs text-muted-foreground">
-                {f.raids ? `${f.raids}× vykrádaná · padla v ${successRate(f.raids, f.successes)} %` : 'Ešte ju nikto nevykrádal'}
+                {f.raids ? `${f.raids}× vykrádaná · padla v ${successRate(f.raids, f.successes)} %` : 'Ještě ji nikdo nevykrádal'}
               </p>
               {f.my_best_ms != null && (
                 <p className="text-xs font-medium text-emerald-600">Tvoj rekord: {formatTime(f.my_best_ms)}</p>
@@ -88,7 +88,7 @@ export function FortressBrowse({ onRaid }: { onRaid: (t: RaidTarget) => void }) 
                 onClick={() => onRaid({ id: f.id, cells: grid.cells, ownerName: f.full_name })}
                 className="mt-auto inline-flex w-fit items-center gap-1 rounded-xl bg-orange-500 px-3 py-1.5 text-sm font-bold text-white hover:bg-orange-400"
               >
-                <Swords className="h-4 w-4" /> Vykradnúť
+                <Swords className="h-4 w-4" /> Vykrást
               </button>
             </div>
           </div>
@@ -117,7 +117,7 @@ function RaidLine({
         </p>
         <p className="text-xs text-muted-foreground">
           <span className={cn('font-bold', raid.success ? 'text-emerald-600' : 'text-red-500')}>
-            {raid.success ? `vykradnuté za ${formatTime(raid.time_ms)}` : 'nestihol/a'}
+            {raid.success ? `vykradeno za ${formatTime(raid.time_ms)}` : 'nestihl/a'}
           </span>
           {' · '}
           {raid.trap_hits} × pasca · {ago(raid.created_at)}
@@ -128,7 +128,7 @@ function RaidLine({
         onClick={onPlay}
         className="inline-flex shrink-0 items-center gap-1 rounded-lg bg-muted px-3 py-1.5 text-sm font-semibold hover:bg-muted/70"
       >
-        <Play className="h-4 w-4" /> Prehrať
+        <Play className="h-4 w-4" /> Přehrát
       </button>
     </div>
   );
@@ -170,22 +170,22 @@ export function FortressRecords({ uid, onReplay }: { uid: string; onReplay: (t: 
   return (
     <div className="space-y-6">
       <section className="space-y-2">
-        <h3 className="font-bold">Nájazdy na tvoju pevnosť</h3>
+        <h3 className="font-bold">Nájezdy na tvou pevnost</h3>
         {onMine.length ? (
           onMine.map((r) => (
             <RaidLine
               key={r.id}
               who={people[r.raider_id]}
               raid={r}
-              onPlay={() => onReplay({ raid: r, title: `${people[r.raider_id]?.full_name ?? 'Niekto'} útočí na tvoju pevnosť` })}
+              onPlay={() => onReplay({ raid: r, title: `${people[r.raider_id]?.full_name ?? 'Někdo'} útočí na tvou pevnost` })}
             />
           ))
         ) : (
-          <Empty>Zatiaľ nikto. Keď ťa niekto vykradne, uvidíš tu celý jeho nájazd — a kde sa zasekol.</Empty>
+          <Empty>Zatím nikdo. Když tě někdo vykrade, uvidíš tu celý jeho nájezd — a kde se zasekl.</Empty>
         )}
       </section>
       <section className="space-y-2">
-        <h3 className="font-bold">Tvoje nájazdy</h3>
+        <h3 className="font-bold">Tvoje nájezdy</h3>
         {mine.length ? (
           mine.map((r) => {
             const owner = people[owners[r.fortress_id]];
@@ -193,14 +193,14 @@ export function FortressRecords({ uid, onReplay }: { uid: string; onReplay: (t: 
               <RaidLine
                 key={r.id}
                 who={owner}
-                extra={owner ? '— pevnosť' : '(pevnosť je stiahnutá)'}
+                extra={owner ? '— pevnost' : '(pevnost je stažená)'}
                 raid={r}
-                onPlay={() => onReplay({ raid: r, title: `Tvoj nájazd na pevnosť ${owner?.full_name ?? ''}`.trim() })}
+                onPlay={() => onReplay({ raid: r, title: `Tvůj nájezd na pevnost ${owner?.full_name ?? ''}`.trim() })}
               />
             );
           })
         ) : (
-          <Empty>Zatiaľ žiadny nájazd. Pozri sa do záložky Vykradnúť.</Empty>
+          <Empty>Zatím žádný nájezd. Mrkni do záložky Vykrást.</Empty>
         )}
       </section>
     </div>
@@ -226,8 +226,7 @@ export function FortressLeaderboard() {
   return (
     <div className="space-y-3">
       <p className="text-sm text-muted-foreground">
-        Najtvrdšie pevnosti — tie, ktoré padajú najmenej. Do rebríčka sa dostane pevnosť, ktorú niekto vykrádal aspoň
-        päťkrát.
+        Nejtvrdší pevnosti — ty, které padají nejméně. Do žebříčku se dostane pevnost, kterou někdo vykrádal aspoň pětkrát.
       </p>
       {rows.length ? (
         rows.map((r, i) => (
@@ -244,14 +243,14 @@ export function FortressLeaderboard() {
             <div className="min-w-0 flex-1">
               <p className="truncate font-semibold">{r.full_name}</p>
               <p className="text-xs text-muted-foreground">
-                {r.raids} nájazdov · padla v {successRate(r.raids, r.successes)} %
+                {r.raids} nájezdů · padla v {successRate(r.raids, r.successes)} %
               </p>
             </div>
             {i === 0 && <Trophy className="h-5 w-5 text-amber-500" />}
           </div>
         ))
       ) : (
-        <Empty>Rebríček je zatiaľ prázdny. Keď pevnosť vydrží aspoň päť nájazdov, objaví sa tu.</Empty>
+        <Empty>Žebříček je zatím prázdný. Když pevnost vydrží aspoň pět nájezdů, objeví se tu.</Empty>
       )}
     </div>
   );

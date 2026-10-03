@@ -39,8 +39,8 @@ export function FortressCard({ ownerId, isOwn }: { ownerId: string; isOwn: boole
           <Castle className="h-6 w-6" />
         </div>
         <div>
-          <p className="font-semibold">Postav si pevnosť</p>
-          <p className="text-sm text-muted-foreground">Schovaj poklad a nechaj kamarátov, nech ho skúsia vykradnúť.</p>
+          <p className="font-semibold">Postav si pevnost</p>
+          <p className="text-sm text-muted-foreground">Schovej poklad a nech kamarády, ať ho zkusí vykrást.</p>
         </div>
       </Link>
     );
@@ -55,7 +55,7 @@ export function FortressCard({ ownerId, isOwn }: { ownerId: string; isOwn: boole
       <div className="flex min-w-0 flex-1 flex-col gap-2">
         <div className="flex items-center gap-2">
           <Castle className="h-5 w-5 text-slate-600" />
-          <h3 className="font-bold">Pevnosť</h3>
+          <h3 className="font-bold">Pevnost</h3>
           {isOwn && !row.published && (
             <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium">rozpracovaná</span>
           )}
@@ -63,11 +63,11 @@ export function FortressCard({ ownerId, isOwn }: { ownerId: string; isOwn: boole
         <div className="flex gap-6">
           <div>
             <p className="text-2xl font-black tabular-nums">{row.raids}</p>
-            <p className="text-xs text-muted-foreground">nájazdov</p>
+            <p className="text-xs text-muted-foreground">nájezdů</p>
           </div>
           <div>
             <p className="text-2xl font-black tabular-nums">{row.raids ? `${100 - rate} %` : '—'}</p>
-            <p className="text-xs text-muted-foreground">odrazených</p>
+            <p className="text-xs text-muted-foreground">odražených</p>
           </div>
         </div>
         <div className="mt-auto flex flex-wrap gap-2">
@@ -77,7 +77,7 @@ export function FortressCard({ ownerId, isOwn }: { ownerId: string; isOwn: boole
                 to="/pevnost"
                 className="inline-flex items-center gap-1 rounded-xl bg-slate-800 px-3 py-1.5 text-sm font-semibold text-white hover:bg-slate-700"
               >
-                <Pencil className="h-4 w-4" /> Upraviť
+                <Pencil className="h-4 w-4" /> Upravit
               </Link>
               <Link
                 to="/pevnost?tab=zaznamy"
@@ -91,7 +91,7 @@ export function FortressCard({ ownerId, isOwn }: { ownerId: string; isOwn: boole
               to={`/pevnost?raid=${row.id}`}
               className="inline-flex items-center gap-1 rounded-xl bg-orange-500 px-3 py-1.5 text-sm font-bold text-white hover:bg-orange-400"
             >
-              <Swords className="h-4 w-4" /> Vykradnúť
+              <Swords className="h-4 w-4" /> Vykrást
             </Link>
           )}
         </div>

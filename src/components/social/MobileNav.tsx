@@ -20,7 +20,7 @@ export function MobileNav() {
 
   const navItems = [
     { icon: Home, label: t('nav.home'), path: '/', badge: 0 },
-    { icon: Handshake, label: 'Kamaráti', path: '/kamarati', badge: 0 },
+    { icon: Handshake, label: 'Kamarádi', path: '/kamarati', badge: 0 },
     { icon: Gamepad2, label: 'Hry', path: '/games', badge: 0 },
     { icon: MessageCircle, label: t('nav.messages'), path: '/messages', badge: unreadMessages },
     { icon: User, label: t('nav.profile'), path: '/profile', badge: 0 },

@@ -444,7 +444,7 @@ export function PostCard({ post, onLikeChange, onPostDeleted }: PostCardProps) {
                   className="text-rose-600 focus:text-rose-600"
                 >
                   <HandHeart className="h-4 w-4 mr-2" />
-                  Toto mi nie je príjemné
+                  Tohle mi není příjemné
                 </DropdownMenuItem>
               )}
               {canDelete && (

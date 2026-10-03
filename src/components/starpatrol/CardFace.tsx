@@ -4,15 +4,15 @@ import { cn } from '@/lib/utils';
 interface Props {
   kind: CardKind;
   selected?: boolean;
-  /** Karta sa teraz nedá zahrať (napr. štít) — len stlmiť, nie skryť. */
+  /** Karta se teď nedá zahrát (např. štít) — jen ztlumit, ne skrýt. */
   muted?: boolean;
-  /** Označená na zahodenie. */
+  /** Označená k zahození. */
   marked?: boolean;
   small?: boolean;
   onClick?: () => void;
 }
 
-/** Karta ako z balíčka: farba podľa druhu, veľká ikonka, krátke pravidlo. */
+/** Karta jako z balíčku: barva podle druhu, velká ikonka, krátké pravidlo. */
 export function CardFace({ kind, selected, muted, marked, small, onClick }: Props) {
   const c = CARD_INFO[kind];
   return (
@@ -31,7 +31,7 @@ export function CardFace({ kind, selected, muted, marked, small, onClick }: Prop
         onClick && !selected && 'hover:-translate-y-1'
       )}
     >
-      {/* hviezdičky v pozadí */}
+      {/* hvězdičky v pozadí */}
       <span className="pointer-events-none absolute inset-0 opacity-30 [background-image:radial-gradient(white_1px,transparent_1px)] [background-size:12px_12px]" />
       <span className={cn('relative block text-center leading-none', small ? 'text-2xl' : 'mt-1 text-4xl [@media(max-height:640px)]:text-3xl')}>{c.icon}</span>
       {!small && (

@@ -97,7 +97,7 @@ const Kamarati = () => {
         const r = await friendCodeUse(c);
         if (r.error) setMsg({ ok: false, text: r.error });
         else {
-          setMsg({ ok: true, text: `Ty a ${r.username} ste kamaráti! 🎉` });
+          setMsg({ ok: true, text: `Ty a ${r.username} jste kamarádi! 🎉` });
           setTyped('');
           void loadFriends();
         }
@@ -137,8 +137,8 @@ const Kamarati = () => {
               <Users className="h-8 w-8" />
             </div>
             <div>
-              <h1 className="text-2xl font-black">Kamaráti</h1>
-              <p className="text-muted-foreground">Kamaráta si pridáš naživo, keď ste spolu — alebo pozvánkou, keď býva ďaleko.</p>
+              <h1 className="text-2xl font-black">Kamarádi</h1>
+              <p className="text-muted-foreground">Kamaráda si přidáš naživo, když jste spolu — nebo pozvánkou, když bydlí daleko.</p>
             </div>
           </header>
 
@@ -146,9 +146,9 @@ const Kamarati = () => {
             <div className="mb-4 grid grid-cols-3 gap-1 rounded-2xl bg-muted p-1">
               {(
                 [
-                  ['show', 'Môj kód', QrIcon],
-                  ['enter', 'Zadať kód', UserPlus],
-                  ['remote', 'Na diaľku', Link2],
+                  ['show', 'Můj kód', QrIcon],
+                  ['enter', 'Zadat kód', UserPlus],
+                  ['remote', 'Na dálku', Link2],
                 ] as const
               ).map(([m, label, Icon]) => (
                 <button
@@ -169,15 +169,15 @@ const Kamarati = () => {
             {mode === 'remote' ? (
               <div className="flex flex-col items-center gap-3 text-center">
                 <p className="text-sm text-muted-foreground">
-                  Kamarát býva ďaleko (iné mesto, Česko, Slovensko)? Pošli mu pozývací odkaz. Keď ho otvorí, budete
-                  kamaráti — a ak v Kamosfére ešte nie je, môže sa zaregistrovať.
+                  Kamarád bydlí daleko (jiné město, Česko, Slovensko)? Pošli mu pozvánku. Až ji otevře, budete
+                  kamarádi — a pokud v Kamosféře ještě není, může se zaregistrovat.
                 </p>
                 {invite ? (
                   <>
                     <p className="w-full break-all rounded-xl bg-muted px-3 py-2 font-mono text-xs">{appUrl(`/pozvanka/${invite.token}`)}</p>
                     <CopyLink link={appUrl(`/pozvanka/${invite.token}`)} />
                     <p className="text-xs text-muted-foreground">
-                      Platí 7 dní a dá sa použiť len raz. Pošli ho len kamarátovi, ktorého naozaj poznáš. 💛
+                      Platí 7 dní a dá se použít jen jednou. Pošli ji jen kamarádovi, kterého opravdu znáš. 💛
                     </p>
                   </>
                 ) : (
@@ -193,7 +193,7 @@ const Kamarati = () => {
                     }}
                     className="inline-flex items-center gap-2 rounded-full bg-emerald-500 px-5 py-2 font-bold text-white"
                   >
-                    <Link2 className="h-4 w-4" /> Vytvoriť pozývací odkaz
+                    <Link2 className="h-4 w-4" /> Vytvořit pozvánku
                   </button>
                 )}
               </div>
@@ -201,11 +201,11 @@ const Kamarati = () => {
               <div className="flex flex-col items-center gap-3 text-center">
                 {code && left > 0 ? (
                   <>
-                    <p className="text-sm text-muted-foreground">Ukáž to kamarátovi, ktorý stojí pri tebe:</p>
+                    <p className="text-sm text-muted-foreground">Ukaž to kamarádovi, který stojí vedle tebe:</p>
                     <p className="font-mono text-5xl font-black tracking-[0.2em] text-emerald-600">{code.code}</p>
                     <QrCode value={appUrl(`/kamarati?kod=${code.code}`)} size={180} />
                     <p className="text-xs text-muted-foreground">
-                      Platí ešte {Math.floor(left / 60)}:{String(left % 60).padStart(2, '0')} · dá sa použiť raz
+                      Platí ještě {Math.floor(left / 60)}:{String(left % 60).padStart(2, '0')} · dá se použít jednou
                     </p>
                   </>
                 ) : (
@@ -214,18 +214,18 @@ const Kamarati = () => {
                     onClick={() => void newCode()}
                     className="inline-flex items-center gap-2 rounded-full bg-emerald-500 px-5 py-2 font-bold text-white"
                   >
-                    <RefreshCw className="h-4 w-4" /> {code ? 'Kód vypršal — nový kód' : 'Ukázať môj kód'}
+                    <RefreshCw className="h-4 w-4" /> {code ? 'Kód vypršel — nový kód' : 'Ukázat můj kód'}
                   </button>
                 )}
               </div>
             ) : (
               <form onSubmit={submit} className="flex flex-col items-center gap-3">
-                <p className="text-sm text-muted-foreground">Napíš kód, ktorý ti ukazuje kamarát na svojej obrazovke:</p>
+                <p className="text-sm text-muted-foreground">Napiš kód, který ti kamarád ukazuje na své obrazovce:</p>
                 <input
                   value={typed}
                   onChange={(e) => setTyped(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6))}
                   placeholder="ABC123"
-                  aria-label="Kód kamaráta"
+                  aria-label="Kód kamaráda"
                   className="w-56 rounded-xl border bg-background px-3 py-2 text-center font-mono text-3xl font-black tracking-[0.25em]"
                 />
                 <button
@@ -233,9 +233,9 @@ const Kamarati = () => {
                   disabled={busy || typed.length !== 6}
                   className="inline-flex items-center gap-2 rounded-full bg-emerald-500 px-6 py-2 font-bold text-white disabled:opacity-50"
                 >
-                  {busy && <Loader2 className="h-4 w-4 animate-spin" />} Sme kamaráti!
+                  {busy && <Loader2 className="h-4 w-4 animate-spin" />} Jsme kamarádi!
                 </button>
-                <p className="text-xs text-muted-foreground">Alebo naskenuj kamarátov QR fotoaparátom v mobile.</p>
+                <p className="text-xs text-muted-foreground">Nebo naskenuj kamarádův QR fotoaparátem v mobilu.</p>
               </form>
             )}
 
@@ -252,11 +252,11 @@ const Kamarati = () => {
           </section>
 
           <section className="rounded-3xl border p-5">
-            <p className="mb-3 font-bold">Moji kamaráti {friends ? `(${friends.length})` : ''}</p>
+            <p className="mb-3 font-bold">Moji kamarádi {friends ? `(${friends.length})` : ''}</p>
             {friends === null ? (
               <Loader2 className="mx-auto h-5 w-5 animate-spin text-muted-foreground" />
             ) : friends.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Zatiaľ žiadni. Keď budeš s kamarátom, ukáž mu svoj kód. 🙂</p>
+              <p className="text-sm text-muted-foreground">Zatím žádní. Až budeš s kamarádem, ukaž mu svůj kód. 🙂</p>
             ) : (
               <ul className="grid gap-2 sm:grid-cols-2">
                 {friends.map((f) => (

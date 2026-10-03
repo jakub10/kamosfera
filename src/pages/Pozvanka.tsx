@@ -53,16 +53,16 @@ const Pozvanka = () => {
         {info === undefined || loading ? (
           <Loader2 className="mx-auto my-8 h-6 w-6 animate-spin text-muted-foreground" />
         ) : !info || !info.valid ? (
-          <p className="mt-4">Táto pozvánka už neplatí. Popros kamaráta o novú. 🙂</p>
+          <p className="mt-4">Tahle pozvánka už neplatí. Popros kamaráda o novou. 🙂</p>
         ) : result ? (
           result.error ? (
             <p className="mt-4 font-semibold text-red-600">{result.error}</p>
           ) : (
             <div className="mt-4 space-y-3">
-              <p className="text-2xl font-black">Ty a {result.username} ste kamaráti! 🎉</p>
+              <p className="text-2xl font-black">Ty a {result.username} jste kamarádi! 🎉</p>
               {result.pending && (
                 <p className="text-sm text-muted-foreground">
-                  Ešte treba súhlas rodiča a správca ťa pustí dnu. Potom sa uvidíte v Kamosfére.
+                  Ještě je potřeba souhlas rodiče a správce tě pustí dovnitř. Pak se uvidíte v Kamosféře.
                 </p>
               )}
               <button
@@ -70,7 +70,7 @@ const Pozvanka = () => {
                 onClick={() => navigate(result.pending ? '/' : '/kamarati')}
                 className="rounded-full bg-emerald-500 px-6 py-2 font-bold text-white"
               >
-                Pokračovať
+                Pokračovat
               </button>
             </div>
           )
@@ -79,18 +79,18 @@ const Pozvanka = () => {
         ) : (
           <div className="mt-4 space-y-4">
             <h1 className="text-2xl font-black">
-              <span className="text-emerald-600">{info.inviter}</span> ťa volá do Kamosféry!
+              <span className="text-emerald-600">{info.inviter}</span> tě zve do Kamosféry!
             </h1>
             <p className="text-sm text-muted-foreground">
-              Kamosféra je sociálna sieť pre partiu kamarátov. Po registrácii budete kamaráti. Dnu ťa pustí správca, keď
-              rodič potvrdí súhlas.
+              Kamosféra je sociální síť pro partu kamarádů. Po registraci budete kamarádi. Dovnitř tě pustí správce, až
+              rodič potvrdí souhlas.
             </p>
             <div className="flex flex-col gap-2">
               <button type="button" onClick={() => openAuth('signup')} className="rounded-full bg-emerald-500 py-3 text-lg font-black text-white">
-                Zaregistrovať sa
+                Zaregistrovat se
               </button>
               <button type="button" onClick={() => openAuth('login')} className="rounded-full border py-2 font-semibold">
-                Už mám účet — prihlásiť sa
+                Už mám účet — přihlásit se
               </button>
             </div>
           </div>

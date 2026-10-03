@@ -64,7 +64,7 @@ BEGIN
   PERFORM chk('nový nič nezapíše',
     ako_chyba(c(1), format('INSERT INTO public.posts (user_id, content) VALUES (%L, ''ahoj'') RETURNING ''1''::jsonb', c(1))) IS NOT NULL, true);
   PERFORM chk('nový nezačne konverzáciu',
-    ako_chyba(c(1), format('SELECT to_jsonb(public.start_conversation(%L::uuid, ''ahoj''))', c(2))) LIKE '%súhlas rodiča%', true);
+    ako_chyba(c(1), format('SELECT to_jsonb(public.start_conversation(%L::uuid, ''ahoj''))', c(2))) LIKE '%souhlas rodiče%', true);
   PERFORM chk('nový nevidí pevnosti ani svet Kamosvet',
     ako_chyba(c(1), 'SELECT to_jsonb(count(*)) FROM public.fortress_browse()') IS NOT NULL
     AND ako_chyba(c(1), 'SELECT to_jsonb(public.world_seed())') IS NOT NULL, true);
@@ -121,7 +121,7 @@ BEGIN
     (SELECT consent_at IS NOT NULL FROM public.member_safety WHERE user_id = c(1))
     AND length(r->>'guardian_token') >= 32, true);
   e := ako_chyba(NULL, format('SELECT public.consent_confirm(%L, %L, true)', tok, 'niekto iný'));
-  PERFORM chk('ten istý odkaz druhýkrát nefunguje', e LIKE '%už bol daný%', true);
+  PERFORM chk('ten istý odkaz druhýkrát nefunguje', e LIKE '%už byl dán%', true);
   PERFORM chk('súhlas sám ešte nepustí dnu — čaká sa na správcu',
     (ako(c(1), 'SELECT to_jsonb(count(*)) FROM public.posts'))::int = 0, true);
   PERFORM chk('stav dieťaťa po súhlase: neprezradí už odkaz na súhlas',
@@ -133,7 +133,7 @@ DO $$
 DECLARE e text;
 BEGIN
   PERFORM chk('dieťa zoznam čakajúcich nevidí',
-    ako_chyba(c(2), 'SELECT public.admin_members()') LIKE '%správcu%', true);
+    ako_chyba(c(2), 'SELECT public.admin_members()') LIKE '%správce%', true);
   PERFORM chk('dieťa nikoho neschváli',
     ako_chyba(c(2), format('SELECT to_jsonb(true) FROM public.admin_set_approval(%L::uuid, true)', c(1))) IS NOT NULL, true);
   PERFORM chk('správca vidí čakajúcich, s menom dospelého zo súhlasu',
@@ -142,7 +142,7 @@ BEGIN
 
   INSERT INTO auth.users (id, email) VALUES ('c0000000-0000-0000-0000-000000000009', 'bezsuhlasu@test.local');
   e := ako_chyba(c(4), format('SELECT to_jsonb(true) FROM public.admin_set_approval(%L::uuid, true)', 'c0000000-0000-0000-0000-000000000009'));
-  PERFORM chk('bez súhlasu rodiča sa schváliť nedá', e LIKE '%súhlas%', true);
+  PERFORM chk('bez súhlasu rodiča sa schváliť nedá', e LIKE '%souhlas%', true);
 
   PERFORM ako(c(4), format('SELECT to_jsonb(true) FROM public.admin_set_approval(%L::uuid, true)', c(1)));
   PERFORM chk('po schválení je Cyril plnohodnotný člen a vidí príspevky',
@@ -226,7 +226,7 @@ BEGIN
   PERFORM chk('kód má 6 znakov a platí 3 minúty',
     length(k->>'code') = 6 AND (k->>'expires_at')::timestamptz <= now() + interval '3 minutes', true);
   e := (ako(c(2), format('SELECT public.friend_code_use(%L)', k->>'code')))->>'error';
-  PERFORM chk('vlastný kód nefunguje', e LIKE '%vlastný%', true);
+  PERFORM chk('vlastný kód nefunguje', e LIKE '%vlastní kód%', true);
 
   PERFORM ako(c(5), format('SELECT public.friend_code_use(%L)', lower(k->>'code')));
   PERFORM chk('kamarát zadá kód a sú kamaráti (aj malými písmenami)',
@@ -248,7 +248,7 @@ BEGIN
   FOR i IN 1..12 LOOP
     e := COALESCE(ako_chyba(c(5), 'SELECT public.friend_code_use(''ZZZZZZ'')'), 'bez výnimky');
   END LOOP;
-  PERFORM chk('hádanie kódov zastaví limit', e LIKE '%Priveľa%', true);
+  PERFORM chk('hádanie kódov zastaví limit', e LIKE '%Moc pokusů%', true);
 END$$;
 
 \echo '--- B10. Pozývací odkaz na diaľku ---'
@@ -282,7 +282,7 @@ BEGIN
 
   inv := ako(c(3), 'SELECT public.friend_invite_new()');
   e := (ako(c(3), format('SELECT public.friend_invite_use(%L)', inv->>'token')))->>'error';
-  PERFORM chk('vlastnú pozvánku použiť nejde', e LIKE '%vlastná%', true);
+  PERFORM chk('vlastnú pozvánku použiť nejde', e LIKE '%vlastní pozvánka%', true);
   e := (ako(c(1), format('SELECT public.friend_invite_use(%L)', inv->>'token')))->>'error';
   PERFORM chk('zablokovaný sa cez pozvánku nevráti', e LIKE '%neplatí%' AND NOT public.are_friends(c(1), c(3)), true);
 

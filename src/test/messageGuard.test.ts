@@ -61,7 +61,7 @@ describe('strážca správ — rozhodnutie', () => {
   });
   it('do Liquid AI ide len text — žiadne mená ani ID', () => {
     const s = JSON.parse(buildState('nová', ['a', 'b', 'c', 'd'], true));
-    expect(s).toEqual({ sprava: 'nová', predchadzajuce: ['b', 'c', 'd'], vztah: 'overeny_kamarat' });
+    expect(s).toEqual({ zprava: 'nová', predchozi: ['b', 'c', 'd'], vztah: 'overeny_kamarad' });
   });
   it('otázky sú presne tie štyri z konceptu', () => {
     expect(Object.keys(QUESTIONS)).toEqual(['osobne_udaje', 'tlak_na_tajomstvo', 'typ', 'zavaznost']);
@@ -77,7 +77,7 @@ describe('strážca správ — celá cesta', () => {
 
     const liquid = calls.find((c) => c.url === LIQUID_URL)!.body as { model: string; state: string };
     expect(liquid.model).toBe('d1:free');
-    expect(JSON.parse(liquid.state).predchadzajuce).toEqual(['ahoj', 'čau', 'ideme von?']);
+    expect(JSON.parse(liquid.state).predchozi).toEqual(['ahoj', 'čau', 'ideme von?']);
     expect(liquid.state).not.toContain('sender-id');
 
     const rec = calls.find((c) => c.url.endsWith('/rpc/guard_record'))!.body as Record<string, unknown>;

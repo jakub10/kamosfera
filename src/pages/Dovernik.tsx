@@ -6,20 +6,20 @@ import { guardianAccept, guardianInviteInfo, guardianLeave, guardianView, type G
 const Shell = ({ children }: { children: React.ReactNode }) => (
   <div className="min-h-screen bg-gradient-to-b from-amber-50 to-rose-50 px-4 py-8 dark:from-slate-950 dark:to-slate-900">
     <div className="mx-auto max-w-lg rounded-3xl bg-card p-6 shadow-xl sm:p-8">
-      <p className="font-black text-amber-700 dark:text-amber-300">Kamosféra · dôverník 💛</p>
+      <p className="font-black text-amber-700 dark:text-amber-300">Kamosféra · důvěrník 💛</p>
       {children}
     </div>
   </div>
 );
 
 const SIGNAL_TEXT: Record<GuardianView['signals'][number]['kind'], (name: string) => string> = {
-  uncomfortable: (n) => `${n} stlačil(a) „Toto mi nie je príjemné".`,
-  ai_harmful: (n) => `${n} mal(a) dostať správu, ktorá by mohla ublížiť. Strážca ju nedoručil.`,
-  ai_secret: (n) => `Niekto sa snažil ${n} presvedčiť, aby niečo tajil(a) pred dospelými, prešiel/prešla do inej aplikácie, poslal(a) fotku alebo sa stretol(a).`,
+  uncomfortable: (n) => `${n} zmáčkl(a) „Tohle mi není příjemné".`,
+  ai_harmful: (n) => `${n} měl(a) dostat zprávu, která by mohla ublížit. Strážce ji nedoručil.`,
+  ai_secret: (n) => `Někdo se snažil ${n} přemluvit, aby něco tajil(a) před dospělými, přešel/přešla do jiné aplikace, poslal(a) fotku nebo se sešel/sešla.`,
 };
 
 const fmt = (iso: string) =>
-  new Intl.DateTimeFormat('sk-SK', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Europe/Prague' }).format(new Date(iso));
+  new Intl.DateTimeFormat('cs-CZ', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Europe/Prague' }).format(new Date(iso));
 
 /** Pozvánka od dieťaťa: dospelý potvrdí, že bude dôverník. */
 export const DovernikPozvanka = () => {
@@ -53,29 +53,29 @@ export const DovernikPozvanka = () => {
       {info === undefined ? (
         <Loader2 className="mx-auto my-10 h-6 w-6 animate-spin text-muted-foreground" />
       ) : info === null ? (
-        <p className="mt-6">Tento odkaz nie je platný alebo už bol použitý. Požiadajte dieťa o nový QR kód.</p>
+        <p className="mt-6">Tento odkaz není platný nebo už byl použit. Požádejte dítě o nový QR kód.</p>
       ) : (
         <div className="mt-4 space-y-4">
           <h1 className="text-2xl font-black">
-            <span className="text-amber-700 dark:text-amber-300">{info.username}</span> si vás vybral(a) za dôverníka
+            <span className="text-amber-700 dark:text-amber-300">{info.username}</span> si vás vybral(a) za důvěrníka
           </h1>
           <div className="space-y-2 text-sm text-muted-foreground">
-            <p>Dieťa vám verí. Čo to znamená:</p>
+            <p>Dítě vám věří. Co to znamená:</p>
             <ul className="list-disc space-y-1 pl-5">
-              <li>Neuvidíte jeho správy, kamarátov ani profil. Je to tak schválne.</li>
+              <li>Neuvidíte jeho zprávy, kamarády ani profil. Je to tak schválně.</li>
               <li>
-                Keď v Kamosfére stlačí „Toto mi nie je príjemné", uvidíte tu signál s časom. Vtedy sa ho, prosím, v
-                pokoji opýtajte, čo sa stalo.
+                Když v Kamosféře zmáčkne „Tohle mi není příjemné", uvidíte tu signál s časem. Pak se ho, prosím, v
+                klidu zeptejte, co se stalo.
               </li>
-              <li>Ak ste doteraz mali dôverníka iného, týmto ho nahradíte.</li>
+              <li>Pokud mělo dítě dosud jiného důvěrníka, tímto ho nahradíte.</li>
             </ul>
           </div>
           <label className="block text-sm font-semibold">
-            Ako vás dieťa volá (nepovinné)
+            Jak vám dítě říká (nepovinné)
             <input
               value={label}
               onChange={(e) => setLabel(e.target.value.slice(0, 40))}
-              placeholder="napr. babka, tréner Juro"
+              placeholder="např. babička, trenér Jura"
               className="mt-1 w-full rounded-xl border bg-background px-3 py-2 font-normal"
             />
           </label>
@@ -86,7 +86,7 @@ export const DovernikPozvanka = () => {
             disabled={busy}
             className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-amber-500 py-3 text-lg font-black text-white shadow"
           >
-            {busy && <Loader2 className="h-5 w-5 animate-spin" />} Budem dôverník
+            {busy && <Loader2 className="h-5 w-5 animate-spin" />} Budu důvěrník
           </button>
         </div>
       )}
@@ -111,7 +111,7 @@ const Dovernik = () => {
   }, [token]);
 
   const leave = async () => {
-    if (!window.confirm('Naozaj už nechcete byť dôverník? Dieťa si bude musieť vybrať nového.')) return;
+    if (!window.confirm('Opravdu už nechcete být důvěrník? Dítě si bude muset vybrat nového.')) return;
     await guardianLeave(token);
     setLeft(true);
   };
@@ -119,22 +119,22 @@ const Dovernik = () => {
   return (
     <Shell>
       {left ? (
-        <p className="mt-6">Už nie ste dôverník. Ďakujeme za vašu pomoc.</p>
+        <p className="mt-6">Už nejste důvěrník. Děkujeme za vaši pomoc.</p>
       ) : view === undefined ? (
         <Loader2 className="mx-auto my-10 h-6 w-6 animate-spin text-muted-foreground" />
       ) : view === null ? (
-        <p className="mt-6">Tento odkaz už neplatí. Možno si dieťa vybralo iného dôverníka.</p>
+        <p className="mt-6">Tento odkaz už neplatí. Možná si dítě vybralo jiného důvěrníka.</p>
       ) : (
         <div className="mt-4 space-y-4">
           <h1 className="text-2xl font-black">
-            Ste dôverník: <span className="text-amber-700 dark:text-amber-300">{view.username}</span>
+            Jste důvěrník: <span className="text-amber-700 dark:text-amber-300">{view.username}</span>
           </h1>
           <p className="text-sm text-muted-foreground">
-            Uložte si túto stránku medzi záložky. Obnovuje sa sama. Nikomu ju neposielajte — kto má odkaz, vidí signály.
+            Uložte si tuto stránku do záložek. Obnovuje se sama. Nikomu ji neposílejte — kdo má odkaz, vidí signály.
           </p>
           {view.signals.length === 0 ? (
             <p className="rounded-2xl bg-emerald-50 p-4 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200">
-              Zatiaľ žiadny signál. 🌤️ To je dobrá správa.
+              Zatím žádný signál. 🌤️ To je dobrá zpráva.
             </p>
           ) : (
             <div className="space-y-2">
@@ -147,13 +147,13 @@ const Dovernik = () => {
                 ))}
               </ul>
               <div className="rounded-2xl bg-muted/60 p-3 text-sm text-muted-foreground">
-                <b>Čo teraz?</b> V pokoji sa dieťaťa opýtajte, ako sa má a či sa niečo nestalo. Nekárajte ho — dobre
-                urobilo, že to dalo vedieť. Keď stlačilo tlačidlo, toho druhého už v Kamosfére zablokovalo.
+                <b>Co teď?</b> V klidu se dítěte zeptejte, jak se má a jestli se něco nestalo. Nekárejte ho — udělalo
+                dobře, že se ozvalo. Když zmáčklo tlačítko, toho druhého už v Kamosféře zablokovalo.
               </div>
             </div>
           )}
           <button type="button" onClick={() => void leave()} className="text-xs text-muted-foreground underline">
-            Už nechcem byť dôverník
+            Už nechci být důvěrník
           </button>
         </div>
       )}

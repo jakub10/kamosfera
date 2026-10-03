@@ -1,270 +1,223 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+/**
+ * AI kontrola příspěvků pro Panel tvůrce — System One od Liquid AI (d1:free).
+ *
+ * Tvůrce klikne „Spustit kontrolu": funkce projde příspěvky za posledních
+ * 24 hodin (nejvýš 50), každý ukáže System One a ty, které by mohly ublížit
+ * nebo obsahují osobní údaje, pošle tvůrcům jako oznámení „moderation".
+ * Spam (moc příspěvků najednou, stejný text pořád dokola) se pozná bez AI.
+ *
+ * Do Liquid AI jde jen text příspěvku — žádná jména ani ID.
+ * Jeden soubor bez knihoven: dá se nahrát i ručně přes Supabase dashboard.
+ * Klíč: Edge Functions → Secrets → LIQUID_API_KEY (stejný jako pro message-guard).
+ */
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
+export const LIQUID_URL = 'https://api.liquid.ai/decisions/v1/systemone';
+
+export const QUESTIONS = {
+  zavaznost: {
+    type: 'score',
+    instructions: 'Jak moc může tento příspěvek ublížit dětem kolem 11 let, které ho uvidí?',
+    criteria: [
+      'V pořádku: neutrální nebo zjevně kamarádské',
+      'Nepříjemné: může zamrzet, ale není to útok',
+      'Ubližující: urážka, zesměšnění, vylučování nebo nevhodný obsah',
+      'Nebezpečné: výhrůžka, násilí, sexuální obsah nebo lákání mimo aplikaci',
+    ],
+  },
+  osobni_udaje: {
+    type: 'noul',
+    instructions:
+      'Obsahuje příspěvek osobní údaje (adresu, telefonní číslo, název školy, přesné místo, kde se někdo právě nachází)?',
+  },
+  typ: {
+    type: 'choice',
+    instructions: 'Jaký typ příspěvku to je? Píšou ho děti kolem 11 let.',
+    criteria: {
+      v_poradku: 'Běžný, přátelský nebo neutrální příspěvek',
+      nadavka: 'Urážka nebo nadávka',
+      vysmivani: 'Zesměšňování vzhledu, schopností nebo rodiny',
+      vyhruzka: 'Výhrůžka ublížením',
+      nevhodne: 'Sexuální, násilný nebo jinak nevhodný obsah pro děti',
+      reklama: 'Reklama, podvod nebo lákání na jiný web',
+    },
+  },
+} as const;
+
+const TYPE_LABEL: Record<string, string> = {
+  nadavka: 'urážka',
+  vysmivani: 'zesměšňování',
+  vyhruzka: 'výhrůžka',
+  nevhodne: 'nevhodný obsah',
+  reklama: 'reklama nebo podvod',
 };
 
-interface FlaggedPost {
-  post_id: string;
-  reason: string;
-  severity: 'low' | 'medium' | 'high';
-  content_preview: string;
+export interface PostAnswers {
+  zavaznost?: { score?: number };
+  osobni_udaje?: { noul?: number };
+  typ?: { choice?: string };
 }
 
-serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+export type Severity = 'low' | 'medium' | 'high';
+
+/** Rozhodnutí o jednom příspěvku. Čistý výpočet — testuje se bez sítě. */
+export function judgePost(a: PostAnswers): { severity: Severity; reason: string } | null {
+  const score = a.zavaznost?.score ?? 0;
+  const personal = a.osobni_udaje?.noul ?? 0;
+  const label = TYPE_LABEL[a.typ?.choice ?? ''];
+  if (score >= 1.8) return { severity: 'high', reason: `Může ublížit${label ? ` (${label})` : ''}` };
+  if (score >= 1.0) return { severity: 'medium', reason: `Nepříjemný příspěvek${label ? ` (${label})` : ''}` };
+  if (personal > 0.7) return { severity: 'low', reason: 'Obsahuje osobní údaje' };
+  return null;
+}
+
+interface Post {
+  id: string;
+  user_id: string;
+  content: string;
+  created_at: string;
+}
+
+/** Spam bez AI: 5+ příspěvků za 5 minut nebo 3+ stejné texty. */
+export function spamFlags(posts: Post[]): Map<string, string> {
+  const out = new Map<string, string>();
+  const byUser = new Map<string, Post[]>();
+  for (const p of posts) byUser.set(p.user_id, [...(byUser.get(p.user_id) ?? []), p]);
+  for (const arr of byUser.values()) {
+    const sorted = [...arr].sort((a, b) => Date.parse(a.created_at) - Date.parse(b.created_at));
+    for (let i = 0; i + 4 < sorted.length; i++) {
+      const secs = (Date.parse(sorted[i + 4].created_at) - Date.parse(sorted[i].created_at)) / 1000;
+      if (secs <= 300) {
+        for (const p of sorted.slice(i, i + 5)) out.set(p.id, `Spam: 5 příspěvků za ${Math.round(secs)} s`);
+      }
+    }
+    const seen = new Map<string, Post[]>();
+    for (const p of sorted) {
+      const key = (p.content ?? '').trim().toLowerCase().replace(/\s+/g, ' ').slice(0, 120);
+      if (key) seen.set(key, [...(seen.get(key) ?? []), p]);
+    }
+    for (const same of seen.values()) {
+      if (same.length >= 3) for (const p of same) out.set(p.id, 'Spam: opakující se obsah');
+    }
   }
+  return out;
+}
 
-  try {
-    // Viz translate-content: Groq místo Lovable gateway, protože ta patří
-    // k projektu v Lovable Cloud a po přechodu na vlastní Supabase odpadá.
-    const GROQ_API_KEY = Deno.env.get("GROQ_API_KEY");
-    const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
-    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+// ---------------------------------------------------------------------------
+// Serverová část (Deno). Při testech se nespouští.
+// ---------------------------------------------------------------------------
 
-    if (!GROQ_API_KEY) {
-      throw new Error("GROQ_API_KEY is not configured");
-    }
+const cors = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+};
+const json = (body: unknown, status = 200) =>
+  new Response(JSON.stringify(body), { status, headers: { ...cors, 'Content-Type': 'application/json' } });
 
-    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
-      throw new Error("Supabase configuration missing");
-    }
+interface Env {
+  get(name: string): string | undefined;
+}
 
-    // Authenticate caller and require creator role
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-    const authClient = createClient(SUPABASE_URL, Deno.env.get('SUPABASE_ANON_KEY')!, {
-      global: { headers: { Authorization: authHeader } },
-    });
-    const token = authHeader.replace('Bearer ', '');
-    const { data: claims, error: authErr } = await authClient.auth.getClaims(token);
-    if (authErr || !claims?.claims?.sub) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
+export async function handle(req: Request, env: Env, fetchFn: typeof fetch = fetch): Promise<Response> {
+  if (req.method === 'OPTIONS') return new Response(null, { headers: cors });
 
-    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+  const url = env.get('SUPABASE_URL');
+  const anon = env.get('SUPABASE_ANON_KEY');
+  const service = env.get('SUPABASE_SERVICE_ROLE_KEY');
+  const key = env.get('LIQUID_API_KEY');
+  if (!url || !anon || !service) return json({ error: 'Chybí nastavení Supabase.' }, 500);
+  if (!key) return json({ error: 'Chybí klíč LIQUID_API_KEY v Supabase → Edge Functions → Secrets.' }, 500);
 
-    const { data: roleRow } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', claims.claims.sub)
-      .eq('role', 'creator')
-      .maybeSingle();
-    if (!roleRow) {
-      return new Response(JSON.stringify({ error: 'Forbidden' }), {
-        status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
+  const who = await fetchFn(`${url}/auth/v1/user`, {
+    headers: { Authorization: req.headers.get('Authorization') ?? '', apikey: anon },
+  });
+  const uid = who.ok ? ((await who.json())?.id as string | undefined) : undefined;
+  if (!uid) return json({ error: 'Musíš se přihlásit.' }, 401);
 
-    // Get posts from the last 24 hours that haven't been moderated yet
-    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-    
-    const { data: posts, error: postsError } = await supabase
-      .from('posts')
-      .select('id, content, created_at, user_id')
-      .gte('created_at', oneDayAgo)
-      .order('created_at', { ascending: false })
-      .limit(50); // Process 50 posts at a time
-
-    if (postsError) {
-      throw postsError;
-    }
-
-    if (!posts || posts.length === 0) {
-      return new Response(
-        JSON.stringify({ message: 'No new posts to moderate', flagged: [] }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Compute per-user posting stats to detect spam (rapid-fire posting / duplicates)
-    const byUser = new Map<string, typeof posts>();
-    for (const p of posts) {
-      const arr = byUser.get(p.user_id) ?? [];
-      arr.push(p);
-      byUser.set(p.user_id, arr);
-    }
-
-    const spamSignals: Record<string, { count_24h: number; burst_count: number; burst_window_seconds: number; duplicates: number }> = {};
-    for (const [uid, arr] of byUser) {
-      const sorted = [...arr].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
-      let maxBurst = 1;
-      let burstWindow = 0;
-      for (let i = 0; i < sorted.length; i++) {
-        for (let j = i + 1; j < sorted.length; j++) {
-          const diff = (new Date(sorted[j].created_at).getTime() - new Date(sorted[i].created_at).getTime()) / 1000;
-          if (diff <= 300) {
-            const c = j - i + 1;
-            if (c > maxBurst) { maxBurst = c; burstWindow = diff; }
-          } else break;
-        }
-      }
-      const seen = new Map<string, number>();
-      let dups = 0;
-      for (const p of sorted) {
-        const key = (p.content || '').trim().toLowerCase().replace(/\s+/g, ' ').slice(0, 120);
-        if (!key) continue;
-        const n = (seen.get(key) ?? 0) + 1;
-        seen.set(key, n);
-        if (n > 1) dups++;
-      }
-      spamSignals[uid] = {
-        count_24h: sorted.length,
-        burst_count: maxBurst,
-        burst_window_seconds: Math.round(burstWindow),
-        duplicates: dups,
-      };
-    }
-
-    // Prepare posts for AI analysis
-    const postsForAnalysis = posts.map(p => ({
-      id: p.id,
-      user_id: p.user_id,
-      created_at: p.created_at,
-      content: p.content.substring(0, 500),
-    }));
-
-    // Call AI to analyze posts
-    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-      method: "POST",
+  const rest = async (path: string, init: RequestInit = {}) => {
+    const r = await fetchFn(`${url}/rest/v1/${path}`, {
+      ...init,
       headers: {
-        Authorization: `Bearer ${GROQ_API_KEY}`,
-        "Content-Type": "application/json",
+        apikey: service,
+        Authorization: `Bearer ${service}`,
+        'Content-Type': 'application/json',
+        ...(init.headers ?? {}),
       },
-      body: JSON.stringify({
-        model: "llama-3.3-70b-versatile",
-        messages: [
-          {
-            role: "system",
-            content: `You are a content moderation AI. Analyze the following posts for inappropriate content including:
-- Hate speech, discrimination, or slurs
-- Explicit sexual content
-- Violence or threats
-- Harassment or bullying
-- Spam or scam content (reklama, phishing, opakující se promo odkazy)
-- SPAMMING BEHAVIOR: uživatel posílá příliš mnoho příspěvků v krátkém čase (např. 5+ za 5 minut) nebo opakuje stejný/podobný obsah. Použij spam_signals (count_24h, burst_count, burst_window_seconds, duplicates). Pokud burst_count >= 5 v pár minutách nebo duplicates >= 3, označ dané příspěvky jako spam s důvodem v češtině, např. "Spam: uživatel poslal X příspěvků za Y sekund" nebo "Spam: opakující se obsah".
-- Illegal activity promotion
-
-For each post that should be flagged, return post_id, reason (in Czech), severity (low/medium/high).
-If no posts are problematic, return an empty array.
-Only flag genuinely problematic content, not mild language or opinions.`
-          },
-          {
-            role: "user",
-            content: `spam_signals per user:\n${JSON.stringify(spamSignals, null, 2)}\n\nPosts to analyze:\n${JSON.stringify(postsForAnalysis, null, 2)}`
-          }
-        ],
-        tools: [
-          {
-            type: "function",
-            function: {
-              name: "report_flagged_posts",
-              description: "Report posts that contain inappropriate content",
-              parameters: {
-                type: "object",
-                properties: {
-                  flagged_posts: {
-                    type: "array",
-                    items: {
-                      type: "object",
-                      properties: {
-                        post_id: { type: "string" },
-                        reason: { type: "string" },
-                        severity: { type: "string", enum: ["low", "medium", "high"] }
-                      },
-                      required: ["post_id", "reason", "severity"]
-                    }
-                  }
-                },
-                required: ["flagged_posts"]
-              }
-            }
-          }
-        ],
-        tool_choice: { type: "function", function: { name: "report_flagged_posts" } }
-      }),
     });
+    if (!r.ok) throw new Error(`${path.split('?')[0]}: ${r.status} ${await r.text()}`);
+    const t = await r.text();
+    return t ? JSON.parse(t) : null;
+  };
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("Groq error:", response.status, errorText);
-      throw new Error(`Groq error: ${response.status}`);
-    }
+  const roles = await rest(`user_roles?select=user_id&user_id=eq.${uid}&role=eq.creator`);
+  if (!roles?.length) return json({ error: 'Jen pro tvůrce.' }, 403);
 
-    const aiResult = await response.json();
-    
-    // Parse the tool call result
-    let flaggedPosts: FlaggedPost[] = [];
-    
-    if (aiResult.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments) {
-      try {
-        const args = JSON.parse(aiResult.choices[0].message.tool_calls[0].function.arguments);
-        flaggedPosts = args.flagged_posts || [];
-      } catch (e) {
-        console.error("Failed to parse AI response:", e);
-      }
-    }
+  const since = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
+  const posts: Post[] =
+    (await rest(`posts?select=id,user_id,content,created_at&created_at=gte.${since}&order=created_at.desc&limit=50`)) ?? [];
+  if (!posts.length) return json({ analyzed_count: 0, flagged: [] });
 
-    // Add content preview to flagged posts
-    const enrichedFlaggedPosts = flaggedPosts.map(fp => {
-      const post = posts.find(p => p.id === fp.post_id);
-      return {
-        ...fp,
-        content_preview: post?.content?.substring(0, 100) || '',
-        user_id: post?.user_id,
-        created_at: post?.created_at,
-      };
-    });
+  // Příspěvky, které už tvůrci jako problémové dostali, se znovu nehlásí.
+  const ids = posts.map((p) => p.id).join(',');
+  const done: { post_id: string }[] = (await rest(`notifications?select=post_id&type=eq.moderation&post_id=in.(${ids})`)) ?? [];
+  const already = new Set(done.map((d) => d.post_id));
 
-    // If there are flagged posts, create notifications for creators
-    if (enrichedFlaggedPosts.length > 0) {
-      // Get all creators
-      const { data: creators } = await supabase
-        .from('user_roles')
-        .select('user_id')
-        .eq('role', 'creator');
+  const flagged: { post_id: string; reason: string; severity: Severity }[] = [];
+  for (const [id, reason] of spamFlags(posts)) {
+    if (!already.has(id)) flagged.push({ post_id: id, reason, severity: 'medium' });
+  }
 
-      if (creators && creators.length > 0) {
-        // Create notifications for each creator
-        const notifications = creators.flatMap(creator => 
-          enrichedFlaggedPosts.map(fp => ({
-            user_id: creator.user_id,
-            from_user_id: null,
-            post_id: fp.post_id,
-            type: 'moderation',
-            message: `AI Moderace: ${fp.reason} (závažnost: ${fp.severity})`,
-          }))
-        );
-
-        await supabase
-          .from('notifications')
-          .insert(notifications);
-      }
-    }
-
-    return new Response(
-      JSON.stringify({ 
-        message: `Analyzed ${posts.length} posts, flagged ${enrichedFlaggedPosts.length}`,
-        flagged: enrichedFlaggedPosts,
-        analyzed_count: posts.length,
-      }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
-
-  } catch (error) {
-    console.error("Moderation error:", error);
-    return new Response(
-      JSON.stringify({ error: 'Internal server error' }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+  // System One: po čtyřech příspěvcích najednou.
+  let failed = 0;
+  const todo = posts.filter((p) => !already.has(p.id) && !flagged.some((f) => f.post_id === p.id) && p.content?.trim());
+  for (let i = 0; i < todo.length; i += 4) {
+    await Promise.all(
+      todo.slice(i, i + 4).map(async (p) => {
+        try {
+          const r = await fetchFn(LIQUID_URL, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ model: 'd1:free', state: p.content.slice(0, 1000), questions: QUESTIONS }),
+          });
+          if (!r.ok) {
+            failed++;
+            return;
+          }
+          const verdict = judgePost(((await r.json())?.answers ?? {}) as PostAnswers);
+          if (verdict) flagged.push({ post_id: p.id, ...verdict });
+        } catch {
+          failed++;
+        }
+      })
     );
   }
-});
+  if (failed === todo.length && todo.length > 0) {
+    return json({ error: 'Liquid AI neodpovídá. Zkontroluj klíč LIQUID_API_KEY a zkus to za chvíli.' }, 502);
+  }
+
+  if (flagged.length) {
+    const creators: { user_id: string }[] = (await rest('user_roles?select=user_id&role=eq.creator')) ?? [];
+    const SEV = { low: 'nízká', medium: 'střední', high: 'vysoká' } as const;
+    const rows = creators.flatMap((c) =>
+      flagged.map((f) => ({
+        user_id: c.user_id,
+        post_id: f.post_id,
+        type: 'moderation',
+        message: `AI kontrola: ${f.reason} (závažnost: ${SEV[f.severity]})`,
+      }))
+    );
+    if (rows.length) await rest('notifications', { method: 'POST', body: JSON.stringify(rows), headers: { Prefer: 'return=minimal' } });
+  }
+
+  return json({ analyzed_count: posts.length, flagged, failed });
+}
+
+const deno = (globalThis as unknown as { Deno?: { serve: (h: (r: Request) => Promise<Response>) => void; env: Env } }).Deno;
+if (deno) {
+  deno.serve((req) =>
+    handle(req, deno.env).catch((e) => {
+      console.error('[ai-moderation]', e);
+      return json({ error: 'Kontrola obsahu selhala. Zkus to za chvíli.' }, 500);
+    })
+  );
+}

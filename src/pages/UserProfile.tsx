@@ -367,8 +367,8 @@ const UserProfile = () => {
             <span className="text-6xl">🔒</span>
             <p className="text-xl font-bold">{profile.full_name}</p>
             <p className="text-muted-foreground">
-              Profil vidia len kamaráti. Kamaráta si pridáš naživo, keď ste spolu — v časti{' '}
-              <Link to="/kamarati" className="font-semibold text-primary underline">Kamaráti</Link>.
+              Profil vidí jen kamarádi. Kamaráda si přidáš naživo, když jste spolu — v sekci{' '}
+              <Link to="/kamarati" className="font-semibold text-primary underline">Kamarádi</Link>.
             </p>
             {friendshipStatus === 'pending_received' && (
               <div className="flex gap-2">

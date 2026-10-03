@@ -49,20 +49,20 @@ export function useUncomfortable(onDone?: () => void) {
     >
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>{error ? 'Niečo sa pokazilo' : 'Dobre, že si to povedal(a) 💛'}</AlertDialogTitle>
+          <AlertDialogTitle>{error ? 'Něco se pokazilo' : 'Dobře, že ses ozval(a) 💛'}</AlertDialogTitle>
           <AlertDialogDescription asChild>
             <div className="space-y-2">
               {error ? (
-                <p>{error} Povedz to, prosím, rodičovi alebo inému dospelému.</p>
+                <p>{error} Řekni to prosím rodiči nebo jinému dospělému.</p>
               ) : (
                 <>
                   <p>
-                    <b>{result?.name}</b> ti už nemôže písať a neuvidíš sa s ním v Kamosfére. Nič sa o tom nedozvie.
+                    <b>{result?.name}</b> ti už nemůže psát a v Kamosféře se s ním neuvidíš. Nic se o tom nedozví.
                   </p>
                   <p>
                     {result?.guardian
-                      ? 'Tvoj dôverník dostal upozornenie. Môžeš sa s ním o tom pokojne porozprávať.'
-                      : 'Zatiaľ nemáš dôverníka. Povedz to, prosím, rodičovi alebo inému dospelému, ktorému veríš.'}
+                      ? 'Tvůj důvěrník dostal upozornění. Můžeš si s ním o tom v klidu promluvit.'
+                      : 'Zatím nemáš důvěrníka. Řekni to prosím rodiči nebo jinému dospělému, kterému věříš.'}
                   </p>
                 </>
               )}
@@ -70,7 +70,7 @@ export function useUncomfortable(onDone?: () => void) {
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogAction>Rozumiem</AlertDialogAction>
+          <AlertDialogAction>Rozumím</AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
@@ -103,7 +103,7 @@ export function UncomfortableButton({
         )}
       >
         {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <HandHeart className="h-3.5 w-3.5" />}
-        Toto mi nie je príjemné
+        Tohle mi není příjemné
       </button>
       {dialog}
     </>

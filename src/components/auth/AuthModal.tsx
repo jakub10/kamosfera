@@ -203,7 +203,7 @@ export function AuthModal({ open, onOpenChange, defaultTab = 'login' }: AuthModa
 
           <TabsContent value="signup" className="mt-6">
             <p className="mb-4 rounded-xl bg-violet-50 px-3 py-2 text-xs text-violet-900 dark:bg-violet-950 dark:text-violet-100">
-              Kamosféra je partia kamarátov. Po registrácii potvrdí súhlas rodič (naskenuje QR) a správca ťa pustí dnu.
+              Kamosféra je parta kamarádů. Po registraci potvrdí souhlas rodič (naskenuje QR) a správce tě pustí dovnitř.
             </p>
             <form onSubmit={handleSignup} className="space-y-4">
               <div className="space-y-2">

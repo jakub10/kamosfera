@@ -132,21 +132,21 @@ const count = (cells: string, ch: string) => {
  */
 export function gridProblems(cells: string): string[] {
   const p: string[] = [];
-  if (cells.length !== CELLS) return ['Mapa má zlú veľkosť.'];
+  if (cells.length !== CELLS) return ['Mapa má špatnou velikost.'];
   for (const ch of cells) {
-    if (!TILES.includes(ch as Tile)) return ['Mapa obsahuje neznámy kúsok.'];
+    if (!TILES.includes(ch as Tile)) return ['Mapa obsahuje neznámý dílek.'];
   }
   const e = count(cells, 'E');
-  if (e === 0) p.push('Chýba vchod.');
-  if (e > 1) p.push('Vchod môže byť len jeden.');
+  if (e === 0) p.push('Chybí vchod.');
+  if (e > 1) p.push('Vchod může být jen jeden.');
   const t = count(cells, '$');
-  if (t === 0) p.push('Chýba poklad.');
-  if (t > 1) p.push('Poklad môže byť len jeden.');
+  if (t === 0) p.push('Chybí poklad.');
+  if (t > 1) p.push('Poklad může být jen jeden.');
   const tp = count(cells, 'T');
-  if (tp === 1) p.push('Teleport potrebuje pár — polož ešte jeden.');
-  if (tp > 2) p.push('Teleporty môžu byť len dva.');
+  if (tp === 1) p.push('Teleport potřebuje pár — polož ještě jeden.');
+  if (tp > 2) p.push('Teleporty můžou být jen dva.');
   const cost = gridCost(cells);
-  if (cost > BUDGET) p.push(`Prekročený rozpočet: ${cost} z ${BUDGET}.`);
+  if (cost > BUDGET) p.push(`Překročený rozpočet: ${cost} z ${BUDGET}.`);
   return p;
 }
 

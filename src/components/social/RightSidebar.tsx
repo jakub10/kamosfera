@@ -43,10 +43,10 @@ export function RightSidebar() {
   return (
     <aside className="hidden lg:block fixed right-0 top-0 h-screen w-80 bg-card border-l border-border p-4 overflow-y-auto">
       <div className="bg-secondary rounded-xl p-4">
-        <h3 className="font-semibold mb-1">Moji kamaráti</h3>
-        <p className="text-xs text-muted-foreground mb-4">Kamaráta si pridáš naživo, keď ste spolu.</p>
+        <h3 className="font-semibold mb-1">Moji kamarádi</h3>
+        <p className="text-xs text-muted-foreground mb-4">Kamaráda si přidáš naživo, když jste spolu.</p>
         {friends && friends.length === 0 && (
-          <p className="text-sm text-muted-foreground">Zatiaľ žiadni — ukáž kamarátovi svoj kód. 🙂</p>
+          <p className="text-sm text-muted-foreground">Zatím žádní — ukaž kamarádovi svůj kód. 🙂</p>
         )}
         <ul className="space-y-2">
           {(friends ?? []).map((f) => (
@@ -66,7 +66,7 @@ export function RightSidebar() {
           ))}
         </ul>
         <Button variant="ghost" className="w-full mt-4 text-primary" asChild>
-          <Link to="/kamarati">Pridať kamaráta</Link>
+          <Link to="/kamarati">Přidat kamaráda</Link>
         </Button>
       </div>
     </aside>

@@ -44,7 +44,7 @@ const rpc = (fn: string, args?: Record<string, unknown>) => (supabase.rpc as any
 
 async function call<T>(fn: string, args?: Record<string, unknown>): Promise<T> {
   const { data, error } = await rpc(fn, args);
-  if (error) throw new Error(error.message || 'Niečo sa pokazilo. Skús to znova.');
+  if (error) throw new Error(error.message || 'Něco se pokazilo. Zkus to znovu.');
   return data as T;
 }
 

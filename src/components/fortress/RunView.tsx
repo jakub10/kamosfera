@@ -375,11 +375,11 @@ export function RunView({ cells, mode, title, replay, claimed, onFinish, onClose
             setMuted(!muted);
             setMutedState(!muted);
           }}
-          aria-label={muted ? 'Zapnúť zvuk' : 'Vypnúť zvuk'}
+          aria-label={muted ? 'Zapnout zvuk' : 'Vypnout zvuk'}
         >
           {muted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
         </button>
-        <button type="button" className="rounded-full p-2 hover:bg-white/10" onClick={onClose} aria-label="Zavrieť">
+        <button type="button" className="rounded-full p-2 hover:bg-white/10" onClick={onClose} aria-label="Zavřít">
           <X className="h-5 w-5" />
         </button>
       </div>
@@ -397,7 +397,7 @@ export function RunView({ cells, mode, title, replay, claimed, onFinish, onClose
         <span
           className={`rounded-full px-2 py-0.5 text-xs ${hud.treasure ? 'bg-amber-400 text-amber-950' : 'bg-white/10'}`}
         >
-          {hud.treasure ? 'Poklad máš — utekaj k vchodu!' : 'Nájdi poklad'}
+          {hud.treasure ? 'Poklad máš — utíkej ke vchodu!' : 'Najdi poklad'}
         </span>
       </div>
 
@@ -406,7 +406,7 @@ export function RunView({ cells, mode, title, replay, claimed, onFinish, onClose
           ref={canvasRef}
           style={{ width: ts * W, height: ts * H }}
           className="rounded-lg shadow-2xl"
-          aria-label="Pevnosť"
+          aria-label="Pevnost"
         />
 
         {phase === 'countdown' && (
@@ -422,13 +422,13 @@ export function RunView({ cells, mode, title, replay, claimed, onFinish, onClose
             <div className="w-full max-w-sm rounded-2xl bg-white p-6 text-center text-slate-900 shadow-2xl animate-in zoom-in-95 fade-in">
               <ResultHeading mode={mode} success={result.success} />
               <p className="mt-2 text-lg font-bold tabular-nums">
-                {result.success ? formatTime(result.timeMs) : 'Čas vypršal'}
+                {result.success ? formatTime(result.timeMs) : 'Čas vypršel'}
                 <span className="mx-2 text-slate-300">·</span>
-                {result.hits} {result.hits === 1 ? 'pasca' : result.hits >= 2 && result.hits <= 4 ? 'pasce' : 'pascí'}
+                {result.hits} {result.hits === 1 ? 'past' : result.hits >= 2 && result.hits <= 4 ? 'pasti' : 'pastí'}
               </p>
               {verified !== null && (
                 <p className={`mt-2 text-sm font-semibold ${verified ? 'text-emerald-600' : 'text-red-600'}`}>
-                  {verified ? '✓ Záznam sedí s výsledkom' : '⚠ Záznam nesedí s výsledkom'}
+                  {verified ? '✓ Záznam sedí s výsledkem' : '⚠ Záznam nesedí s výsledkem'}
                 </p>
               )}
               {resultNote && <div className="mt-3 text-sm text-slate-600">{resultNote}</div>}
@@ -439,14 +439,14 @@ export function RunView({ cells, mode, title, replay, claimed, onFinish, onClose
                   onClick={restart}
                   className="inline-flex items-center gap-1 rounded-xl bg-slate-100 px-4 py-2 font-semibold hover:bg-slate-200"
                 >
-                  <RotateCcw className="h-4 w-4" /> {mode === 'replay' ? 'Pozrieť znova' : 'Znova'}
+                  <RotateCcw className="h-4 w-4" /> {mode === 'replay' ? 'Podívat se znovu' : 'Znovu'}
                 </button>
                 <button
                   type="button"
                   onClick={onClose}
                   className="rounded-xl bg-slate-900 px-4 py-2 font-semibold text-white hover:bg-slate-700"
                 >
-                  Späť
+                  Zpět
                 </button>
               </div>
             </div>
@@ -462,7 +462,7 @@ export function RunView({ cells, mode, title, replay, claimed, onFinish, onClose
           </div>
         ) : (
           <p className="shrink-0 pb-3 pt-2 text-center text-xs text-white/60">
-            Šípky alebo WASD — pohyb · Medzerník — rozbiť stenu · Esc — späť
+            Šipky nebo WASD — pohyb · Mezerník — rozbít zeď · Esc — zpět
           </p>
         ))}
     </div>
@@ -477,15 +477,15 @@ function ResultHeading({ mode, success }: { mode: RunMode; success: boolean }) {
   const [text, sub] =
     mode === 'test'
       ? success
-        ? ['Dá sa prejsť! ✅', 'Pevnosť je overená — môžeš ju zverejniť.']
-        : ['Tentoraz to nevyšlo', 'Pevnosť treba vedieť prejsť vlastnými silami. Skús znova, alebo ju uľahči.']
+        ? ['Dá se projít! ✅', 'Pevnost je ověřená — můžeš ji zveřejnit.']
+        : ['Tentokrát to nevyšlo', 'Pevnost musí jít projít vlastními silami. Zkus to znovu, nebo ji ulehči.']
       : mode === 'raid'
         ? success
-          ? ['Vykradnuté! 🏆', 'Poklad je tvoj.']
-          : ['Tentoraz nie', 'Obrancovia vyhrali. Skús to znova!']
+          ? ['Vykradeno! 🏆', 'Poklad je tvůj.']
+          : ['Tentokrát ne', 'Obránci vyhráli. Zkus to znovu!']
         : success
-          ? ['Pevnosť padla', 'Nájazdník sa dostal k pokladu a späť.']
-          : ['Pevnosť vydržala 🛡️', 'Nájazdník to nestihol.'];
+          ? ['Pevnost padla', 'Nájezdník se dostal k pokladu a zpět.']
+          : ['Pevnost vydržela 🛡️', 'Nájezdník to nestihl.'];
   return (
     <div>
       {success && (

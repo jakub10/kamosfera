@@ -15,7 +15,7 @@ import { loadFortress, profilesByIds, submitRaid, formatTime } from '@/games/for
 import { cn } from '@/lib/utils';
 
 /**
- * Pevnosť & Nájazd.
+ * Pevnost & Nájezd.
  *
  * Postav pevnosť, schovaj poklad, kamaráti ju vykradnú za 60 sekúnd.
  * Nikto nemusí byť online v rovnakom čase — majiteľ si potom pozrie celý
@@ -25,10 +25,10 @@ import { cn } from '@/lib/utils';
 type Tab = 'moja' | 'vykradnut' | 'zaznamy' | 'rebricek';
 
 const TABS: { id: Tab; label: string; icon: typeof Castle }[] = [
-  { id: 'moja', label: 'Moja pevnosť', icon: Castle },
-  { id: 'vykradnut', label: 'Vykradnúť', icon: Swords },
+  { id: 'moja', label: 'Moje pevnost', icon: Castle },
+  { id: 'vykradnut', label: 'Vykrást', icon: Swords },
   { id: 'zaznamy', label: 'Záznamy', icon: History },
-  { id: 'rebricek', label: 'Rebríček', icon: Trophy },
+  { id: 'rebricek', label: 'Žebříček', icon: Trophy },
 ];
 
 interface Profile {
@@ -68,7 +68,7 @@ const Pevnost = () => {
         const f = await loadFortress(id);
         if (!f || !f.published || f.owner_id === user.id) return;
         const ppl = await profilesByIds([f.owner_id]);
-        setRaid({ id: f.id, cells: f.grid.cells, ownerName: ppl[f.owner_id]?.full_name ?? 'kamaráta' });
+        setRaid({ id: f.id, cells: f.grid.cells, ownerName: ppl[f.owner_id]?.full_name ?? 'kamaráda' });
       } catch (e) {
         console.error('[pevnosť] odkaz na nájazd zlyhal:', e);
       } finally {
@@ -90,20 +90,20 @@ const Pevnost = () => {
       if (!raid || !user) return;
       setRaidNote(
         <span className="inline-flex items-center gap-1">
-          <Loader2 className="h-4 w-4 animate-spin" /> Zapisujem nájazd…
+          <Loader2 className="h-4 w-4 animate-spin" /> Zapisuji nájezd…
         </span>
       );
       try {
         await submitRaid(raid.id, user.id, result, rep);
         setRaidNote(
           result.success
-            ? `Zapísané! ${raid.ownerName} dostane správu o tvojom nájazde: ${formatTime(result.timeMs)}. 😎`
-            : 'Zapísané. Majiteľ uvidí celý nájazd — a ty už vieš, kde sú pasce.'
+            ? `Zapsáno! ${raid.ownerName} dostane zprávu o tvém nájezdu: ${formatTime(result.timeMs)}. 😎`
+            : 'Zapsáno. Majitel uvidí celý nájezd — a ty už víš, kde jsou pasti.'
         );
         setRefresh((n) => n + 1);
       } catch (e) {
         console.error('[pevnosť] zápis nájazdu zlyhal:', e);
-        setRaidNote(<span className="font-semibold text-red-600">{(e as Error).message ?? 'Nájazd sa nepodarilo zapísať.'}</span>);
+        setRaidNote(<span className="font-semibold text-red-600">{(e as Error).message ?? 'Nájezd se nepodařilo zapsat.'}</span>);
       }
     },
     [raid, user]
@@ -121,8 +121,8 @@ const Pevnost = () => {
               <Castle className="h-8 w-8" />
             </div>
             <div>
-              <h1 className="text-2xl font-black">Pevnosť & Nájazd</h1>
-              <p className="text-muted-foreground">Postav pevnosť, schovaj poklad. Kamaráti majú 60 sekúnd.</p>
+              <h1 className="text-2xl font-black">Pevnost & Nájezd</h1>
+              <p className="text-muted-foreground">Postav pevnost, schovej poklad. Kamarádi mají 60 sekund.</p>
             </div>
           </header>
 
@@ -151,9 +151,9 @@ const Pevnost = () => {
             </div>
           ) : !user ? (
             <div className="rounded-2xl border p-8 text-center">
-              <p className="mb-3">Na stavanie a vykrádanie pevností sa treba prihlásiť.</p>
+              <p className="mb-3">Na stavění a vykrádání pevností se musíš přihlásit.</p>
               <Link to="/" className="font-semibold text-primary underline">
-                Prihlásiť sa
+                Přihlásit se
               </Link>
             </div>
           ) : tab === 'moja' ? (
@@ -180,7 +180,7 @@ const Pevnost = () => {
         <RunView
           cells={raid.cells}
           mode="raid"
-          title={`Nájazd na pevnosť: ${raid.ownerName}`}
+          title={`Nájezd na pevnost: ${raid.ownerName}`}
           onFinish={onRaidFinish}
           onClose={() => setRaid(null)}
           resultNote={raidNote}
