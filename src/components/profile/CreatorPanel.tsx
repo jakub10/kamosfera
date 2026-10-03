@@ -247,7 +247,14 @@ export function CreatorPanel() {
         throw new Error('Funkce ai-moderation není v Supabase nahraná (Edge Functions → Deploy).');
       }
       if (!response.ok) {
-        throw new Error(result.error || 'Kontrola obsahu selhala.');
+        // Chybu může vrátit naše funkce ({error}) nebo brána Supabase ({message}/{msg}).
+        const why = result.error || result.message || result.msg;
+        if (response.status === 401 && !result.error) {
+          throw new Error(
+            'Supabase odmítl přihlášení (401). V Edge Functions → ai-moderation → Settings vypni „Verify JWT" a dej Save.'
+          );
+        }
+        throw new Error(`Kontrola obsahu selhala (${response.status}${why ? `: ${why}` : ''}).`);
       }
 
       toast({
