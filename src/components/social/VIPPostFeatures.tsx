@@ -7,6 +7,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
+import { KAMOS_STICKERS } from '@/lib/stickers';
 
 export type PostBackgroundStyle = 
   | 'gradient-purple' 
@@ -50,7 +51,17 @@ export const VIP_BACKGROUNDS: { id: PostBackgroundStyle; name: string; className
 ];
 
 // VIP exclusive image emojis - actual image URLs (not text characters)
-export const VIP_IMAGE_EMOJIS = [
+export interface VipEmoji {
+  id: string;
+  name: string;
+  url: string;
+  cost: number;
+  /** Vlastní nálepka Kamosféry (větší, v telefonu ji nenajdeš). */
+  sticker?: boolean;
+}
+
+/** Starší obrázková emoji (z telefonu). V obchodě už nejsou, kdo je koupil, má je dál. */
+const PHONE_EMOJIS: VipEmoji[] = [
   { id: 'star-gold', name: 'Zlatá hvězda', url: 'https://em-content.zobj.net/source/apple/391/star_2b50.png', cost: 0 },
   { id: 'crown', name: 'Koruna', url: 'https://em-content.zobj.net/source/apple/391/crown_1f451.png', cost: 0 },
   { id: 'diamond', name: 'Diamant', url: 'https://em-content.zobj.net/source/apple/391/gem-stone_1f48e.png', cost: 0 },
@@ -82,6 +93,8 @@ export const VIP_IMAGE_EMOJIS = [
   { id: 'ice-cream', name: 'Zmrzlina', url: 'https://em-content.zobj.net/source/apple/391/ice-cream_1f368.png', cost: 25 },
   { id: 'rainbow-flag', name: 'Duhová vlajka', url: 'https://em-content.zobj.net/source/apple/391/rainbow-flag_1f3f3-fe0f-200d-1f308.png', cost: 100 },
 ];
+
+export const VIP_IMAGE_EMOJIS: VipEmoji[] = [...KAMOS_STICKERS, ...PHONE_EMOJIS];
 
 export function getBackgroundClass(style: PostBackgroundStyle): string {
   const bg = VIP_BACKGROUNDS.find(b => b.id === style);
@@ -227,7 +240,7 @@ export function VIPEmojiPicker({
 }: VIPEmojiPickerProps) {
   const [open, setOpen] = useState(false);
 
-  const isUnlocked = (emoji: typeof VIP_IMAGE_EMOJIS[0]) => {
+  const isUnlocked = (emoji: VipEmoji) => {
     if (emoji.cost === 0) return true;
     return unlockedEmojis.includes(emoji.id);
   };
@@ -256,51 +269,31 @@ export function VIPEmojiPicker({
             </div>
           </div>
           
-          {/* Free emojis */}
+          {/* Nálepky Kamosféry */}
           <div>
-            <p className="text-xs text-muted-foreground mb-2">Základní</p>
-            <div className="grid grid-cols-6 gap-1.5">
-              {VIP_IMAGE_EMOJIS.filter(e => e.cost === 0).map((emoji) => (
-                <button
-                  key={emoji.id}
-                  onClick={() => {
-                    onEmojiSelect(`[img:${emoji.id}]`);
-                    setOpen(false);
-                  }}
-                  className="h-10 w-10 flex items-center justify-center rounded-lg hover:bg-amber-500/10 transition-colors"
-                  title={emoji.name}
-                >
-                  <img src={emoji.url} alt={emoji.name} className="h-7 w-7" />
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Premium emojis */}
-          <div>
-            <p className="text-xs text-muted-foreground mb-2">Premium (odemkni v obchodě)</p>
-            <div className="grid grid-cols-6 gap-1.5">
-              {VIP_IMAGE_EMOJIS.filter(e => e.cost > 0).map((emoji) => {
-                const unlocked = isUnlocked(emoji);
+            <p className="text-xs text-muted-foreground mb-2">Nálepky Kamosféry 🤖</p>
+            <div className="grid grid-cols-5 gap-1.5">
+              {KAMOS_STICKERS.map((st) => {
+                const unlocked = isUnlocked(st);
                 return (
                   <button
-                    key={emoji.id}
+                    key={st.id}
+                    type="button"
                     onClick={() => {
-                      if (unlocked) {
-                        onEmojiSelect(`[img:${emoji.id}]`);
-                        setOpen(false);
-                      }
+                      if (!unlocked) return;
+                      onEmojiSelect(`[img:${st.id}]`);
+                      setOpen(false);
                     }}
                     disabled={!unlocked}
                     className={cn(
-                      "relative h-10 w-10 flex items-center justify-center rounded-lg transition-colors",
-                      unlocked ? "hover:bg-amber-500/10" : "opacity-50 cursor-not-allowed"
+                      'relative h-12 w-12 rounded-lg transition-colors',
+                      unlocked ? 'hover:bg-amber-500/10' : 'cursor-not-allowed opacity-50'
                     )}
-                    title={`${emoji.name} (${emoji.cost} bodů)`}
+                    title={unlocked ? st.name : `${st.name} (${st.cost} bodů v obchodě)`}
                   >
-                    <img src={emoji.url} alt={emoji.name} className="h-7 w-7" />
+                    <StickerImage url={st.url} name={st.name} className="h-11 w-11" />
                     {!unlocked && (
-                      <div className="absolute inset-0 flex items-center justify-center bg-black/30 rounded-lg">
+                      <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-black/30">
                         <Lock className="h-3 w-3 text-white" />
                       </div>
                     )}
@@ -309,9 +302,50 @@ export function VIPEmojiPicker({
               })}
             </div>
           </div>
+
+          {/* Základní a dřív koupená emoji */}
+          <div>
+            <p className="text-xs text-muted-foreground mb-2">Emoji</p>
+            <div className="grid grid-cols-6 gap-1.5">
+              {PHONE_EMOJIS.filter((e) => isUnlocked(e)).map((emoji) => (
+                <button
+                  key={emoji.id}
+                  type="button"
+                  onClick={() => {
+                    onEmojiSelect(`[img:${emoji.id}]`);
+                    setOpen(false);
+                  }}
+                  className="h-10 w-10 flex items-center justify-center rounded-lg hover:bg-amber-500/10 transition-colors"
+                  title={emoji.name}
+                >
+                  <StickerImage url={emoji.url} name={emoji.name} className="h-7 w-7" />
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       </PopoverContent>
     </Popover>
+  );
+}
+
+/**
+ * Obrázek, který nejde jednoduše zkopírovat: není to <img>, takže ho nejde
+ * přetáhnout, „Uložit obrázek jako…" ani zkopírovat s textem příspěvku.
+ * (Snímek obrazovky zastavit nejde — to žádná aplikace neumí.)
+ */
+export function StickerImage({ url, name, className }: { url: string; name: string; className?: string }) {
+  return (
+    <span
+      role="img"
+      aria-label={name}
+      title={name}
+      draggable={false}
+      onContextMenu={(e) => e.preventDefault()}
+      onDragStart={(e) => e.preventDefault()}
+      className={cn('inline-block select-none bg-contain bg-center bg-no-repeat [-webkit-touch-callout:none] [-webkit-user-drag:none]', className)}
+      style={{ backgroundImage: `url("${url}")` }}
+    />
   );
 }
 
@@ -326,29 +360,32 @@ export function renderVIPEmojis(text: string): React.ReactNode[] {
     if (match.index > lastIndex) {
       parts.push(text.slice(lastIndex, match.index));
     }
-    
-    const emojiId = match[1];
-    const emoji = VIP_IMAGE_EMOJIS.find(e => e.id === emojiId);
+
+    const emoji = VIP_IMAGE_EMOJIS.find((e) => e.id === match![1]);
     if (emoji) {
       parts.push(
-        <img 
-          key={match.index} 
-          src={emoji.url} 
-          alt={emoji.name} 
-          className="inline-block h-5 w-5 align-text-bottom mx-0.5"
+        <StickerImage
+          key={match.index}
+          url={emoji.url}
+          name={emoji.name}
+          className={
+            emoji.sticker
+              ? 'mx-0.5 h-20 w-20 rounded-2xl bg-white align-middle shadow-sm ring-1 ring-black/5'
+              : 'mx-0.5 h-5 w-5 align-text-bottom'
+          }
         />
       );
     } else {
       parts.push(match[0]);
     }
-    
+
     lastIndex = match.index + match[0].length;
   }
-  
+
   if (lastIndex < text.length) {
     parts.push(text.slice(lastIndex));
   }
-  
+
   return parts.length > 0 ? parts : [text];
 }
 

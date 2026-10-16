@@ -1,6 +1,5 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
-import LanguageDetector from 'i18next-browser-languagedetector';
 import cs from './locales/cs.json';
 import sk from './locales/sk.json';
 import en from './locales/en.json';
@@ -14,10 +13,12 @@ export const LANG_LABELS: Record<Lang, string> = {
   en: '🇬🇧 English',
 };
 
+// Kamosféra je celá česky. Menu se dřív řídilo jazykem prohlížeče, takže
+// kamarádi ze Slovenska měli menu slovensky a zbytek česky.
 i18n
-  .use(LanguageDetector)
   .use(initReactI18next)
   .init({
+    lng: 'cs',
     resources: {
       cs: { translation: cs },
       sk: { translation: sk },
@@ -26,11 +27,6 @@ i18n
     fallbackLng: 'cs',
     supportedLngs: SUPPORTED_LANGS as unknown as string[],
     interpolation: { escapeValue: false },
-    detection: {
-      order: ['localStorage', 'navigator'],
-      lookupLocalStorage: 'kamosfera-lang',
-      caches: ['localStorage'],
-    },
   });
 
 export default i18n;

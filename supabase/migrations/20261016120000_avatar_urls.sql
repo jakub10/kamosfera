@@ -25,3 +25,8 @@ UPDATE public.profiles
 UPDATE public.profiles
    SET avatar_config = jsonb_set(avatar_config, '{eyes}', '"closed"')
  WHERE avatar_config->>'eyes' = 'close';
+
+-- Výchozí nastavení avatara bylo z jiného stylu („variant01", „short01"…),
+-- se kterým DiceBear avataaars nic nenakreslí. Editor teď neznámé hodnoty
+-- nahradí sám, nové účty začínají s prázdným nastavením.
+ALTER TABLE public.profiles ALTER COLUMN avatar_config SET DEFAULT '{}'::jsonb;

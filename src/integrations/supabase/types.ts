@@ -346,8 +346,10 @@ export type Database = {
       groups: {
         Row: {
           avatar_url: string | null
+          color: string
           created_at: string
           description: string | null
+          emoji: string
           id: string
           is_private: boolean
           name: string
@@ -356,8 +358,10 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
+          color?: string
           created_at?: string
           description?: string | null
+          emoji?: string
           id?: string
           is_private?: boolean
           name: string
@@ -366,8 +370,10 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
+          color?: string
           created_at?: string
           description?: string | null
+          emoji?: string
           id?: string
           is_private?: boolean
           name?: string

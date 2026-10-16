@@ -66,7 +66,7 @@
   },
   "shop": {
     "title": "Obchod",
-    "subtitle": "Odemkni pozadí a emoji za body",
+    "subtitle": "Odemkni pozadí a nálepky za body",
     "points": "bodů",
     "buy": "Koupit",
     "owned": "Vlastníš",
@@ -74,7 +74,7 @@
     "free": "Zdarma",
     "vipFree": "VIP zdarma",
     "backgrounds": "Pozadí",
-    "emojis": "Emoji",
+    "emojis": "Nálepky",
     "howToEarn": "Jak získat body?",
     "howToEarnText": "Body získáváš plněním achievementů – přidávej příspěvky, lajkuj, komentuj a získávej přátele."
   },

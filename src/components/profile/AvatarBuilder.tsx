@@ -192,6 +192,41 @@ const defaultConfig: AvatarConfig = {
   backgroundColor: 'b6e3f4',
 };
 
+// Staré uložené hodnoty, které DiceBear nezná (César, zavřené oči).
+const RENAMED: Record<string, string> = { caesar: 'theCaesar', close: 'closed' };
+const ALLOWED: Partial<Record<keyof AvatarConfig, { id: string }[]>> = {
+  hair: HAIR_STYLES,
+  hairColor: HAIR_COLORS,
+  skinColor: SKIN_COLORS,
+  eyes: EYES,
+  eyebrows: EYEBROWS,
+  mouth: MOUTH,
+  facialHair: FACIAL_HAIR,
+  facialHairColor: HAIR_COLORS,
+  accessories: ACCESSORIES,
+  clothing: CLOTHING,
+  clothingColor: CLOTHING_COLORS,
+  backgroundColor: BACKGROUND_COLORS,
+};
+
+/**
+ * Uložené nastavení → platné pro avataaars. Nové účty mají v databázi
+ * výchozí hodnoty z jiného stylu („variant01", „short01"…) — s nimi
+ * DiceBear obrázek vůbec nenakreslí, takže je nahradíme výchozími.
+ */
+function sanitizeConfig(saved: Record<string, unknown>): AvatarConfig {
+  const out = { ...defaultConfig };
+  for (const key of Object.keys(defaultConfig) as (keyof AvatarConfig)[]) {
+    const raw = saved[key];
+    if (raw === undefined || raw === null) continue;
+    const v = RENAMED[String(raw)] ?? String(raw);
+    const allowed = ALLOWED[key];
+    if (!allowed || allowed.some((o) => o.id === v)) out[key] = v;
+  }
+  out.style = 'avataaars';
+  return out;
+}
+
 export function AvatarBuilder() {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -212,14 +247,7 @@ export function AvatarBuilder() {
       
       if (data?.avatar_config && typeof data.avatar_config === 'object') {
         const configData = data.avatar_config as Record<string, unknown>;
-        // Staré uložené hodnoty, které DiceBear nezná (César, zavřené oči).
-        const RENAMED: Record<string, string> = { caesar: 'theCaesar', close: 'closed' };
-        setConfig(prev => ({
-          ...prev,
-          ...Object.fromEntries(
-            Object.entries(configData).map(([k, v]) => [k, RENAMED[String(v ?? '')] ?? String(v ?? '')])
-          )
-        } as AvatarConfig));
+        setConfig(sanitizeConfig(data.avatar_config as Record<string, unknown>));
       }
       setLoading(false);
     };
