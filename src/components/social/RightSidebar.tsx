@@ -41,7 +41,7 @@ export function RightSidebar() {
   }, [user]);
 
   return (
-    <aside className="hidden lg:block fixed right-0 top-0 h-screen w-80 bg-card border-l border-border p-4 overflow-y-auto">
+    <aside className="hidden lg:block fixed right-0 top-0 h-screen h-dvh w-80 bg-card border-l border-border p-4 pb-28 overflow-y-auto">
       <div className="bg-secondary rounded-xl p-4">
         <h3 className="font-semibold mb-1">Moji kamarádi</h3>
         <p className="text-xs text-muted-foreground mb-4">Kamaráda si přidáš naživo, když jste spolu.</p>

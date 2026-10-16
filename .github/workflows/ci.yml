@@ -109,3 +109,6 @@ jobs:
 
       - name: Testy strážcu správ
         run: psql -v ON_ERROR_STOP=1 -f supabase/tests/08_message_guard.sql
+
+      - name: Testy oprav (přezdívka, přečtené zprávy, pomoc)
+        run: psql -v ON_ERROR_STOP=1 -f supabase/tests/09_fixes.sql

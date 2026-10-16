@@ -21,7 +21,7 @@ export interface GuardianView {
   username: string;
   label: string;
   since: string;
-  signals: { kind: 'uncomfortable' | 'ai_harmful' | 'ai_secret'; at: string }[];
+  signals: { kind: 'uncomfortable' | 'ai_harmful' | 'ai_secret' | 'help'; at: string }[];
 }
 
 export interface AdminMember {
@@ -56,6 +56,11 @@ export const onboardingDone = () => call<void>('onboarding_done');
 export const guardianInviteNew = () => call<string>('guardian_invite_new');
 export const reportUncomfortable = (other: string) =>
   call<{ guardian: boolean }>('report_uncomfortable', { _other: other });
+export const askGuardianHelp = () => call<{ guardian: boolean }>('ask_guardian_help');
+
+/** Štítek, který dospělý nevyplnil, se nezobrazuje (jinak „Tvůj důvěrník: důvěrník"). */
+export const guardianName = (label: string | null | undefined) =>
+  label && !/^d[ůô]v[ěe]rník$/i.test(label.trim()) ? label.trim() : null;
 
 export const friendCodeNew = () => call<{ code: string; expires_at: string }>('friend_code_new');
 export const friendCodeUse = (code: string) =>

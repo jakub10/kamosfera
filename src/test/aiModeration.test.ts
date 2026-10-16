@@ -68,3 +68,16 @@ describe('AI kontrola příspěvků', () => {
     expect((await res.json()).error).toContain('LIQUID_API_KEY');
   });
 });
+
+describe('klíče Supabase', () => {
+  const env = (o: Record<string, string>) => ({ get: (k: string) => o[k] });
+  it('nový tajný klíč jde jen jako apikey, starý i jako Bearer', async () => {
+    const { supabaseKeys } = await import('../../supabase/functions/ai-moderation/index');
+    const req = new Request('https://x', { headers: { apikey: 'sb_publishable_abc' } });
+    const neu = supabaseKeys(env({ SUPABASE_SECRET_KEYS: '{"default":"sb_secret_x"}' }), req);
+    expect(neu).toMatchObject({ anon: 'sb_publishable_abc', serviceHeaders: { apikey: 'sb_secret_x' } });
+    expect(neu.serviceHeaders).not.toHaveProperty('Authorization');
+    const old = supabaseKeys(env({ SUPABASE_ANON_KEY: 'a', SUPABASE_SERVICE_ROLE_KEY: 'eyJ' }), new Request('https://x'));
+    expect(old).toMatchObject({ anon: 'a', serviceHeaders: { apikey: 'eyJ', Authorization: 'Bearer eyJ' } });
+  });
+});
