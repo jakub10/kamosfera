@@ -237,6 +237,8 @@ export function CreatorPanel() {
           headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${session.access_token}`,
+            // Bez apikey brána Supabase volání odmítne (401) ještě před funkcí.
+            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? '',
           },
         }
       );
@@ -251,7 +253,7 @@ export function CreatorPanel() {
         const why = result.error || result.message || result.msg;
         if (response.status === 401 && !result.error) {
           throw new Error(
-            'Supabase odmítl přihlášení (401). V Edge Functions → ai-moderation → Settings vypni „Verify JWT" a dej Save.'
+            `Supabase odmítl přihlášení (401${why ? `: ${why}` : ''}). V Edge Functions → ai-moderation → Settings vypni „Verify JWT" a dej Save.`
           );
         }
         throw new Error(`Kontrola obsahu selhala (${response.status}${why ? `: ${why}` : ''}).`);

@@ -14,6 +14,7 @@ const Shell = ({ children }: { children: React.ReactNode }) => (
 
 const SIGNAL_TEXT: Record<GuardianView['signals'][number]['kind'], (name: string) => string> = {
   uncomfortable: (n) => `${n} zmáčkl(a) „Tohle mi není příjemné".`,
+  help: (n) => `${n} zmáčkl(a) „Potřebuju pomoct". Ozvěte se mu/jí, prosím.`,
   ai_harmful: (n) => `${n} měl(a) dostat zprávu, která by mohla ublížit. Strážce ji nedoručil.`,
   ai_secret: (n) => `Někdo se snažil ${n} přemluvit, aby něco tajil(a) před dospělými, přešel/přešla do jiné aplikace, poslal(a) fotku nebo se sešel/sešla.`,
 };

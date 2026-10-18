@@ -9,7 +9,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useTranslation } from 'react-i18next';
-import { VIP_BACKGROUNDS, VIP_IMAGE_EMOJIS } from '@/components/social/VIPPostFeatures';
+import { StickerImage, VIP_BACKGROUNDS } from '@/components/social/VIPPostFeatures';
+import { KAMOS_STICKERS } from '@/lib/stickers';
 import { cn } from '@/lib/utils';
 
 interface UserShopData {
@@ -95,7 +96,8 @@ export function VIPShop() {
   const isOwned = (itemId: string) => userData.unlocked_items.includes(itemId);
 
   const premiumBackgrounds = VIP_BACKGROUNDS.filter(bg => bg.cost && bg.cost > 0);
-  const premiumEmojis = VIP_IMAGE_EMOJIS.filter(e => e.cost > 0);
+  // V obchodě jsou jen vlastní nálepky Kamosféry — emoji z telefonu má každý zadarmo.
+  const premiumEmojis = KAMOS_STICKERS.filter(e => e.cost > 0);
 
   if (loading) {
     return (
@@ -221,6 +223,10 @@ export function VIPShop() {
           </TabsContent>
 
           <TabsContent value="emojis" className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Nálepky robota Kamoše jsou jen v Kamosféře. Tři máš zdarma, další si odemkni body. Vložíš je ✨ tlačítkem
+              při psaní příspěvku.
+            </p>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
               {premiumEmojis.map((emoji) => {
                 const owned = isOwned(emoji.id);
@@ -236,8 +242,8 @@ export function VIPShop() {
                       !owned && canAfford && "hover:border-amber-500/50"
                     )}
                   >
-                    <div className="h-16 w-16 mx-auto mb-3 rounded-xl bg-muted flex items-center justify-center">
-                      <img src={emoji.url} alt={emoji.name} className="h-12 w-12" />
+                    <div className="h-20 w-20 mx-auto mb-3 rounded-2xl bg-white flex items-center justify-center shadow-sm ring-1 ring-black/5">
+                      <StickerImage url={emoji.url} name={emoji.name} className="h-[4.5rem] w-[4.5rem]" />
                     </div>
                     
                     <h4 className="font-medium text-sm mb-1 truncate">{emoji.name}</h4>

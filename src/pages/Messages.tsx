@@ -116,7 +116,7 @@ const Messages = () => {
             setMessages(prev => [...prev, newMsg]);
             // Mark as read if from other user
             if (newMsg.sender_id !== user?.id) {
-              markMessageAsRead(newMsg.id);
+              markMessageAsRead(newMsg.conversation_id, newMsg.id);
             }
           }
         )
@@ -240,22 +240,23 @@ const Messages = () => {
     }
   };
 
-  const markMessagesAsRead = async (conversationId: string) => {
+  // Přečtení dělá funkce v databázi — přímý UPDATE smí jen odesílatel zprávy.
+  const markRead = async (conversationId: string, messageId?: string) => {
     if (!user) return;
-    await supabase
-      .from('messages')
-      .update({ read: true })
-      .eq('conversation_id', conversationId)
-      .neq('sender_id', user.id)
-      .eq('read', false);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await (supabase.rpc as any)('mark_conversation_read', {
+      _conversation: conversationId,
+      _message: messageId ?? null,
+    });
+    if (error) {
+      console.warn('[zprávy] označení jako přečtené selhalo:', error.message);
+      return;
+    }
+    setConversations((prev) => prev.map((c) => (c.id === conversationId && !messageId ? { ...c, unread_count: 0 } : c)));
+    window.dispatchEvent(new Event('kamosfera:unread-changed'));
   };
-
-  const markMessageAsRead = async (messageId: string) => {
-    await supabase
-      .from('messages')
-      .update({ read: true })
-      .eq('id', messageId);
-  };
+  const markMessagesAsRead = (conversationId: string) => markRead(conversationId);
+  const markMessageAsRead = (conversationId: string, messageId: string) => markRead(conversationId, messageId);
 
   const fetchCurrentProfile = async () => {
     if (!user) return;

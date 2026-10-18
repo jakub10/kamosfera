@@ -38,7 +38,7 @@ export function Sidebar({ currentProfile }: SidebarProps) {
   ];
 
   return (
-    <aside className="hidden md:flex fixed left-0 top-0 h-screen w-64 bg-card border-r border-border flex-col">
+    <aside className="hidden md:flex fixed left-0 top-0 h-screen h-dvh w-64 bg-card border-r border-border flex-col">
       <div className="p-4 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-3">
           <img src={logo} alt="Kamosféra" className="h-10 w-10 rounded-xl" />
@@ -47,7 +47,7 @@ export function Sidebar({ currentProfile }: SidebarProps) {
         {/* Přepínač jazyka je schovaný: přeloží jen menu, zbytek je česky. Vrátí se, až bude obsah přeložený. */}
       </div>
 
-      <nav className="flex-1 px-3">
+      <nav className="min-h-0 flex-1 overflow-y-auto px-3">
         {navItems.map((item) => {
           const isActive = location.pathname === item.path;
           return (

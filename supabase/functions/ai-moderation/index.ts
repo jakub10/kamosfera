@@ -118,12 +118,32 @@ interface Env {
   get(name: string): string | undefined;
 }
 
+/** Klíče Supabase: starší (JWT) i nové (sb_publishable_… / sb_secret_…). */
+export function supabaseKeys(env: Env, req: Request) {
+  const pick = (json: string | undefined) => {
+    try {
+      const o = JSON.parse(json ?? '');
+      return (o?.default ?? Object.values(o ?? {})[0]) as string | undefined;
+    } catch {
+      return undefined;
+    }
+  };
+  const anon = req.headers.get('apikey') || env.get('SUPABASE_ANON_KEY') || pick(env.get('SUPABASE_PUBLISHABLE_KEYS'));
+  const service = env.get('SUPABASE_SERVICE_ROLE_KEY') || pick(env.get('SUPABASE_SECRET_KEYS'));
+  // Nový tajný klíč není JWT — posílá se jen jako apikey.
+  const serviceHeaders: Record<string, string> = service
+    ? service.startsWith('sb_')
+      ? { apikey: service }
+      : { apikey: service, Authorization: `Bearer ${service}` }
+    : {};
+  return { anon, service, serviceHeaders };
+}
+
 export async function handle(req: Request, env: Env, fetchFn: typeof fetch = fetch): Promise<Response> {
   if (req.method === 'OPTIONS') return new Response(null, { headers: cors });
 
   const url = env.get('SUPABASE_URL');
-  const anon = env.get('SUPABASE_ANON_KEY');
-  const service = env.get('SUPABASE_SERVICE_ROLE_KEY');
+  const { anon, service, serviceHeaders } = supabaseKeys(env, req);
   const key = env.get('LIQUID_API_KEY');
   if (!url || !anon || !service) return json({ error: 'Chybí nastavení Supabase.' }, 500);
   if (!key) return json({ error: 'Chybí klíč LIQUID_API_KEY v Supabase → Edge Functions → Secrets.' }, 500);
@@ -138,8 +158,7 @@ export async function handle(req: Request, env: Env, fetchFn: typeof fetch = fet
     const r = await fetchFn(`${url}/rest/v1/${path}`, {
       ...init,
       headers: {
-        apikey: service,
-        Authorization: `Bearer ${service}`,
+        ...serviceHeaders,
         'Content-Type': 'application/json',
         ...(init.headers ?? {}),
       },

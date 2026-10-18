@@ -45,7 +45,7 @@ const HAIR_STYLES = [
   { id: 'shortCurly', name: 'Krátké kudrnaté', emoji: '👨‍🦱' },
   { id: 'shortRound', name: 'Krátké kulaté', emoji: '👦' },
   { id: 'sides', name: 'Po stranách', emoji: '👴' },
-  { id: 'caesar', name: 'César', emoji: '👨' },
+  { id: 'theCaesar', name: 'César', emoji: '👨' },
   { id: 'theCaesarAndSidePart', name: 'César s pěšinkou', emoji: '👨' },
 ];
 
@@ -76,7 +76,7 @@ const EYES = [
   { id: 'default', name: 'Normální', emoji: '👁️' },
   { id: 'happy', name: 'Šťastné', emoji: '😊' },
   { id: 'wink', name: 'Mrkající', emoji: '😉' },
-  { id: 'close', name: 'Zavřené', emoji: '😌' },
+  { id: 'closed', name: 'Zavřené', emoji: '😌' },
   { id: 'squint', name: 'Přimhouřené', emoji: '😏' },
   { id: 'surprised', name: 'Překvapené', emoji: '😮' },
   { id: 'cry', name: 'Plačící', emoji: '😢' },
@@ -192,6 +192,41 @@ const defaultConfig: AvatarConfig = {
   backgroundColor: 'b6e3f4',
 };
 
+// Staré uložené hodnoty, které DiceBear nezná (César, zavřené oči).
+const RENAMED: Record<string, string> = { caesar: 'theCaesar', close: 'closed' };
+const ALLOWED: Partial<Record<keyof AvatarConfig, { id: string }[]>> = {
+  hair: HAIR_STYLES,
+  hairColor: HAIR_COLORS,
+  skinColor: SKIN_COLORS,
+  eyes: EYES,
+  eyebrows: EYEBROWS,
+  mouth: MOUTH,
+  facialHair: FACIAL_HAIR,
+  facialHairColor: HAIR_COLORS,
+  accessories: ACCESSORIES,
+  clothing: CLOTHING,
+  clothingColor: CLOTHING_COLORS,
+  backgroundColor: BACKGROUND_COLORS,
+};
+
+/**
+ * Uložené nastavení → platné pro avataaars. Nové účty mají v databázi
+ * výchozí hodnoty z jiného stylu („variant01", „short01"…) — s nimi
+ * DiceBear obrázek vůbec nenakreslí, takže je nahradíme výchozími.
+ */
+function sanitizeConfig(saved: Record<string, unknown>): AvatarConfig {
+  const out = { ...defaultConfig };
+  for (const key of Object.keys(defaultConfig) as (keyof AvatarConfig)[]) {
+    const raw = saved[key];
+    if (raw === undefined || raw === null) continue;
+    const v = RENAMED[String(raw)] ?? String(raw);
+    const allowed = ALLOWED[key];
+    if (!allowed || allowed.some((o) => o.id === v)) out[key] = v;
+  }
+  out.style = 'avataaars';
+  return out;
+}
+
 export function AvatarBuilder() {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -212,12 +247,7 @@ export function AvatarBuilder() {
       
       if (data?.avatar_config && typeof data.avatar_config === 'object') {
         const configData = data.avatar_config as Record<string, unknown>;
-        setConfig(prev => ({ 
-          ...prev,
-          ...Object.fromEntries(
-            Object.entries(configData).map(([k, v]) => [k, String(v ?? '')])
-          )
-        } as AvatarConfig));
+        setConfig(sanitizeConfig(data.avatar_config as Record<string, unknown>));
       }
       setLoading(false);
     };
@@ -245,14 +275,21 @@ export function AvatarBuilder() {
     params.set('clothesColor', cfg.clothingColor);
     
     // Accessories - omit if empty
+    // DiceBear jinak doplňky i vousy kreslí jen v 10 % případů.
     if (cfg.accessories) {
       params.set('accessories', cfg.accessories);
+      params.set('accessoriesProbability', '100');
+    } else {
+      params.set('accessoriesProbability', '0');
     }
     
     // Facial hair - omit if empty
     if (cfg.facialHair) {
       params.set('facialHair', cfg.facialHair);
       params.set('facialHairColor', cfg.facialHairColor);
+      params.set('facialHairProbability', '100');
+    } else {
+      params.set('facialHairProbability', '0');
     }
     
     // Background

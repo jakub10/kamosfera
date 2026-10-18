@@ -52,8 +52,13 @@ export function useUnreadCounts() {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` }, fetchCounts)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, fetchCounts)
       .subscribe();
+    // Zprávy hlásí přečtení hned, nečeká se na Realtime.
+    window.addEventListener('kamosfera:unread-changed', fetchCounts);
 
-    return () => { supabase.removeChannel(channel); };
+    return () => {
+      supabase.removeChannel(channel);
+      window.removeEventListener('kamosfera:unread-changed', fetchCounts);
+    };
   }, [user]);
 
   return { unreadNotifications, unreadMessages };

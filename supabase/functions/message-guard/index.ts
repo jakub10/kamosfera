@@ -125,13 +125,33 @@ interface Env {
   get(name: string): string | undefined;
 }
 
+/** Klíče Supabase: starší (JWT) i nové (sb_publishable_… / sb_secret_…). */
+export function supabaseKeys(env: Env, req: Request) {
+  const pick = (json: string | undefined) => {
+    try {
+      const o = JSON.parse(json ?? '');
+      return (o?.default ?? Object.values(o ?? {})[0]) as string | undefined;
+    } catch {
+      return undefined;
+    }
+  };
+  const anon = req.headers.get('apikey') || env.get('SUPABASE_ANON_KEY') || pick(env.get('SUPABASE_PUBLISHABLE_KEYS'));
+  const service = env.get('SUPABASE_SERVICE_ROLE_KEY') || pick(env.get('SUPABASE_SECRET_KEYS'));
+  // Nový tajný klíč není JWT — posílá se jen jako apikey.
+  const serviceHeaders: Record<string, string> = service
+    ? service.startsWith('sb_')
+      ? { apikey: service }
+      : { apikey: service, Authorization: `Bearer ${service}` }
+    : {};
+  return { anon, service, serviceHeaders };
+}
+
 export async function handle(req: Request, env: Env, fetchFn: typeof fetch = fetch): Promise<Response> {
   if (req.method === 'OPTIONS') return new Response(null, { headers: cors });
   if (req.method !== 'POST') return json({ error: 'Jen POST.' }, 405);
 
   const url = env.get('SUPABASE_URL');
-  const anon = env.get('SUPABASE_ANON_KEY');
-  const service = env.get('SUPABASE_SERVICE_ROLE_KEY');
+  const { anon, service, serviceHeaders } = supabaseKeys(env, req);
   const liquidKey = env.get('LIQUID_API_KEY');
   if (!url || !anon || !service) return json({ error: 'Chybí nastavení Supabase.' }, 500);
 
@@ -157,7 +177,7 @@ export async function handle(req: Request, env: Env, fetchFn: typeof fetch = fet
   const rpc = async (fn: string, args: Record<string, unknown>) => {
     const r = await fetchFn(`${url}/rest/v1/rpc/${fn}`, {
       method: 'POST',
-      headers: { apikey: service, Authorization: `Bearer ${service}`, 'Content-Type': 'application/json' },
+      headers: { ...serviceHeaders, 'Content-Type': 'application/json' },
       body: JSON.stringify(args),
     });
     if (!r.ok) throw new Error(`${fn}: ${r.status} ${await r.text()}`);
