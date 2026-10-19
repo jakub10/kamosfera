@@ -101,6 +101,43 @@ describe('chyba Liquid AI se ukáže tvůrci', () => {
         : (base.fn as unknown as (u: string, i?: RequestInit) => Promise<Response>)(url, init)) as unknown as typeof fetch;
     const res = await handle(req(), env(), fn);
     expect(res.status).toBe(502);
-    expect((await res.json()).error).toContain('HTTP 401: {"detail":"Invalid API key"}');
+    expect((await res.json()).error).toContain('HTTP 401 (model d1:free): {"detail":"Invalid API key"}');
+  });
+
+  it('když Liquid AI model nezná, zeptá se na seznam a použije rozhodovací model', async () => {
+    const mod = await import('../../supabase/functions/ai-moderation/index');
+    mod.resetKnownModel();
+    const base = fakeFetch([post('p1', 'blbá zpráva')], () => ({}));
+    const used: string[] = [];
+    const fn = (async (url: string, init?: RequestInit) => {
+      if (url === LIQUID_URL) {
+        const body = JSON.parse(String(init?.body));
+        used.push(body.model);
+        if (body.model === 'd1:free')
+          return new Response('{"error":{"message":"The model `d1:free` does not exist.","type":"not_found_error"}}', { status: 404 });
+        return new Response(JSON.stringify({ answers: { zavaznost: { score: 2.2 } } }), { status: 200 });
+      }
+      if (mod.LIQUID_MODELS_URLS.includes(url))
+        return new Response(JSON.stringify({ data: [{ id: 'lfm-chat' }, { id: 'd1-systemone-free' }] }), { status: 200 });
+      return (base.fn as unknown as (u: string, i?: RequestInit) => Promise<Response>)(url, init);
+    }) as unknown as typeof fetch;
+    const res = await handle(req(), env(), fn);
+    expect(res.status).toBe(200);
+    expect(used).toEqual(['d1:free', 'd1-systemone-free']);
+    expect((await res.json()).flagged).toHaveLength(1);
+    mod.resetKnownModel();
+  });
+
+  it('bez náhradního modelu řekne, které modely Liquid AI má', async () => {
+    const mod = await import('../../supabase/functions/ai-moderation/index');
+    mod.resetKnownModel();
+    const base = fakeFetch([post('p1', 'ahoj')], () => ({}));
+    const fn = (async (url: string, init?: RequestInit) => {
+      if (url === LIQUID_URL) return new Response('{"error":{"message":"The model does not exist."}}', { status: 404 });
+      if (mod.LIQUID_MODELS_URLS.includes(url)) return new Response('{}', { status: 404 });
+      return (base.fn as unknown as (u: string, i?: RequestInit) => Promise<Response>)(url, init);
+    }) as unknown as typeof fetch;
+    const res = await handle(req(), env(), fn);
+    expect((await res.json()).error).toContain('Liquid AI seznam nevrátila');
   });
 });

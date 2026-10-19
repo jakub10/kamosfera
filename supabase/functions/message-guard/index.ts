@@ -27,7 +27,88 @@ export interface Answers {
 }
 
 export const LIQUID_URL = 'https://api.liquid.ai/decisions/v1/systemone';
-export const MODEL = 'd1:free';
+
+// ---------------------------------------------------------------------------
+// Model Liquid AI. Výchozí je d1:free; jiný jde nastavit v Secrets jako
+// LIQUID_MODEL. Když Liquid AI model nezná (404), funkce se zeptá na seznam
+// dostupných modelů a vybere rozhodovací (System One / d1).
+// ---------------------------------------------------------------------------
+export const DEFAULT_MODEL = 'd1:free';
+export const MODEL = DEFAULT_MODEL;
+export const LIQUID_MODELS_URLS = ['https://api.liquid.ai/decisions/v1/models', 'https://api.liquid.ai/v1/models'];
+let knownModel: string | undefined;
+export const resetKnownModel = () => {
+  knownModel = undefined;
+};
+
+function collectIds(v: unknown, out: Set<string>) {
+  if (Array.isArray(v)) v.forEach((x) => collectIds(x, out));
+  else if (typeof v === 'string') out.add(v);
+  else if (v && typeof v === 'object') {
+    const o = v as Record<string, unknown>;
+    for (const k of ['id', 'name', 'model', 'slug']) if (typeof o[k] === 'string') out.add(o[k] as string);
+    for (const k of ['data', 'models', 'items', 'results']) if (o[k]) collectIds(o[k], out);
+  }
+}
+
+export async function listLiquidModels(fetchFn: typeof fetch, key: string): Promise<string[]> {
+  const ids = new Set<string>();
+  for (const u of LIQUID_MODELS_URLS) {
+    try {
+      const r = await fetchFn(u, { headers: { Authorization: `Bearer ${key}` } });
+      if (r.ok) collectIds(await r.json(), ids);
+    } catch {
+      /* další adresa */
+    }
+    if (ids.size) break;
+  }
+  return [...ids];
+}
+
+export function pickModel(ids: string[], not?: string): string | undefined {
+  const c = ids.filter((m) => m !== not);
+  const dec = (m: string) => /d1|decision|system/i.test(m);
+  return c.find((m) => dec(m) && /free/i.test(m)) ?? c.find(dec) ?? c[0];
+}
+
+/** Jeden dotaz na System One. Vrátí odpovědi, nebo text chyby od Liquid AI. */
+export async function askLiquid(
+  fetchFn: typeof fetch,
+  key: string,
+  envModel: string | undefined,
+  payload: { state: string; questions: unknown },
+  signal?: AbortSignal
+): Promise<{ answers: Record<string, unknown>; model: string } | { error: string; status: number }> {
+  const send = (model: string) =>
+    fetchFn(LIQUID_URL, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model, ...payload }),
+      signal,
+    });
+  let model = knownModel ?? (envModel?.trim() || DEFAULT_MODEL);
+  let r = await send(model);
+  if (r.status === 404) {
+    const text = await r.text().catch(() => '');
+    if (/model/i.test(text)) {
+      const ids = await listLiquidModels(fetchFn, key);
+      const alt = pickModel(ids, model);
+      if (!alt) {
+        return {
+          status: 404,
+          error: `HTTP 404: ${text.slice(0, 200)} — dostupné modely: ${ids.length ? ids.join(', ') : 'Liquid AI seznam nevrátila'}`,
+        };
+      }
+      model = alt;
+      r = await send(model);
+    } else {
+      return { status: 404, error: `HTTP 404: ${text.slice(0, 300)}` };
+    }
+  }
+  if (!r.ok) return { status: r.status, error: `HTTP ${r.status} (model ${model}): ${(await r.text().catch(() => '')).slice(0, 300)}` };
+  knownModel = model;
+  return { answers: ((await r.json())?.answers ?? {}) as Record<string, unknown>, model };
+}
 
 /** Prahy z konceptu bezpečnosti — doladia sa na skutočných správach. */
 export const THRESHOLDS = {
@@ -195,19 +276,21 @@ export async function handle(req: Request, env: Env, fetchFn: typeof fetch = fet
     try {
       const ctrl = new AbortController();
       const timer = setTimeout(() => ctrl.abort(), 6000);
-      const r = await fetchFn(LIQUID_URL, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${liquidKey}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify(buildRequest(buildState(content, ctx.previous ?? [], !!ctx.friends))),
-        signal: ctrl.signal,
-      });
+      const res = await askLiquid(
+        fetchFn,
+        liquidKey,
+        env.get('LIQUID_MODEL'),
+        { state: buildState(content, ctx.previous ?? [], !!ctx.friends), questions: QUESTIONS },
+        ctrl.signal
+      );
       clearTimeout(timer);
-      if (r.ok) {
-        const answers = ((await r.json())?.answers ?? {}) as Answers;
+      if ('answers' in res) {
+        const answers = res.answers as Answers;
         decision = decide(answers);
         scores = scoresOf(answers);
       } else {
-        scores = { error: `liquid ${r.status}` };
+        scores = { error: `liquid ${res.status}` };
+        console.error('[message-guard] Liquid AI', res.error);
       }
     } catch (e) {
       scores = { error: `liquid ${(e as Error).name}` };
