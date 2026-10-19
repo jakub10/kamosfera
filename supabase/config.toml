@@ -12,11 +12,6 @@ verify_jwt = false
 [functions.inworld-realtime]
 verify_jwt = false
 
-[functions.activate-role]
-verify_jwt = true
-
-[functions.admin-set-role]
-verify_jwt = true
 [functions.message-guard]
 # Přihlášení si funkce ověřuje sama (funguje i s novými klíči Supabase).
 verify_jwt = false

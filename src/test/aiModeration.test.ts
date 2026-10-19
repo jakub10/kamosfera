@@ -81,3 +81,26 @@ describe('klíče Supabase', () => {
     expect(old).toMatchObject({ anon: 'a', serviceHeaders: { apikey: 'eyJ', Authorization: 'Bearer eyJ' } });
   });
 });
+
+describe('chyby Liquid AI', () => {
+  it('klíč z Secrets se očistí od mezer, uvozovek a „Bearer"', async () => {
+    const { cleanKey } = await import('../../supabase/functions/ai-moderation/index');
+    expect(cleanKey('  liquid_abc\n')).toBe('liquid_abc');
+    expect(cleanKey('Bearer liquid_abc')).toBe('liquid_abc');
+    expect(cleanKey('"liquid_abc"')).toBe('liquid_abc');
+    expect(cleanKey('   ')).toBeUndefined();
+  });
+});
+
+describe('chyba Liquid AI se ukáže tvůrci', () => {
+  it('502 obsahuje skutečnou odpověď Liquid AI', async () => {
+    const base = fakeFetch([post('p1', 'ahoj')], () => ({}));
+    const fn = (async (url: string, init?: RequestInit) =>
+      url === LIQUID_URL
+        ? new Response('{"detail":"Invalid API key"}', { status: 401 })
+        : (base.fn as unknown as (u: string, i?: RequestInit) => Promise<Response>)(url, init)) as unknown as typeof fetch;
+    const res = await handle(req(), env(), fn);
+    expect(res.status).toBe(502);
+    expect((await res.json()).error).toContain('HTTP 401: {"detail":"Invalid API key"}');
+  });
+});

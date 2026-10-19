@@ -102,14 +102,18 @@ export function CreatorPanel() {
 
   const setUserRole = async (target_user_id: string, role: 'vip' | 'vip_pro_max' | 'creator', action: 'grant' | 'revoke') => {
     setUpdatingRoleFor(target_user_id + role + action);
-    const { data, error } = await supabase.functions.invoke('admin-set-role', {
-      body: { target_user_id, role, action },
+    // Role přiděluje databáze (dřív Edge funkce admin-set-role).
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (supabase.rpc as any)('admin_set_role', {
+      _target: target_user_id,
+      _role: role,
+      _action: action,
     });
     setUpdatingRoleFor(null);
     if (error || !data?.success) {
       toast({
         title: 'Chyba',
-        description: (data as { error?: string } | null)?.error || error?.message || 'Nepodařilo se změnit roli.',
+        description: error?.message || 'Nepodařilo se změnit roli.',
         variant: 'destructive',
       });
       return;

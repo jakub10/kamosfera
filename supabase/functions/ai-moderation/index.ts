@@ -118,6 +118,9 @@ interface Env {
   get(name: string): string | undefined;
 }
 
+export const cleanKey = (k: string | undefined) =>
+  k?.trim().replace(/^bearer\s+/i, '').replace(/^["']+|["']+$/g, '').trim() || undefined;
+
 /** Klíče Supabase: starší (JWT) i nové (sb_publishable_… / sb_secret_…). */
 export function supabaseKeys(env: Env, req: Request) {
   const pick = (json: string | undefined) => {
@@ -144,7 +147,8 @@ export async function handle(req: Request, env: Env, fetchFn: typeof fetch = fet
 
   const url = env.get('SUPABASE_URL');
   const { anon, service, serviceHeaders } = supabaseKeys(env, req);
-  const key = env.get('LIQUID_API_KEY');
+  // Klíč vložený do Secrets občas obsahuje mezeru, nový řádek, uvozovky nebo „Bearer".
+  const key = cleanKey(env.get('LIQUID_API_KEY'));
   if (!url || !anon || !service) return json({ error: 'Chybí nastavení Supabase.' }, 500);
   if (!key) return json({ error: 'Chybí klíč LIQUID_API_KEY v Supabase → Edge Functions → Secrets.' }, 500);
 
@@ -188,30 +192,40 @@ export async function handle(req: Request, env: Env, fetchFn: typeof fetch = fet
 
   // System One: po čtyřech příspěvcích najednou.
   let failed = 0;
+  let lastError = '';
   const todo = posts.filter((p) => !already.has(p.id) && !flagged.some((f) => f.post_id === p.id) && p.content?.trim());
-  for (let i = 0; i < todo.length; i += 4) {
-    await Promise.all(
-      todo.slice(i, i + 4).map(async (p) => {
-        try {
-          const r = await fetchFn(LIQUID_URL, {
-            method: 'POST',
-            headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ model: 'd1:free', state: p.content.slice(0, 1000), questions: QUESTIONS }),
-          });
-          if (!r.ok) {
-            failed++;
-            return;
-          }
-          const verdict = judgePost(((await r.json())?.answers ?? {}) as PostAnswers);
-          if (verdict) flagged.push({ post_id: p.id, ...verdict });
-        } catch {
-          failed++;
-        }
-      })
-    );
+  // Po dvou najednou: zdarma verze Liquid AI má limit na počet dotazů.
+  const ask = async (p: Post, attempt = 0): Promise<void> => {
+    try {
+      const r = await fetchFn(LIQUID_URL, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model: 'd1:free', state: p.content.slice(0, 1000), questions: QUESTIONS }),
+      });
+      if (r.status === 429 && attempt < 2) {
+        await new Promise((res) => setTimeout(res, 1500 * (attempt + 1)));
+        return ask(p, attempt + 1);
+      }
+      if (!r.ok) {
+        failed++;
+        lastError = `HTTP ${r.status}: ${(await r.text().catch(() => '')).slice(0, 300)}`;
+        console.error('[ai-moderation] Liquid AI', lastError);
+        return;
+      }
+      const verdict = judgePost(((await r.json())?.answers ?? {}) as PostAnswers);
+      if (verdict) flagged.push({ post_id: p.id, ...verdict });
+    } catch (e) {
+      failed++;
+      lastError = (e as Error).message;
+      console.error('[ai-moderation] Liquid AI', e);
+    }
+  };
+  for (let i = 0; i < todo.length; i += 2) {
+    await Promise.all(todo.slice(i, i + 2).map((p) => ask(p)));
   }
   if (failed === todo.length && todo.length > 0) {
-    return json({ error: 'Liquid AI neodpovídá. Zkontroluj klíč LIQUID_API_KEY a zkus to za chvíli.' }, 502);
+    // Skutečnou odpověď Liquid AI ukážeme tvůrci — bez ní se chyba nedá najít.
+    return json({ error: `Liquid AI odmítla dotaz (${lastError}).` }, 502);
   }
 
   if (flagged.length) {

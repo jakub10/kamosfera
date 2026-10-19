@@ -80,3 +80,53 @@ BEGIN
     (SELECT public.guardian_view(repeat('h', 64)) -> 'signals' -> 0 ->> 'kind') = 'help', true);
   PERFORM chk('nepřihlášený nic', ako_chyba(NULL, 'SELECT public.ask_guardian_help()') IS NOT NULL, true);
 END $$;
+
+\echo ''
+\echo '--- H4. Role přiděluje databáze (bez Edge funkcí) ---'
+-- Na Supabase je pgcrypto ve schématu extensions vždy; v testovací databázi ne.
+CREATE SCHEMA IF NOT EXISTS extensions;
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+DO $$
+BEGIN
+  IF to_regprocedure('extensions.gen_random_bytes(integer)') IS NULL THEN
+    EXECUTE 'CREATE FUNCTION extensions.gen_random_bytes(integer) RETURNS bytea LANGUAGE sql AS ''SELECT public.gen_random_bytes($1)''';
+  END IF;
+END $$;
+GRANT USAGE ON SCHEMA extensions TO authenticated;
+DO $$
+DECLARE
+  tvurce uuid := 'a9100000-0000-0000-0000-000000000001';
+  dite uuid := 'a9100000-0000-0000-0000-000000000002';
+  cizi uuid := 'a9100000-0000-0000-0000-000000000003';
+  kod text;
+BEGIN
+  INSERT INTO public.user_roles (user_id, role) VALUES (tvurce, 'creator');
+
+  PERFORM chk('obyčejný uživatel VIP rozdávat nesmí',
+    ako_chyba(cizi, format('SELECT public.admin_set_role(%L, ''vip'', ''grant'')', dite)) LIKE '%Jen pro tvůrce%', true);
+  PERFORM chk('tvůrce dá VIP PRO MAX (s ním i VIP)',
+    ako(tvurce, format('SELECT public.admin_set_role(%L, ''vip_pro_max'', ''grant'')', dite)) = '{"success": true}'::jsonb, true);
+  PERFORM chk('dítě má vip i vip_pro_max',
+    (SELECT count(*) FROM public.user_roles WHERE user_id = dite AND role IN ('vip', 'vip_pro_max')) = 2, true);
+  PERFORM chk('druhé udělení nic nezdvojí',
+    ako(tvurce, format('SELECT public.admin_set_role(%L, ''vip'', ''grant'')', dite)) = '{"success": true}'::jsonb, true);
+  PERFORM chk('… pořád dvě role',
+    (SELECT count(*) FROM public.user_roles WHERE user_id = dite AND role IN ('vip', 'vip_pro_max')) = 2, true);
+  PERFORM chk('odebrání VIP vezme i PRO MAX',
+    ako(tvurce, format('SELECT public.admin_set_role(%L, ''vip'', ''revoke'')', dite)) = '{"success": true}'::jsonb, true);
+  PERFORM chk('… a nic nezbude',
+    NOT EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = dite AND role IN ('vip', 'vip_pro_max')), true);
+  PERFORM chk('tvůrce si vlastní roli tvůrce nevezme',
+    ako_chyba(tvurce, format('SELECT public.admin_set_role(%L, ''creator'', ''revoke'')', tvurce)) IS NOT NULL, true);
+  PERFORM chk('zapsat si roli přímo nejde',
+    ako_chyba(cizi, format('INSERT INTO public.user_roles (user_id, role) VALUES (%L, ''vip'') RETURNING ''1''::jsonb', cizi)) IS NOT NULL, true);
+
+  kod := (ako(tvurce, 'SELECT to_jsonb(public.create_activation_code(''vip''))') #>> '{}');
+  PERFORM chk('špatný kód neprojde',
+    ako(cizi, 'SELECT public.activate_role_code(''vip'', ''SPATNYKOD123'')') ->> 'success' = 'false', true);
+  PERFORM chk('správný kód (i malými písmeny) dá VIP',
+    ako(cizi, format('SELECT public.activate_role_code(''vip'', %L)', lower(kod))) ->> 'success' = 'true', true);
+  PERFORM chk('… opravdu má VIP', public.has_role(cizi, 'vip'), true);
+  PERFORM chk('kód je jednorázový',
+    ako(dite, format('SELECT public.activate_role_code(''vip'', %L)', kod)) ->> 'success' = 'false', true);
+END $$;
