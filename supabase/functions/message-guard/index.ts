@@ -152,7 +152,7 @@ export async function handle(req: Request, env: Env, fetchFn: typeof fetch = fet
 
   const url = env.get('SUPABASE_URL');
   const { anon, service, serviceHeaders } = supabaseKeys(env, req);
-  const liquidKey = env.get('LIQUID_API_KEY');
+  const liquidKey = env.get('LIQUID_API_KEY')?.trim().replace(/^bearer\s+/i, '').replace(/^["']+|["']+$/g, '').trim();
   if (!url || !anon || !service) return json({ error: 'Chybí nastavení Supabase.' }, 500);
 
   // 1. Kto píše — podľa jeho prihlásenia, nie podľa toho, čo pošle.

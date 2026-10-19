@@ -48,9 +48,9 @@ export function useUserRole() {
       return true;
     }
 
-    const { data, error } = await supabase.functions.invoke('activate-role', {
-      body: { role, code },
-    });
+    // Jednorázový kód z Panelu tvůrce ověří databáze (dřív Edge funkce activate-role).
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (supabase.rpc as any)('activate_role_code', { _role: role, _code: code });
 
     if (error || !data?.success) {
       toast({
