@@ -108,7 +108,7 @@ export const QUESTIONS = {
   osobni_udaje: {
     type: 'noul',
     instructions:
-      'Obsahuje příspěvek osobní údaje (adresu, telefonní číslo, název školy, přesné místo, kde se někdo právě nachází)?',
+      'Obsahuje příspěvek KONKRÉTNÍ osobní údaje, podle kterých by cizí člověk dítě našel nebo kontaktoval: celou adresu nebo ulici s číslem domu, telefonní číslo, e-mail, přesný název školy i se třídou, nebo přesné místo a čas, kde dítě právě je nebo bude? Běžné věci jako „hlásím se ze školy“, „jdu domů“, „jsme venku“, „byl jsem v Praze“ nebo křestní jméno kamaráda osobní údaje NEJSOU.',
   },
   typ: {
     type: 'choice',
@@ -141,13 +141,16 @@ export interface PostAnswers {
 export type Severity = 'low' | 'medium' | 'high';
 
 /** Rozhodnutí o jednom příspěvku. Čistý výpočet — testuje se bez sítě. */
+export const PERSONAL_THRESHOLD = 0.85;
+
 export function judgePost(a: PostAnswers): { severity: Severity; reason: string } | null {
   const score = a.zavaznost?.score ?? 0;
   const personal = a.osobni_udaje?.noul ?? 0;
   const label = TYPE_LABEL[a.typ?.choice ?? ''];
   if (score >= 1.8) return { severity: 'high', reason: `Může ublížit${label ? ` (${label})` : ''}` };
   if (score >= 1.0) return { severity: 'medium', reason: `Nepříjemný příspěvek${label ? ` (${label})` : ''}` };
-  if (personal > 0.7) return { severity: 'low', reason: 'Obsahuje osobní údaje' };
+  // Přísnější práh: běžné „jsem ve škole“ se hlásit nemá, jen opravdové údaje.
+  if (personal > PERSONAL_THRESHOLD) return { severity: 'low', reason: 'Možná osobní údaje (adresa, telefon, škola…)' };
   return null;
 }
 

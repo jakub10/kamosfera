@@ -114,7 +114,7 @@ export async function askLiquid(
 export const THRESHOLDS = {
   confirm: 0.8, // závažnosť od tejto hodnoty: „Naozaj to chceš poslať?"
   hide: 1.8, // závažnosť od tejto hodnoty: nedoručiť + signál dôverníkovi
-  personal: 0.7, // osobné údaje: „Naozaj chceš zdieľať tieto údaje?"
+  personal: 0.85, // osobné údaje: „Naozaj chceš zdieľať tieto údaje?"
   secret: 0.5, // tlak na tajomstvo: vždy signál dôverníkovi
 };
 
@@ -122,7 +122,7 @@ export const QUESTIONS = {
   osobne_udaje: {
     type: 'noul',
     instructions:
-      'Obsahuje nová zpráva osobní údaje (adresu, telefonní číslo, název školy, přesné místo, kde se někdo právě nachází) nebo žádost o ně?',
+      'Obsahuje nová zpráva KONKRÉTNÍ osobní údaje, podle kterých by cizí člověk dítě našel nebo kontaktoval (celá adresa nebo ulice s číslem domu, telefonní číslo, e-mail, přesný název školy i se třídou, přesné místo a čas, kde dítě právě je nebo bude), nebo žádost o ně? Běžné věci jako „jsem ve škole“, „jdu domů“, „jsme venku“ nebo křestní jméno kamaráda osobní údaje NEJSOU.',
   },
   tlak_na_tajomstvo: {
     type: 'noul',
