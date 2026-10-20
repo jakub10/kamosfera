@@ -13,6 +13,10 @@ export default defineConfig(({ mode, isSsrBuild }) => ({
     },
   },
   plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
+  // Verze do hlášení chyb: Vercel při buildu zná commit.
+  define: {
+    __APP_VERSION__: JSON.stringify((process.env.VERCEL_GIT_COMMIT_SHA ?? "dev").slice(0, 7)),
+  },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),

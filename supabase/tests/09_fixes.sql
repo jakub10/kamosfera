@@ -130,3 +130,33 @@ BEGIN
   PERFORM chk('kód je jednorázový',
     ako(dite, format('SELECT public.activate_role_code(''vip'', %L)', kod)) ->> 'success' = 'false', true);
 END $$;
+
+\echo ''
+\echo '--- H5. Hlášení chyb ---'
+DO $$
+DECLARE
+  tvurce uuid := 'a9100000-0000-0000-0000-000000000001';
+  dite uuid := 'a9100000-0000-0000-0000-000000000002';
+  i int;
+BEGIN
+  PERFORM chk('dítě nahlásí chybu',
+    ako(dite, 'SELECT public.report_bug(''Avatar se neuloží'', ''/settings'', ''{"version":"abc1234"}'')') ? 'id', true);
+  PERFORM chk('prázdné hlášení neprojde',
+    ako_chyba(dite, 'SELECT public.report_bug(''  '')') LIKE '%pár slov%', true);
+  PERFORM chk('nepřihlášený nic', ako_chyba(NULL, 'SELECT public.report_bug(''ahoj světe'')') IS NOT NULL, true);
+  PERFORM chk('dítě hlášení nevidí (ani svoje)',
+    ako(dite, 'SELECT to_jsonb(count(*)) FROM public.bug_reports') = '0'::jsonb, true);
+  PERFORM chk('tvůrce hlášení vidí',
+    ako(tvurce, 'SELECT to_jsonb(count(*)) FROM public.bug_reports') = '1'::jsonb, true);
+  PERFORM chk('tvůrce změní stav',
+    ako(tvurce, 'UPDATE public.bug_reports SET status = ''sent'' RETURNING to_jsonb(status)') = '"sent"'::jsonb, true);
+  PERFORM chk('dítě stav nezmění',
+    ako(dite, 'WITH u AS (UPDATE public.bug_reports SET status = ''done'' RETURNING 1) SELECT to_jsonb(count(*)) FROM u') = '0'::jsonb, true);
+  PERFORM chk('zapsat hlášení přímo nejde',
+    ako_chyba(dite, 'INSERT INTO public.bug_reports (message) VALUES (''x y z'') RETURNING ''1''::jsonb') IS NOT NULL, true);
+  FOR i IN 1..9 LOOP
+    PERFORM ako(dite, format('SELECT public.report_bug(%L)', 'chyba číslo ' || i));
+  END LOOP;
+  PERFORM chk('nejvýš 10 hlášení za hodinu',
+    ako_chyba(dite, 'SELECT public.report_bug(''jedenácté hlášení'')') LIKE '%Moc hlášení%', true);
+END $$;

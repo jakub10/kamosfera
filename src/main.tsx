@@ -3,6 +3,10 @@ import App from "./App.tsx";
 import { supabaseConfig } from "./integrations/supabase/client";
 import "./index.css";
 import "./i18n";
+import { installErrorLog } from "./lib/errorLog";
+
+// Chyby z prohlížeče se pamatují pro „Nahlásit chybu".
+installErrorLog();
 
 const root = createRoot(document.getElementById("root")!);
 
