@@ -34,7 +34,9 @@ describe('AI kontrola příspěvků', () => {
     expect(judgePost({ zavaznost: { score: 0.3 } })).toBeNull();
     expect(judgePost({ zavaznost: { score: 1.2 }, typ: { choice: 'vysmivani' } })).toEqual({ severity: 'medium', reason: 'Nepříjemný příspěvek (zesměšňování)' });
     expect(judgePost({ zavaznost: { score: 2.5 } })?.severity).toBe('high');
-    expect(judgePost({ zavaznost: { score: 0.1 }, osobni_udaje: { noul: 0.9 } })?.reason).toBe('Obsahuje osobní údaje');
+    expect(judgePost({ zavaznost: { score: 0.1 }, osobni_udaje: { noul: 0.9 } })?.reason).toBe('Možná osobní údaje (adresa, telefon, škola…)');
+    // „hlásím se ze školy“ dostalo od Liquid AI kolem 0.75 — to už se nehlásí.
+    expect(judgePost({ zavaznost: { score: 0.1 }, osobni_udaje: { noul: 0.78 } })).toBeNull();
   });
 
   it('spam pozná bez AI', () => {

@@ -149,6 +149,7 @@ export function CreatorPanel() {
       .select('id, post_id, message, created_at, read')
       .eq('user_id', user.id)
       .eq('type', 'moderation')
+      .eq('read', false)
       .order('created_at', { ascending: false })
       .limit(50);
     
@@ -319,16 +320,17 @@ export function CreatorPanel() {
   };
 
   const dismissFlaggedPost = async (notificationId: string) => {
+    // Jen „přečteno“, ne smazat: AI kontrola stejný příspěvek podruhé nehlásí.
     await supabase
       .from('notifications')
-      .delete()
+      .update({ read: true })
       .eq('id', notificationId);
-    
+
     setFlaggedPosts(prev => prev.filter(fp => fp.id !== notificationId));
-    
+
     toast({
-      title: '✓ Označeno jako vyřešené',
-      description: 'Upozornění bylo odstraněno.',
+      title: '👍 V pořádku',
+      description: 'Příspěvek zůstává a AI kontrola ho už znovu nenahlásí.',
     });
   };
 
@@ -530,6 +532,12 @@ export function CreatorPanel() {
                 </Button>
               </div>
               
+              {flaggedPosts.length > 0 && (
+                <p className="text-xs text-muted-foreground">
+                  AI se může splést. Klikni na <b>Zobrazit</b>, přečti si příspěvek a pak buď <b>V pořádku</b> (zůstane),
+                  nebo <b>Smazat</b>.
+                </p>
+              )}
               {flaggedPosts.length === 0 ? (
                 <div className="text-center py-6 text-muted-foreground flex flex-col items-center gap-2">
                   <img src={mascotThumbsup} alt="" className="w-24 h-24 object-contain" loading="lazy" />
@@ -550,15 +558,21 @@ export function CreatorPanel() {
                           AI
                         </Badge>
                       </div>
-                      <div className="flex gap-2 mt-3">
+                      <div className="flex flex-wrap gap-2 mt-3">
+                        <Button size="sm" variant="outline" className="flex-1" asChild>
+                          <Link to={`/post/${fp.post_id}`} target="_blank">
+                            <Eye className="h-3 w-3 mr-1" />
+                            Zobrazit
+                          </Link>
+                        </Button>
                         <Button
                           size="sm"
                           variant="outline"
-                          className="flex-1"
-                          onClick={() => setPostIdToView(fp.post_id || '')}
+                          className="flex-1 border-emerald-500/50 text-emerald-700 hover:bg-emerald-500/10 dark:text-emerald-300"
+                          onClick={() => dismissFlaggedPost(fp.id)}
+                          title="Příspěvek je v pořádku — nechat ho tam"
                         >
-                          <Eye className="h-3 w-3 mr-1" />
-                          Zobrazit
+                          👍 V pořádku
                         </Button>
                         <Button
                           size="sm"
@@ -566,16 +580,10 @@ export function CreatorPanel() {
                           className="flex-1"
                           onClick={() => deletePost(fp.post_id || '')}
                           disabled={deleting}
+                          title="Příspěvek opravdu nepatří do Kamosféry — smazat"
                         >
                           <Trash2 className="h-3 w-3 mr-1" />
                           Smazat
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => dismissFlaggedPost(fp.id)}
-                        >
-                          ✓
                         </Button>
                       </div>
                     </div>
