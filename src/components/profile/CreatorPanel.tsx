@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { Shield, Loader2, Trash2, Ban, Eye, AlertTriangle, UserX, RefreshCw, Bot, ExternalLink, Flag, Crown, Gem, Copy, KeyRound, Search, UserCog } from 'lucide-react';
+import { Shield, Loader2, Trash2, Ban, Eye, AlertTriangle, UserX, RefreshCw, Bot, ExternalLink, Flag, Crown, Gem, Copy, KeyRound, Search, UserCog, Bug } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useAuth } from '@/hooks/useAuth';
@@ -14,6 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Link } from 'react-router-dom';
 import mascotThumbsup from '@/assets/mascot-thumbsup.png';
 import mascotLock from '@/assets/mascot-lock.png';
+import { BugReportsAdmin } from './BugReportsAdmin';
 
 interface BannedUser {
   id: string;
@@ -454,7 +455,7 @@ export function CreatorPanel() {
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="moderation" className="w-full">
-          <TabsList className="grid w-full grid-cols-5 mb-4">
+          <TabsList className="grid w-full grid-cols-6 mb-4">
             <TabsTrigger value="moderation" className="gap-1">
               <Bot className="h-4 w-4" />
               <span className="hidden sm:inline">AI Moderace</span>
@@ -475,7 +476,15 @@ export function CreatorPanel() {
               <KeyRound className="h-4 w-4" />
               <span className="hidden sm:inline">Kódy</span>
             </TabsTrigger>
+            <TabsTrigger value="bugs" className="gap-1">
+              <Bug className="h-4 w-4" />
+              <span className="hidden sm:inline">Chyby</span>
+            </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="bugs" className="space-y-4">
+            <BugReportsAdmin />
+          </TabsContent>
 
           {/* AI Moderation Tab */}
           <TabsContent value="moderation" className="space-y-4">

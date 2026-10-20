@@ -1,4 +1,5 @@
-import { Menu, LogOut, Settings, Bookmark } from 'lucide-react';
+import { Menu, LogOut, Settings, Bookmark, Bug } from 'lucide-react';
+import { openBugReport } from '@/lib/bugReport';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/hooks/useAuth';
@@ -68,6 +69,10 @@ export function MobileHeader({ currentProfile }: MobileHeaderProps) {
                 <Settings className="h-4 w-4" />
                 {t('nav.settings')}
               </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={openBugReport} className="flex items-center gap-2">
+              <Bug className="h-4 w-4" />
+              Nahlásit chybu
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={signOut} className="text-destructive">

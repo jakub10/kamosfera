@@ -170,6 +170,16 @@ salvy, traktorový lúč a vybavenie, ktoré mení dosah pri stole.
 - Testy: `supabase/tests/06_star_patrol.sql` (65 kontrol vrátane 16 celých
   hier) a `src/test/starPatrolText.test.ts`.
 
+## Hlášení chyb
+
+1. Kdokoli přihlášený klikne na **Nahlásit chybu** (levé menu, na mobilu menu pod avatarem)
+   a napíše, co se stalo. Aplikace přidá stránku, verzi (commit), prohlížeč, velikost okna
+   a posledních pár chyb z konzole. Zápis jde přes funkci `report_bug`, nejvýš 10 hlášení za hodinu.
+2. Tvůrce v **Panelu tvůrce → Chyby** hlášení přečte. Repozitář je veřejný, proto se
+   nic neposílá samo. Tlačítkem **Na GitHub** otevře předvyplněný issue s popiskem `bug`,
+   bez jména dítěte, a odešle ho.
+3. Kdo Kamosféru opravuje, bere chyby z [GitHub Issues](https://github.com/jakub10/kamosfera/issues?q=label%3Abug).
+
 ## Jak je to postavené
 
 - **Frontend** — React 18, Vite, TypeScript, Tailwind, shadcn/ui

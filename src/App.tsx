@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { SafetyGate } from "@/components/safety/SafetyGate";
+import { BugReportDialog } from "@/components/BugReportDialog";
 import { lazy, Suspense } from "react";
 import { Loader2 } from "lucide-react";
 
@@ -81,6 +82,7 @@ const App = () => (
             </Routes>
           </Suspense>
           </SafetyGate>
+          <BugReportDialog />
         </BrowserRouter>
       </TooltipProvider>
     </AuthProvider>

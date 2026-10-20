@@ -1,4 +1,5 @@
-import { Home, Handshake, Bell, MessageCircle, Bookmark, User, Settings, LogOut, Users, Gamepad2, Compass, ShieldCheck } from 'lucide-react';
+import { Home, Handshake, Bell, MessageCircle, Bookmark, User, Settings, LogOut, Users, Gamepad2, Compass, ShieldCheck, Bug } from 'lucide-react';
+import { openBugReport } from '@/lib/bugReport';
 import { useSafety } from '@/components/safety/SafetyGate';
 import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -72,6 +73,12 @@ export function Sidebar({ currentProfile }: SidebarProps) {
           );
         })}
       </nav>
+
+      <div className="px-3 pb-2">
+        <Button variant="ghost" onClick={openBugReport} className="w-full justify-start gap-4 text-sm text-muted-foreground">
+          <Bug className="h-4 w-4" /> Nahlásit chybu
+        </Button>
+      </div>
 
       {currentProfile && (
         <div className="p-4 border-t border-border">
