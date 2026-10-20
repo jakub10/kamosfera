@@ -602,7 +602,7 @@ export function CreatorPanel() {
                   asChild
                   disabled={!postIdToView.trim()}
                 >
-                  <Link to={`/post/${postIdToView}`} target="_blank">
+                  <Link to={`/post/${postIdToView.trim()}`} target="_blank">
                     <ExternalLink className="h-4 w-4" />
                   </Link>
                 </Button>
