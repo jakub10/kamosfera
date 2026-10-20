@@ -14,6 +14,7 @@ const Profile = lazy(() => import("./pages/Profile"));
 const UserProfile = lazy(() => import("./pages/UserProfile"));
 const Settings = lazy(() => import("./pages/Settings"));
 const Saved = lazy(() => import("./pages/Saved"));
+const PostDetail = lazy(() => import("./pages/PostDetail"));
 const Messages = lazy(() => import("./pages/Messages"));
 const Kamarati = lazy(() => import("./pages/Kamarati"));
 const Suhlas = lazy(() => import("./pages/Suhlas"));
@@ -61,6 +62,7 @@ const App = () => (
               <Route path="/profile/:userId" element={<UserProfile />} />
               <Route path="/settings" element={<Settings />} />
               <Route path="/saved" element={<Saved />} />
+              <Route path="/post/:postId" element={<PostDetail />} />
               <Route path="/messages" element={<Messages />} />
               {/* Hľadanie skončilo: nikoho sa nedá vyhľadať, kamaráti len naživo. */}
               <Route path="/search" element={<Navigate to="/kamarati" replace />} />
