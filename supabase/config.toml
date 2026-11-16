@@ -9,9 +9,6 @@ verify_jwt = false
 [functions.ai-chat]
 verify_jwt = false
 
-[functions.inworld-realtime]
-verify_jwt = false
-
 [functions.message-guard]
 # Přihlášení si funkce ověřuje sama (funguje i s novými klíči Supabase).
 verify_jwt = false

@@ -1,5 +1,12 @@
 # Přechod z Lovable Cloud na vlastní Supabase
 
+> **Přechod je hotový.** Tenhle návod zůstává jako záznam a pro případ, že by
+> se databáze stavěla znovu. Jednorázové pomůcky, na které se odkazuje
+> (`scripts/prenos_dat.py`, `scripts/prava_supabase.sql`,
+> `scripts/schema_do_jedneho_suboru.sh`, `supabase/manual/`), byly po přechodu
+> smazány — jsou v historii gitu (naposled v commitu `0dff8b9`). Stejně tak
+> hlasová funkce `inworld-realtime`, kterou aplikace nepoužívala.
+
 Kamosféra doteď běžela na databázi, kterou pro projekt založilo Lovable
 („Lovable Cloud"). Je to skutečný Supabase projekt, ale **není vidět ve
 vlastním Supabase účtu** — nejde tam pustit migrace, nastavit Google
@@ -155,7 +162,6 @@ Pak **Edge Functions → Secrets** (nebo `npx supabase secrets set KLÍČ=hodnot
 | Klíč | K čemu | Odkud |
 |---|---|---|
 | `GROQ_API_KEY` | AI kamarád, moderace, překlady | <https://console.groq.com> |
-| `INWORLD_API_KEY` | hlasový agent | <https://inworld.ai> |
 | `VIP_ACTIVATION_CODE` | aktivace role VIP | vymyslet |
 | `CREATOR_ACTIVATION_CODE` | aktivace role Creator | vymyslet |
 | `VIP_PRO_MAX_ACTIVATION_CODE` | aktivace role VIP Pro Max | vymyslet |
@@ -263,13 +269,9 @@ server, a v konzoli prohlížeče (F12) je celá chyba. To je ten rozdíl oproti
 
 ## Co v repozitáři zbylo z Lovable
 
-`lovable-tagger` ve `vite.config.ts` — značkuje komponenty ve vývojovém
-režimu, aby se v editoru Lovable dalo klikat do kódu. S databází nemá nic
-společného a produkčního buildu se netýká, takže může zůstat.
+Už nic. Naposled odešly `lovable-tagger`, `bun.lockb` a složka `.lovable/`.
 
-Co odešlo: `@lovable.dev/cloud-auth-js` (posílal přihlášení na relativní
+Co odešlo dřív: `@lovable.dev/cloud-auth-js` (posílal přihlášení na relativní
 `/~oauth/initiate`, což mimo jejich hosting končilo na 404), sdílení sezení
 s editorem přes `postMessage` a volání `ai.gateway.lovable.dev`.
 
-**Editor Lovable po přechodu ztratí sdílené přihlášení s náhledem** — v jeho
-preview bude potřeba se přihlásit normálně. Kód upravovat dál může.
