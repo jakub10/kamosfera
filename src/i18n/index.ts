@@ -13,34 +13,13 @@ export const LANG_LABELS: Record<Lang, string> = {
   en: '🇬🇧 English',
 };
 
-const STORAGE_KEY = 'kamosfera-lang';
-
-// Výchozí je čeština. Jazyk se NEŘÍDÍ prohlížečem (kamarádi ze Slovenska
-// pak měli menu slovensky a zbytek česky, aniž by si to vybrali) — platí
-// jen to, co si člověk sám zvolí v Nastavení.
-function savedLang(): Lang {
-  try {
-    const saved = window.localStorage.getItem(STORAGE_KEY);
-    if ((SUPPORTED_LANGS as readonly string[]).includes(saved ?? '')) return saved as Lang;
-  } catch {
-    // bez úložiště (soukromé okno, předrenderování) zůstane čeština
-  }
-  return 'cs';
-}
-
-i18n.on('languageChanged', (lng) => {
-  try {
-    window.localStorage.setItem(STORAGE_KEY, lng);
-    document.documentElement.lang = lng;
-  } catch {
-    // nejde uložit — jazyk platí aspoň do zavření stránky
-  }
-});
-
+// Kamosféra je celá česky (rozhodnutí z 3. 10. 2026). Slovenský a anglický
+// překlad pokrývá jen menu, takže přepínač by udělal půl česky, půl jinak.
+// Soubory překladů zůstávají pro případ, že se jednou přeloží všechno.
 i18n
   .use(initReactI18next)
   .init({
-    lng: savedLang(),
+    lng: 'cs',
     resources: {
       cs: { translation: cs },
       sk: { translation: sk },

@@ -16,8 +16,6 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { AvatarBuilder } from '@/components/profile/AvatarBuilder';
-import { LanguageSwitcher } from '@/components/LanguageSwitcher';
-import { useTranslation } from 'react-i18next';
 import { useUserRole } from '@/hooks/useUserRole';
 import { VipProMaxActivation } from '@/components/profile/VipProMaxActivation';
 
@@ -37,7 +35,6 @@ interface BlockedUser {
 const Settings = () => {
   const { user, signOut } = useAuth();
   const { toast } = useToast();
-  const { t } = useTranslation();
   const { activateVIP, isVIP } = useUserRole();
   const [currentProfile, setCurrentProfile] = useState<Profile | null>(null);
   const [blockedUsers, setBlockedUsers] = useState<BlockedUser[]>([]);
@@ -270,10 +267,6 @@ const Settings = () => {
                   checked={darkMode}
                   onCheckedChange={handleDarkModeChange}
                 />
-              </div>
-              <div className="flex items-center justify-between">
-                <Label>{t('common.language')}</Label>
-                <LanguageSwitcher variant="full" />
               </div>
             </CardContent>
           </Card>

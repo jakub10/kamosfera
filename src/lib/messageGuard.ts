@@ -4,6 +4,7 @@
  * bez jeho lístka aj tak nepustí.
  */
 import { supabase } from '@/integrations/supabase/client';
+import { askGuardConfirm } from './guardConfirm';
 
 export type GuardVerdict = 'send' | 'confirm' | 'hide' | 'unchecked';
 export type GuardReason = 'mean' | 'personal';
@@ -53,7 +54,7 @@ export async function guardAllows(
   }
   if (guard?.verdict === 'confirm') {
     const why = guard.reasons.map((r) => REASON_TEXT[r]).join('\n\n');
-    return window.confirm(`${why}\n\nOpravdu to chceš poslat?`);
+    return askGuardConfirm(why);
   }
   return true;
 }
