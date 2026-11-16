@@ -112,3 +112,6 @@ jobs:
 
       - name: Testy oprav (přezdívka, přečtené zprávy, pomoc)
         run: psql -v ON_ERROR_STOP=1 -f supabase/tests/09_fixes.sql
+
+      - name: Testy oprav (úprava zprávy, příběhy a blokování)
+        run: psql -v ON_ERROR_STOP=1 -f supabase/tests/10_message_edit_lock.sql

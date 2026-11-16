@@ -132,7 +132,7 @@ bezpečnosti:
 | závažnosť | pod 0.8 | správa ide |
 | závažnosť | 0.8 – 1.8 | „Naozaj to chceš poslať?" |
 | závažnosť | od 1.8 | nedoručí sa, dôverník príjemcu dostane signál |
-| osobné údaje | nad 0.7 | „Naozaj chceš zdieľať tieto údaje?" |
+| osobné údaje | nad 0.85 | „Naozaj chceš zdieľať tieto údaje?" |
 | tlak na tajomstvo | nad 0.5 | vždy signál dôverníkovi príjemcu |
 
 Keď je strážca zapnutý, databáza pustí správu len s jeho „lístkom" (platí 5 minút a len
