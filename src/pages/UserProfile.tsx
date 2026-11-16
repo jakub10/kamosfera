@@ -1,3 +1,4 @@
+import { guardAllows } from '@/lib/messageGuard';
 import { FortressCard } from '@/components/fortress/FortressCard';
 import { UncomfortableButton } from '@/components/safety/UncomfortableButton';
 import { Link } from 'react-router-dom';
@@ -34,9 +35,9 @@ import { MessageRequestDialog } from '@/components/social/MessageRequestDialog';
 import { format } from 'date-fns';
 import { cs } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
-import mascotLost from '@/assets/mascot-lost.png';
-import mascotWelcome from '@/assets/mascot-welcome.png';
-import mascotCamera from '@/assets/mascot-camera.png';
+import mascotLost from '@/assets/mascot-lost.webp';
+import mascotWelcome from '@/assets/mascot-welcome.webp';
+import mascotCamera from '@/assets/mascot-camera.webp';
 
 interface Profile {
   user_id: string;
@@ -235,6 +236,17 @@ const UserProfile = () => {
   const openConversation = async (intro?: string) => {
     if (!user || !profile) return;
     setSendingRequest(true);
+
+    // První zprávu cizímu si nejdřív přečte AI strážce.
+    if (intro) {
+      const allowed = await guardAllows({ target_user_id: profile.user_id }, intro.trim(), (why) =>
+        toast({ title: 'Zpráva neodešla', description: why, variant: 'destructive' })
+      );
+      if (!allowed) {
+        setSendingRequest(false);
+        return;
+      }
+    }
 
     const { error } = await supabase.rpc('start_conversation', {
       _target_user_id: profile.user_id,

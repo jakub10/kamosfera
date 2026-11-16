@@ -5,8 +5,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Bot, Send, X, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import ReactMarkdown from 'react-markdown';
-import { supabase } from '@/integrations/supabase/client';
-import mascotThinking from '@/assets/mascot-thinking.png';
+import { supabase, functionUrl, functionHeaders } from '@/integrations/supabase/client';
+import mascotThinking from '@/assets/mascot-thinking.webp';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -18,7 +18,7 @@ interface AIChatbotModalProps {
   onClose: () => void;
 }
 
-const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-chat`;
+const CHAT_URL = functionUrl('ai-chat');
 
 export function AIChatbotModal({ isOpen, onClose }: AIChatbotModalProps) {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -47,10 +47,7 @@ export function AIChatbotModal({ isOpen, onClose }: AIChatbotModalProps) {
       if (!session) throw new Error('Musíš se přihlásit.');
       const response = await fetch(CHAT_URL, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
-        },
+        headers: functionHeaders(session.access_token),
         body: JSON.stringify({ messages: [...messages, userMessage] }),
       });
 

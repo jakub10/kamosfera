@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { PostCard } from './PostCard';
@@ -6,7 +6,7 @@ import { CreatePost } from './CreatePost';
 import { Stories } from './Stories';
 import { Loader2 } from 'lucide-react';
 import { PostBackgroundStyle } from './VIPPostFeatures';
-import mascotWave from '@/assets/mascot-wave.png';
+import mascotWave from '@/assets/mascot-wave.webp';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 
@@ -38,9 +38,16 @@ interface FeedProps {
   currentProfile?: Profile | null;
 }
 
+/** Kolik příspěvků se načte najednou; další přidá „Načíst starší". */
+export const FEED_PAGE = 30;
+
 export function Feed({ currentProfile }: FeedProps) {
   const [posts, setPosts] = useState<PostWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
+  // Kolik příspěvků je vidět. V ref, aby i obnova z Realtime načetla stejně.
+  const limit = useRef(FEED_PAGE);
   const { user } = useAuth();
 
   const fetchPosts = async () => {
@@ -49,9 +56,12 @@ export function Feed({ currentProfile }: FeedProps) {
       const { data: postsData, error: postsError } = await supabase
         .from('posts')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(limit.current + 1);
 
       if (postsError) throw postsError;
+      setHasMore((postsData?.length ?? 0) > limit.current);
+      postsData?.splice(limit.current);
 
       if (!postsData || postsData.length === 0) {
         setPosts([]);
@@ -89,7 +99,8 @@ export function Feed({ currentProfile }: FeedProps) {
         const { data: userLikes } = await supabase
           .from('likes')
           .select('post_id')
-          .eq('user_id', user.id);
+          .eq('user_id', user.id)
+          .in('post_id', postsData.map((p) => p.id));
         userLikesSet = new Set(userLikes?.map((l) => l.post_id) || []);
       }
 
@@ -129,7 +140,14 @@ export function Feed({ currentProfile }: FeedProps) {
       console.error('Error fetching posts:', error);
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
+  };
+
+  const loadMore = () => {
+    limit.current += FEED_PAGE;
+    setLoadingMore(true);
+    void fetchPosts();
   };
 
   useEffect(() => {
@@ -181,14 +199,24 @@ export function Feed({ currentProfile }: FeedProps) {
           </Button>
         </div>
       ) : (
-        posts.map((post) => (
-          <PostCard 
-            key={post.id} 
-            post={post} 
-            onLikeChange={fetchPosts} 
-            onPostDeleted={fetchPosts}
-          />
-        ))
+        <>
+          {posts.map((post) => (
+            <PostCard
+              key={post.id}
+              post={post}
+              onLikeChange={fetchPosts}
+              onPostDeleted={fetchPosts}
+            />
+          ))}
+          {hasMore && (
+            <div className="flex justify-center py-2">
+              <Button variant="outline" onClick={loadMore} disabled={loadingMore} className="rounded-full">
+                {loadingMore && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Načíst starší
+              </Button>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

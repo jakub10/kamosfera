@@ -10,7 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import mascotWave from '@/assets/mascot-wave.png';
+import mascotWave from '@/assets/mascot-wave.webp';
 import { MAX_INTRO_LENGTH, checkIntroMessage } from '@/lib/safety';
 
 interface MessageRequestDialogProps {

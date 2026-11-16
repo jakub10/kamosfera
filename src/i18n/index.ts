@@ -13,8 +13,9 @@ export const LANG_LABELS: Record<Lang, string> = {
   en: '🇬🇧 English',
 };
 
-// Kamosféra je celá česky. Menu se dřív řídilo jazykem prohlížeče, takže
-// kamarádi ze Slovenska měli menu slovensky a zbytek česky.
+// Kamosféra je celá česky (rozhodnutí z 3. 10. 2026). Slovenský a anglický
+// překlad pokrývá jen menu, takže přepínač by udělal půl česky, půl jinak.
+// Soubory překladů zůstávají pro případ, že se jednou přeloží všechno.
 i18n
   .use(initReactI18next)
   .init({

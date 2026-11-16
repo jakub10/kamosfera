@@ -9,7 +9,7 @@ import { MobileHeader } from '@/components/social/MobileHeader';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Castle, Loader2, Bell, Heart, MessageCircle, UserPlus, Check, Rocket } from 'lucide-react';
-import mascotSleep from '@/assets/mascot-sleep.png';
+import mascotSleep from '@/assets/mascot-sleep.webp';
 import { getReaction } from '@/lib/reactions';
 import { formatDistanceToNow } from 'date-fns';
 import { cs } from 'date-fns/locale';

@@ -1,6 +1,6 @@
 import { useLocation } from "react-router-dom";
 import { useEffect } from "react";
-import mascotLost from "@/assets/mascot-lost.png";
+import mascotLost from "@/assets/mascot-lost.webp";
 
 const NotFound = () => {
   const location = useLocation();

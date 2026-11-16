@@ -4,14 +4,14 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Bot, Send, X, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase, functionUrl, functionHeaders } from '@/integrations/supabase/client';
 
 interface Message {
   role: 'user' | 'assistant';
   content: string;
 }
 
-const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/groq-chat`;
+const CHAT_URL = functionUrl('groq-chat');
 
 interface AIChatWindowProps {
   isOpen: boolean;
@@ -45,10 +45,7 @@ export function AIChatWindow({ isOpen, onClose }: AIChatWindowProps) {
       if (!session) throw new Error('Musíš se přihlásit.');
       const response = await fetch(CHAT_URL, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
-        },
+        headers: functionHeaders(session.access_token),
         body: JSON.stringify({ messages: [...messages, userMessage] }),
       });
 

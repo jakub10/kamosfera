@@ -11,7 +11,7 @@ import { MobileNav } from '@/components/social/MobileNav';
 import { MobileHeader } from '@/components/social/MobileHeader';
 import { GAME_ITEMS, GameModals, type GameId, type GameItem } from '@/components/games/gameCatalog';
 import { cn } from '@/lib/utils';
-import mascotGaming from '@/assets/mascot-gaming.png';
+import mascotGaming from '@/assets/mascot-gaming.webp';
 
 interface Profile {
   username: string;

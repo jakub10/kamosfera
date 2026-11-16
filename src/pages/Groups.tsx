@@ -1,3 +1,4 @@
+import { guardAllows } from '@/lib/messageGuard';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -15,9 +16,9 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Plus, Users, MessageCircle, Send, Lock, Globe, LogOut, Settings, UserPlus, UserMinus, Crown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import mascotFriends from '@/assets/mascot-friends.png';
-import mascotWelcome from '@/assets/mascot-welcome.png';
-import mascotChat from '@/assets/mascot-chat.png';
+import mascotFriends from '@/assets/mascot-friends.webp';
+import mascotWelcome from '@/assets/mascot-welcome.webp';
+import mascotChat from '@/assets/mascot-chat.webp';
 import { cn } from '@/lib/utils';
 import { GROUP_COLORS, GROUP_EMOJIS, groupStyle, type GroupColor } from '@/lib/groupStyle';
 
@@ -355,13 +356,23 @@ const Groups = () => {
   const sendMessage = async () => {
     if (!user || !selectedGroup || !newMessage.trim()) return;
     setSendingMessage(true);
+    const text = newMessage.trim();
+
+    // AI strážce: zprávu do skupiny uvidí dřív než parta.
+    const allowed = await guardAllows({ group_id: selectedGroup.id }, text, (why) =>
+      toast({ title: 'Zpráva neodešla', description: why, variant: 'destructive' })
+    );
+    if (!allowed) {
+      setSendingMessage(false);
+      return;
+    }
 
     const { error } = await supabase
       .from('group_messages')
       .insert({
         group_id: selectedGroup.id,
         sender_id: user.id,
-        content: newMessage.trim(),
+        content: text,
       });
 
     if (error) {

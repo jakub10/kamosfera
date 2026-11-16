@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
-import mascotWave from '@/assets/mascot-wave.png';
+import mascotWave from '@/assets/mascot-wave.webp';
 import { signInWithGoogle } from '@/lib/googleSignIn';
 import { isValidUsername } from '@/lib/safety';
 import { explainAuthError } from '@/lib/authErrors';

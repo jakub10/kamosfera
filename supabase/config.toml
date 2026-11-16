@@ -1,4 +1,4 @@
-project_id = "uhlkuofwittcveeyyjzz"
+project_id = "zwgvspvgtfpjoolvvfxc"
 
 [functions.groq-chat]
 verify_jwt = false
@@ -7,9 +7,6 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.ai-chat]
-verify_jwt = false
-
-[functions.inworld-realtime]
 verify_jwt = false
 
 [functions.message-guard]

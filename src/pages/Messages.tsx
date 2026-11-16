@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { checkMessage, REASON_TEXT, type GuardReason } from '@/lib/messageGuard';
+import { checkMessage, guardAllows, REASON_TEXT, type GuardReason } from '@/lib/messageGuard';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,7 +24,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Send, MessageCircle, Search, ArrowLeft, Smile, Check, CheckCheck, Image, Trash2, Ban, X as XIcon, Clock } from 'lucide-react';
 import { MessageRequestDialog } from '@/components/social/MessageRequestDialog';
-import mascotChat from '@/assets/mascot-chat.png';
+import mascotChat from '@/assets/mascot-chat.webp';
 import { formatDistanceToNow } from 'date-fns';
 import { cs } from 'date-fns/locale';
 import data from '@emoji-mart/data';
@@ -405,6 +405,17 @@ const Messages = () => {
   const openConversation = async (otherUser: Profile, intro?: string) => {
     if (!user) return;
     setSendingRequest(true);
+
+    // První zprávu cizímu si nejdřív přečte AI strážce.
+    if (intro) {
+      const allowed = await guardAllows({ target_user_id: otherUser.user_id }, intro.trim(), (why) =>
+        toast({ title: 'Zpráva neodešla', description: why, variant: 'destructive' })
+      );
+      if (!allowed) {
+        setSendingRequest(false);
+        return;
+      }
+    }
 
     const { error } = await supabase.rpc('start_conversation', {
       _target_user_id: otherUser.user_id,

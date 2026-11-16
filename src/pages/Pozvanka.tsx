@@ -4,7 +4,7 @@ import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { AuthModal } from '@/components/auth/AuthModal';
 import { friendInviteInfo, friendInviteUse, INVITE_KEY } from '@/lib/childSafety';
-import mascotFriends from '@/assets/mascot-friends.png';
+import mascotFriends from '@/assets/mascot-friends.webp';
 
 /**
  * Pozývací odkaz od kamaráta, ktorý býva ďaleko. Kto ešte nemá účet, uvidí,

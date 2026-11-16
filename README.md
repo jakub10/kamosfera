@@ -38,12 +38,11 @@ si odtud kdokoli přečetl. Soubor `.env` je schválně v `.gitignore`.
 
 Konfigurace je v `vercel.json`. Dvě věci v ní nejsou samozřejmé:
 
-**`installCommand` je `npm install`, ne `npm ci`.** Lovable commituje přímo
-do `main` a aktualizuje jen `bun.lockb`, takže `package-lock.json` občas
-přestane sedět. `npm ci` na to spadne (`EUSAGE`) a web je dole, aniž by se
-v kódu cokoli změnilo — přesně to se už jednou stalo. `npm install` to
-přežije. Přísné `npm ci` zůstává v CI, kde se rozejití zámků pozná dřív:
-**produkce shovívavá, kontrola přísná.**
+**`installCommand` je `npm ci`.** Dokud do `main` commitovalo Lovable
+(a aktualizovalo jen svůj `bun.lockb`), `package-lock.json` občas přestal
+sedět a `npm ci` shodil web — proto tu býval shovívavý `npm install`.
+Lovable už se nepoužívá, zámek je jeden a stejný příkaz běží i v CI, takže
+rozejití se pozná dřív, než se cokoli nasadí.
 
 **`rewrites` na `index.html`.** Routování běží v prohlížeči; bez tohohle
 vrací přímé otevření `/svet` nebo `/messages` chybu 404. Statické soubory
@@ -116,14 +115,24 @@ Podľa konceptu „Kamosféra — Child Safety Concept" (vrstvy 1 a 3; AI strá�
   dôverníkovi. Dôverník je dospelý bez účtu so stránkou `/dovernik/<odkaz>` — vidí len
   prezývku dieťaťa a čas signálu, nikdy správy, kamarátov ani to, kto to bol.
 - **Noc 22:00 – 6:30** (Praha/Bratislava): appka spí, písať sa nedá ani cez databázu.
-  Tlačidlo pomoci funguje aj v noci.
+  Spí sieť, nie pomoc: nočná obrazovka má tlačidlo „Potřebuju pomoct“ (signál dôverníkovi),
+  detskú linku 116 111 a 112. Dôverník signál uvidí, až keď si otvorí svoju stránku —
+  upozornenie e-mailom ani SMS zatiaľ nie je.
 - Všetko stráži databáza (`supabase/migrations/20261001100000_child_safety.sql`):
   reštriktívna politika na každej tabuľke a brána na funkciách, ktoré pravidlá tabuliek
   obchádzajú. Testy: `supabase/tests/07_child_safety.sql`.
 
+## AI kamarát
+
+Odpovede AI kamaráta (`ai-chat`, `groq-chat`) kontroluje druhý dotaz na model — „model kontroluje
+model" (`supabase/functions/_shared/groq-chat.ts`). Odpoveď sa najprv celá vygeneruje, kontrolór
+povie `OK` / `STOP` / `POMOC` a k dieťaťu sa dostane až schválený text; pri `POMOC` (dieťa píše
+o niečom vážnom) dostane odkaz na dospelého, linku 116 111 a 112. Keď kontrola zlyhá, odpoveď sa
+nepustí. AI kamarát je len pre schválených členov a v noci spí. Testy: `src/test/aiChatSafety.test.ts`.
+
 ## AI strážca správ
 
-Každú súkromnú správu pred odoslaním posúdi **System One** od Liquid AI (model `d1:free`)
+Každú súkromnú správu, **správu do skupiny aj prvú správu cudziemu** pred odoslaním posúdi **System One** od Liquid AI (model `d1:free`)
 — serverová funkcia `supabase/functions/message-guard`. Do Liquid AI ide len text (nová
 správa, 3 predošlé, či sú kamaráti), žiadne mená ani ID. Otázky a prahy sú z konceptu
 bezpečnosti:
@@ -133,7 +142,7 @@ bezpečnosti:
 | závažnosť | pod 0.8 | správa ide |
 | závažnosť | 0.8 – 1.8 | „Naozaj to chceš poslať?" |
 | závažnosť | od 1.8 | nedoručí sa, dôverník príjemcu dostane signál |
-| osobné údaje | nad 0.7 | „Naozaj chceš zdieľať tieto údaje?" |
+| osobné údaje | nad 0.85 | „Naozaj chceš zdieľať tieto údaje?" |
 | tlak na tajomstvo | nad 0.5 | vždy signál dôverníkovi príjemcu |
 
 Keď je strážca zapnutý, databáza pustí správu len s jeho „lístkom" (platí 5 minút a len
@@ -184,8 +193,8 @@ salvy, traktorový lúč a vybavenie, ktoré mení dosah pri stole.
 
 - **Frontend** — React 18, Vite, TypeScript, Tailwind, shadcn/ui
 - **Backend** — Supabase: PostgreSQL s Row Level Security, Auth, Storage, Realtime
-- **Edge funkce** (Deno) — AI chat přes Groq, hlasový agent přes Inworld,
-  moderace obsahu, překlady, správa rolí
+- **Edge funkce** (Deno) — AI chat přes Groq, moderace obsahu,
+  strážce zpráv, překlady
 
 ```
 src/

@@ -7,7 +7,7 @@ import { MobileNav } from '@/components/social/MobileNav';
 import { MobileHeader } from '@/components/social/MobileHeader';
 import { PostCard } from '@/components/social/PostCard';
 import { Loader2, Bookmark } from 'lucide-react';
-import mascotSleep from '@/assets/mascot-sleep.png';
+import mascotSleep from '@/assets/mascot-sleep.webp';
 
 interface Profile {
   username: string;
