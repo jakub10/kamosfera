@@ -15,9 +15,9 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Plus, Users, MessageCircle, Send, Lock, Globe, LogOut, Settings, UserPlus, UserMinus, Crown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import mascotFriends from '@/assets/mascot-friends.png';
-import mascotWelcome from '@/assets/mascot-welcome.png';
-import mascotChat from '@/assets/mascot-chat.png';
+import mascotFriends from '@/assets/mascot-friends.webp';
+import mascotWelcome from '@/assets/mascot-welcome.webp';
+import mascotChat from '@/assets/mascot-chat.webp';
 import { cn } from '@/lib/utils';
 import { GROUP_COLORS, GROUP_EMOJIS, groupStyle, type GroupColor } from '@/lib/groupStyle';
 

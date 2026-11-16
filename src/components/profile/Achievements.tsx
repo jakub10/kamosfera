@@ -6,7 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Loader2, Trophy, Star, Lock } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import mascotTrophy from '@/assets/mascot-trophy.png';
+import mascotTrophy from '@/assets/mascot-trophy.webp';
 
 interface Achievement {
   id: string;

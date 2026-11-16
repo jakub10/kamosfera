@@ -7,7 +7,7 @@ import { RightSidebar } from '@/components/social/RightSidebar';
 import { MobileNav } from '@/components/social/MobileNav';
 import { MobileHeader } from '@/components/social/MobileHeader';
 import { Button } from '@/components/ui/button';
-import mascotSearch from '@/assets/mascot-search.png';
+import mascotSearch from '@/assets/mascot-search.webp';
 
 interface Profile {
   username: string;

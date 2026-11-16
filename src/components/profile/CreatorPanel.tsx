@@ -9,11 +9,11 @@ import { Shield, Loader2, Trash2, Ban, Eye, AlertTriangle, UserX, RefreshCw, Bot
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase, functionUrl, functionHeaders } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Link } from 'react-router-dom';
-import mascotThumbsup from '@/assets/mascot-thumbsup.png';
-import mascotLock from '@/assets/mascot-lock.png';
+import mascotThumbsup from '@/assets/mascot-thumbsup.webp';
+import mascotLock from '@/assets/mascot-lock.webp';
 import { BugReportsAdmin } from './BugReportsAdmin';
 
 interface BannedUser {
@@ -237,15 +237,10 @@ export function CreatorPanel() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error('Musíš se přihlásit.');
       const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-moderation`,
+        functionUrl('ai-moderation'),
         {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${session.access_token}`,
-            // Bez apikey brána Supabase volání odmítne (401) ještě před funkcí.
-            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? '',
-          },
+          headers: functionHeaders(session.access_token),
         }
       );
 

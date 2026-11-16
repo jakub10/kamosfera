@@ -23,6 +23,19 @@ const SUPABASE_PUBLISHABLE_KEY = cleanEnvValue(import.meta.env.VITE_SUPABASE_PUB
 export const supabaseConfig = describeConfig(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 export const supabaseConfigMissing = supabaseConfig.kind !== 'ok';
 
+/** Adresa Edge funkce — z vyčištěné adresy, stejné, jakou používá klient. */
+export const functionUrl = (name: string) => `${SUPABASE_URL}/functions/v1/${name}`;
+
+/**
+ * Hlavičky pro přímé volání Edge funkce přes `fetch`.
+ * Bez `apikey` brána Supabase volání odmítne (401) ještě před funkcí.
+ */
+export const functionHeaders = (accessToken: string) => ({
+  'Content-Type': 'application/json',
+  Authorization: `Bearer ${accessToken}`,
+  apikey: SUPABASE_PUBLISHABLE_KEY,
+});
+
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 

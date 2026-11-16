@@ -24,7 +24,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Send, MessageCircle, Search, ArrowLeft, Smile, Check, CheckCheck, Image, Trash2, Ban, X as XIcon, Clock } from 'lucide-react';
 import { MessageRequestDialog } from '@/components/social/MessageRequestDialog';
-import mascotChat from '@/assets/mascot-chat.png';
+import mascotChat from '@/assets/mascot-chat.webp';
 import { formatDistanceToNow } from 'date-fns';
 import { cs } from 'date-fns/locale';
 import data from '@emoji-mart/data';

@@ -6,7 +6,7 @@ import { CreatePost } from './CreatePost';
 import { Stories } from './Stories';
 import { Loader2 } from 'lucide-react';
 import { PostBackgroundStyle } from './VIPPostFeatures';
-import mascotWave from '@/assets/mascot-wave.png';
+import mascotWave from '@/assets/mascot-wave.webp';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 

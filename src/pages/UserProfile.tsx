@@ -34,9 +34,9 @@ import { MessageRequestDialog } from '@/components/social/MessageRequestDialog';
 import { format } from 'date-fns';
 import { cs } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
-import mascotLost from '@/assets/mascot-lost.png';
-import mascotWelcome from '@/assets/mascot-welcome.png';
-import mascotCamera from '@/assets/mascot-camera.png';
+import mascotLost from '@/assets/mascot-lost.webp';
+import mascotWelcome from '@/assets/mascot-welcome.webp';
+import mascotCamera from '@/assets/mascot-camera.webp';
 
 interface Profile {
   user_id: string;

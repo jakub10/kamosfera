@@ -8,7 +8,7 @@ import { RightSidebar } from '@/components/social/RightSidebar';
 import { MobileNav } from '@/components/social/MobileNav';
 import { MobileHeader } from '@/components/social/MobileHeader';
 import { PostCard } from '@/components/social/PostCard';
-import mascotLost from '@/assets/mascot-lost.png';
+import mascotLost from '@/assets/mascot-lost.webp';
 
 interface Profile {
   username: string;

@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Mic, MicOff, X, Loader2, Volume2, Brain } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase, functionUrl, functionHeaders } from '@/integrations/supabase/client';
 
 interface VoiceAgentModalProps {
   isOpen: boolean;
@@ -47,7 +47,7 @@ declare global {
   }
 }
 
-const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-chat`;
+const CHAT_URL = functionUrl('ai-chat');
 const MEMORY_KEY = 'kamosfera_voice_memory_cs';
 const MAX_MEMORY_MESSAGES = 16;
 
@@ -177,10 +177,7 @@ export function VoiceAgentModal({ isOpen, onClose }: VoiceAgentModalProps) {
       ];
       const response = await fetch(CHAT_URL, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${session.access_token}`,
-        },
+        headers: functionHeaders(session.access_token),
         body: JSON.stringify({ messages: messagesWithLang }),
       });
 

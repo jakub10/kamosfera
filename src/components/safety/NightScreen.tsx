@@ -1,4 +1,4 @@
-import mascotSleep from '@/assets/mascot-sleep.png';
+import mascotSleep from '@/assets/mascot-sleep.webp';
 import { NIGHT_TEXT } from '@/lib/childSafety';
 
 /** Kamosféra v noci spí. Veľa zlého sa deje práve v noci. */

@@ -16,7 +16,6 @@
   "dependencies": {
     "@emoji-mart/data": "^1.2.1",
     "@emoji-mart/react": "^1.1.1",
-    "@hookform/resolvers": "^3.10.0",
     "@radix-ui/react-accordion": "^1.2.11",
     "@radix-ui/react-alert-dialog": "^1.1.14",
     "@radix-ui/react-aspect-ratio": "^1.1.7",
@@ -53,7 +52,6 @@
     "embla-carousel-react": "^8.6.0",
     "emoji-mart": "^5.6.0",
     "i18next": "^26.0.10",
-    "i18next-browser-languagedetector": "^8.2.1",
     "input-otp": "^1.4.2",
     "lucide-react": "^0.462.0",
     "next-themes": "^0.3.0",
@@ -70,8 +68,7 @@
     "sonner": "^1.7.4",
     "tailwind-merge": "^2.6.0",
     "tailwindcss-animate": "^1.0.7",
-    "vaul": "^0.9.9",
-    "zod": "^3.25.76"
+    "vaul": "^0.9.9"
   },
   "devDependencies": {
     "@eslint/js": "^9.32.0",
@@ -98,5 +95,5 @@
     "vite": "^5.4.19",
     "vitest": "^3.2.4"
   },
-  "description": "Kamosf\u00e9ra \u2014 bezpe\u010dn\u00e1 soci\u00e1ln\u00ed s\u00ed\u0165 pro d\u011bti."
+  "description": "Kamosféra — bezpečná sociální síť pro děti."
 }

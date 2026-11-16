@@ -1,5 +1,5 @@
 // Translates user-generated content (posts, comments) to a target language
-// using Lovable AI Gateway. No DB writes — pure proxy.
+// through Groq. No DB writes — pure proxy.
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
