@@ -1,3 +1,4 @@
+import { guardAllows } from '@/lib/messageGuard';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -355,13 +356,23 @@ const Groups = () => {
   const sendMessage = async () => {
     if (!user || !selectedGroup || !newMessage.trim()) return;
     setSendingMessage(true);
+    const text = newMessage.trim();
+
+    // AI strážce: zprávu do skupiny uvidí dřív než parta.
+    const allowed = await guardAllows({ group_id: selectedGroup.id }, text, (why) =>
+      toast({ title: 'Zpráva neodešla', description: why, variant: 'destructive' })
+    );
+    if (!allowed) {
+      setSendingMessage(false);
+      return;
+    }
 
     const { error } = await supabase
       .from('group_messages')
       .insert({
         group_id: selectedGroup.id,
         sender_id: user.id,
-        content: newMessage.trim(),
+        content: text,
       });
 
     if (error) {

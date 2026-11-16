@@ -111,3 +111,51 @@ describe('strážca správ — celá cesta', () => {
     expect(res.status).toBe(401);
   });
 });
+
+describe('strážca správ — skupiny a první zpráva cizímu', () => {
+  const ID = '22222222-2222-2222-2222-222222222222';
+  function net() {
+    const calls: { url: string; body?: Record<string, unknown> }[] = [];
+    const fn = vi.fn(async (url: string, init?: RequestInit) => {
+      const body = init?.body ? JSON.parse(String(init.body)) : undefined;
+      calls.push({ url, body });
+      const ok = (b: unknown) => new Response(JSON.stringify(b), { status: 200 });
+      if (url.endsWith('/auth/v1/user')) return ok({ id: 'sender-id' });
+      if (url.endsWith('/rpc/guard_prepare_group')) return ok({ relation: 'skupina', previous: ['čau'] });
+      if (url.endsWith('/rpc/guard_prepare_intro')) return ok({ relation: 'neni_kamarad', previous: [] });
+      if (url.endsWith('/rpc/guard_record_scope')) return ok('check-id');
+      if (url === LIQUID_URL) return ok({ model: 'd1:free', answers: { zavaznost: { score: 0.1 } } });
+      return new Response('{}', { status: 404 });
+    });
+    return { fn: fn as unknown as typeof fetch, calls };
+  }
+  const post = (body: Record<string, unknown>) =>
+    new Request('https://f/message-guard', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer kid-jwt' },
+      body: JSON.stringify(body),
+    });
+
+  it('zpráva do skupiny jde přes kontext skupiny a zapíše se jako group', async () => {
+    const { fn, calls } = net();
+    const res = await handle(post({ group_id: ID, content: 'ahoj parto' }), env(), fn);
+    expect((await res.json()).verdict).toBe('send');
+    expect(calls.find((c) => c.url.endsWith('/rpc/guard_prepare_group'))?.body).toEqual({ _sender: 'sender-id', _group: ID });
+    const liquid = calls.find((c) => c.url === LIQUID_URL)!.body as { state: string };
+    expect(JSON.parse(liquid.state).vztah).toBe('skupina');
+    const rec = calls.find((c) => c.url.endsWith('/rpc/guard_record_scope'))!.body!;
+    expect(rec._kind).toBe('group');
+    expect(rec._scope).toBe(ID);
+  });
+
+  it('první zpráva cizímu se zapíše jako intro na příjemce', async () => {
+    const { fn, calls } = net();
+    const res = await handle(post({ target_user_id: ID, content: 'Ahoj, jsem Kuba' }), env(), fn);
+    expect((await res.json()).verdict).toBe('send');
+    const liquid = calls.find((c) => c.url === LIQUID_URL)!.body as { state: string };
+    expect(JSON.parse(liquid.state).vztah).toBe('neni_kamarad');
+    const rec = calls.find((c) => c.url.endsWith('/rpc/guard_record_scope'))!.body!;
+    expect(rec._kind).toBe('intro');
+    expect(rec._scope).toBe(ID);
+  });
+});

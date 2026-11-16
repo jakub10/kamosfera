@@ -155,11 +155,12 @@ export const QUESTIONS = {
 } as const;
 
 /** Čo vidí Liquid AI: len text. Žiadne mená, ID ani prezývky. */
-export function buildState(message: string, previous: string[], friends: boolean): string {
+export function buildState(message: string, previous: string[], friends: boolean | string): string {
   return JSON.stringify({
     zprava: message,
     predchozi: previous.slice(-3),
-    vztah: friends ? 'overeny_kamarad' : 'neni_kamarad',
+    // 'overeny_kamarad' | 'neni_kamarad' | 'skupina'
+    vztah: typeof friends === 'string' ? friends : friends ? 'overeny_kamarad' : 'neni_kamarad',
   });
 }
 
@@ -243,15 +244,18 @@ export async function handle(req: Request, env: Env, fetchFn: typeof fetch = fet
   const sender = (await who.json())?.id as string | undefined;
   if (!sender) return json({ error: 'Nejdřív se přihlas.' }, 401);
 
-  let body: { conversation_id?: string; content?: string };
+  let body: { conversation_id?: string; group_id?: string; target_user_id?: string; content?: string };
   try {
     body = await req.json();
   } catch {
     return json({ error: 'Špatný požadavek.' }, 400);
   }
   const content = (body.content ?? '').trim();
-  const conversation = body.conversation_id ?? '';
-  if (!content || content.length > 5000 || !/^[0-9a-f-]{36}$/i.test(conversation)) {
+  // Kam zpráva jde: soukromá konverzace, skupina, nebo první zpráva někomu.
+  const kind: 'conversation' | 'group' | 'intro' = body.group_id ? 'group' : body.target_user_id ? 'intro' : 'conversation';
+  const scope = body.group_id ?? body.target_user_id ?? body.conversation_id ?? '';
+  const conversation = scope;
+  if (!content || content.length > 5000 || !/^[0-9a-f-]{36}$/i.test(scope)) {
     return json({ error: 'Špatný požadavek.' }, 400);
   }
 
@@ -266,7 +270,12 @@ export async function handle(req: Request, env: Env, fetchFn: typeof fetch = fet
   };
 
   // 2. Kontext (a overenie, že v konverzácii naozaj sedí).
-  const ctx = await rpc('guard_prepare', { _sender: sender, _conversation: conversation });
+  const ctx =
+    kind === 'group'
+      ? await rpc('guard_prepare_group', { _sender: sender, _group: scope })
+      : kind === 'intro'
+        ? await rpc('guard_prepare_intro', { _sender: sender, _target: scope })
+        : await rpc('guard_prepare', { _sender: sender, _conversation: conversation });
   if (ctx?.error) return json({ error: ctx.error }, 403);
 
   // 3. Liquid AI. Pri výpadku správa prejde ako neskontrolovaná.
@@ -280,7 +289,7 @@ export async function handle(req: Request, env: Env, fetchFn: typeof fetch = fet
         fetchFn,
         liquidKey,
         env.get('LIQUID_MODEL'),
-        { state: buildState(content, ctx.previous ?? [], !!ctx.friends), questions: QUESTIONS },
+        { state: buildState(content, ctx.previous ?? [], ctx.relation ?? !!ctx.friends), questions: QUESTIONS },
         ctrl.signal
       );
       clearTimeout(timer);
@@ -300,14 +309,26 @@ export async function handle(req: Request, env: Env, fetchFn: typeof fetch = fet
   }
 
   // 4. Lístok + signály dôverníkovi príjemcu.
-  await rpc('guard_record', {
-    _sender: sender,
-    _conversation: conversation,
-    _content: content,
-    _verdict: decision.verdict,
-    _scores: scores,
-    _secret: decision.secret,
-  });
+  if (kind === 'conversation') {
+    await rpc('guard_record', {
+      _sender: sender,
+      _conversation: conversation,
+      _content: content,
+      _verdict: decision.verdict,
+      _scores: scores,
+      _secret: decision.secret,
+    });
+  } else {
+    await rpc('guard_record_scope', {
+      _sender: sender,
+      _scope: scope,
+      _kind: kind,
+      _content: content,
+      _verdict: decision.verdict,
+      _scores: scores,
+      _secret: decision.secret,
+    });
+  }
 
   return json({ verdict: decision.verdict, reasons: decision.reasons });
 }

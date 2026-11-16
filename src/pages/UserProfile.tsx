@@ -1,3 +1,4 @@
+import { guardAllows } from '@/lib/messageGuard';
 import { FortressCard } from '@/components/fortress/FortressCard';
 import { UncomfortableButton } from '@/components/safety/UncomfortableButton';
 import { Link } from 'react-router-dom';
@@ -235,6 +236,17 @@ const UserProfile = () => {
   const openConversation = async (intro?: string) => {
     if (!user || !profile) return;
     setSendingRequest(true);
+
+    // První zprávu cizímu si nejdřív přečte AI strážce.
+    if (intro) {
+      const allowed = await guardAllows({ target_user_id: profile.user_id }, intro.trim(), (why) =>
+        toast({ title: 'Zpráva neodešla', description: why, variant: 'destructive' })
+      );
+      if (!allowed) {
+        setSendingRequest(false);
+        return;
+      }
+    }
 
     const { error } = await supabase.rpc('start_conversation', {
       _target_user_id: profile.user_id,

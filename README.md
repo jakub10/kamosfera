@@ -115,14 +115,24 @@ Podľa konceptu „Kamosféra — Child Safety Concept" (vrstvy 1 a 3; AI strá�
   dôverníkovi. Dôverník je dospelý bez účtu so stránkou `/dovernik/<odkaz>` — vidí len
   prezývku dieťaťa a čas signálu, nikdy správy, kamarátov ani to, kto to bol.
 - **Noc 22:00 – 6:30** (Praha/Bratislava): appka spí, písať sa nedá ani cez databázu.
-  Tlačidlo pomoci funguje aj v noci.
+  Spí sieť, nie pomoc: nočná obrazovka má tlačidlo „Potřebuju pomoct“ (signál dôverníkovi),
+  detskú linku 116 111 a 112. Dôverník signál uvidí, až keď si otvorí svoju stránku —
+  upozornenie e-mailom ani SMS zatiaľ nie je.
 - Všetko stráži databáza (`supabase/migrations/20261001100000_child_safety.sql`):
   reštriktívna politika na každej tabuľke a brána na funkciách, ktoré pravidlá tabuliek
   obchádzajú. Testy: `supabase/tests/07_child_safety.sql`.
 
+## AI kamarát
+
+Odpovede AI kamaráta (`ai-chat`, `groq-chat`) kontroluje druhý dotaz na model — „model kontroluje
+model" (`supabase/functions/_shared/groq-chat.ts`). Odpoveď sa najprv celá vygeneruje, kontrolór
+povie `OK` / `STOP` / `POMOC` a k dieťaťu sa dostane až schválený text; pri `POMOC` (dieťa píše
+o niečom vážnom) dostane odkaz na dospelého, linku 116 111 a 112. Keď kontrola zlyhá, odpoveď sa
+nepustí. AI kamarát je len pre schválených členov a v noci spí. Testy: `src/test/aiChatSafety.test.ts`.
+
 ## AI strážca správ
 
-Každú súkromnú správu pred odoslaním posúdi **System One** od Liquid AI (model `d1:free`)
+Každú súkromnú správu, **správu do skupiny aj prvú správu cudziemu** pred odoslaním posúdi **System One** od Liquid AI (model `d1:free`)
 — serverová funkcia `supabase/functions/message-guard`. Do Liquid AI ide len text (nová
 správa, 3 predošlé, či sú kamaráti), žiadne mená ani ID. Otázky a prahy sú z konceptu
 bezpečnosti:
